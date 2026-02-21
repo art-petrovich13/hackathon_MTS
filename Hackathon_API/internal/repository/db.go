@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
-	"iaas-platform/internal/config"
+	"github.com/art-petrovich13/hackathon_MTS/internal/config"
 )
 
 func NewDB(cfg *config.Config) (*sqlx.DB, error) {

@@ -2,10 +2,9 @@ package repository
 
 import (
 	"fmt"
-
-	"github.com/art-petrovich13/hackathon_MTS/internal/config"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
+	"github.com/art-petrovich13/hackathon_MTS/internal/config"
 )
 
 func NewDB(cfg *config.Config) (*sqlx.DB, error) {

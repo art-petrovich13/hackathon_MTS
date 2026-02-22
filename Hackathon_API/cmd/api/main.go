@@ -1,3 +1,4 @@
+// cmd/api/main.go
 package main
 
 import (
@@ -12,6 +13,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
+	"github.com/art-petrovich13/hackathon_MTS/internal/compute/sim" // симуляционный драйвер
 	"github.com/art-petrovich13/hackathon_MTS/internal/config"
 	"github.com/art-petrovich13/hackathon_MTS/internal/handlers"
 	"github.com/art-petrovich13/hackathon_MTS/internal/repository"
@@ -38,10 +40,13 @@ func main() {
 	imageRepo := repository.NewImageRepository(db)
 	nodeRepo := repository.NewNodeRepository(db)
 	vmRepo := repository.NewVMRepository(db)
-	// userRepo, projectRepo пока не нужны, но можно создать
 
-	// Инициализация сервисов
-	vmService := services.NewVMService(db, vmRepo, flavorRepo, imageRepo, nodeRepo)
+	// Создаём симуляционный драйвер (на 7-й день используем sim-реализацию)
+	computeDriver := sim.NewSimDriver()
+	slog.Info("using SIMULATION compute driver")
+
+	// Инициализация сервисов с передачей драйвера
+	vmService := services.NewVMService(db, vmRepo, flavorRepo, imageRepo, nodeRepo, computeDriver)
 
 	// Инициализация обработчиков
 	flavorHandler := handlers.NewFlavorHandler(flavorRepo)
@@ -57,8 +62,6 @@ func main() {
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger) // или свой логгер на основе slog
 	r.Use(middleware.Recoverer)
-	// Можно добавить CORS позже
-	// r.Use(cors.Handler(cors.Options{...}))
 
 	// Группа API v1
 	r.Route("/api/v1", func(r chi.Router) {

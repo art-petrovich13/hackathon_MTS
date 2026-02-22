@@ -1,10 +1,13 @@
+// internal/handlers/vm_handler.go
 package handlers
 
 import (
 	"encoding/json"
 	"net/http"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+
 	"github.com/art-petrovich13/hackathon_MTS/internal/models"
 	"github.com/art-petrovich13/hackathon_MTS/internal/services"
 )
@@ -18,7 +21,6 @@ func NewVMHandler(service *services.VMService) *VMHandler {
 }
 
 // CreateVMRequest – тело запроса на создание VM.
-// (можно использовать models.CreateVMRequest)
 type CreateVMRequest = models.CreateVMRequest
 
 // Create обрабатывает POST /api/v1/vms
@@ -29,7 +31,7 @@ func (h *VMHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Валидация (простейшая)
+	// Простейшая валидация
 	if req.Name == "" {
 		respondError(w, http.StatusBadRequest, "name is required")
 		return
@@ -45,17 +47,15 @@ func (h *VMHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	vm, err := h.service.CreateVM(r.Context(), &req)
 	if err != nil {
-		// Здесь можно более детально обработать ошибки (например, если flavor не найден)
 		respondError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 	respondJSON(w, http.StatusCreated, vm)
 }
 
-// List возвращает все VM (позже можно добавить фильтр по проекту)
+// List возвращает все VM
 func (h *VMHandler) List(w http.ResponseWriter, r *http.Request) {
 	// TODO: получать project_id из контекста после аутентификации
-	// Пока передаём uuid.Nil, чтобы получить все
 	vms, err := h.service.ListVMs(r.Context(), uuid.Nil)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "Failed to fetch VMs")
@@ -75,7 +75,6 @@ func (h *VMHandler) Get(w http.ResponseWriter, r *http.Request) {
 
 	vm, err := h.service.GetVM(r.Context(), id)
 	if err != nil {
-		// Если VM не найдена, вернём 404
 		respondError(w, http.StatusNotFound, "VM not found")
 		return
 	}
@@ -95,7 +94,7 @@ func (h *VMHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	w.WriteHeader(http.StatusNoContent) // 204 No Content
+	w.WriteHeader(http.StatusNoContent)
 }
 
 // Start обрабатывает POST /api/v1/vms/{id}/start
@@ -129,3 +128,6 @@ func (h *VMHandler) Stop(w http.ResponseWriter, r *http.Request) {
 	}
 	respondJSON(w, http.StatusOK, map[string]string{"status": "stop initiated"})
 }
+
+// ВНИМАНИЕ: функции respondJSON и respondError УДАЛЕНЫ отсюда,
+// так как они уже определены в другом файле (скорее всего response.go)

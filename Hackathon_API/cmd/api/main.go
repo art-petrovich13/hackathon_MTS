@@ -13,21 +13,24 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
-	"github.com/art-petrovich13/hackathon_MTS/internal/compute/sim" // симуляционный драйвер
+	// ── ИЗМЕНЕНИЕ: заменяем sim на docker ──────────────────────────────────
+	dockerdriver "github.com/art-petrovich13/hackathon_MTS/internal/compute/docker"
+	// ───────────────────────────────────────────────────────────────────────
 	"github.com/art-petrovich13/hackathon_MTS/internal/config"
 	"github.com/art-petrovich13/hackathon_MTS/internal/handlers"
 	"github.com/art-petrovich13/hackathon_MTS/internal/repository"
 	"github.com/art-petrovich13/hackathon_MTS/internal/services"
+	"github.com/art-petrovich13/hackathon_MTS/internal/worker"
 )
 
 func main() {
-	// Загрузка конфигурации
+	// ── Конфигурация ────────────────────────────────────────────────────────
 	cfg, err := config.Load()
 	if err != nil {
 		log.Fatal("cannot load config:", err)
 	}
 
-	// Подключение к БД
+	// ── БД ──────────────────────────────────────────────────────────────────
 	db, err := repository.NewDB(cfg)
 	if err != nil {
 		log.Fatal("cannot connect to db:", err)
@@ -35,42 +38,60 @@ func main() {
 	defer db.Close()
 	slog.Info("database connected")
 
-	// Инициализация репозиториев
+	// ── Репозитории ─────────────────────────────────────────────────────────
 	flavorRepo := repository.NewFlavorRepository(db)
 	imageRepo := repository.NewImageRepository(db)
 	nodeRepo := repository.NewNodeRepository(db)
 	vmRepo := repository.NewVMRepository(db)
 
-	// Создаём симуляционный драйвер (на 7-й день используем sim-реализацию)
-	computeDriver := sim.NewSimDriver()
-	slog.Info("using SIMULATION compute driver")
+	// ── ИЗМЕНЕНИЕ: Docker-драйвер вместо симуляционного ────────────────────
+	//
+	// NewDockerDriver читает переменную DOCKER_HOST из окружения.
+	// Если DOCKER_HOST не задан — подключается к локальному сокету
+	// /var/run/docker.sock (стандартное поведение Docker SDK).
+	//
+	// При запуске через docker-compose не забудь пробросить сокет:
+	//   volumes:
+	//     - /var/run/docker.sock:/var/run/docker.sock
+	//
+	computeDriver, err := dockerdriver.NewDockerDriver()
+	if err != nil {
+		slog.Error("failed to create docker driver", "error", err)
+		os.Exit(1)
+	}
+	slog.Info("using DOCKER compute driver")
+	// ───────────────────────────────────────────────────────────────────────
 
-	// Инициализация сервисов с передачей драйвера
+	// ── Сервисы ─────────────────────────────────────────────────────────────
 	vmService := services.NewVMService(db, vmRepo, flavorRepo, imageRepo, nodeRepo, computeDriver)
 
-	// Инициализация обработчиков
+	// ── Воркер ──────────────────────────────────────────────────────────────────
+	workerCtx, workerCancel := context.WithCancel(context.Background())
+	defer workerCancel()
+
+	vmWorker := worker.NewVMWorker(db, computeDriver, vmRepo, nodeRepo, 5*time.Second)
+	go vmWorker.Start(workerCtx)
+	slog.Info("vm worker launched")
+
+	// ── Хендлеры ────────────────────────────────────────────────────────────
 	flavorHandler := handlers.NewFlavorHandler(flavorRepo)
 	imageHandler := handlers.NewImageHandler(imageRepo)
 	nodeHandler := handlers.NewNodeHandler(nodeRepo)
 	vmHandler := handlers.NewVMHandler(vmService)
 
-	// Настройка роутера
+	// ── Роутер ──────────────────────────────────────────────────────────────
 	r := chi.NewRouter()
 
-	// Middleware (глобальные)
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
-	r.Use(middleware.Logger) // или свой логгер на основе slog
+	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
-	// Группа API v1
 	r.Route("/api/v1", func(r chi.Router) {
-		// Публичные эндпоинты (без аутентификации)
 		r.Get("/flavors", flavorHandler.List)
 		r.Get("/images", imageHandler.List)
 		r.Get("/nodes", nodeHandler.List)
 
-		// VM endpoints
 		r.Post("/vms", vmHandler.Create)
 		r.Get("/vms", vmHandler.List)
 		r.Get("/vms/{id}", vmHandler.Get)
@@ -79,22 +100,20 @@ func main() {
 		r.Post("/vms/{id}/stop", vmHandler.Stop)
 	})
 
-	// Запуск сервера
-	port := cfg.APIPort
+	// ── HTTP-сервер + Graceful shutdown ─────────────────────────────────────
 	srv := &http.Server{
-		Addr:         ":" + port,
+		Addr:         ":" + cfg.APIPort,
 		Handler:      r,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  120 * time.Second,
 	}
 
-	// Graceful shutdown
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt)
 
 	go func() {
-		slog.Info("server started", "port", port)
+		slog.Info("server started", "port", cfg.APIPort)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			slog.Error("server failed", "error", err)
 		}

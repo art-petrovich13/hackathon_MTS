@@ -293,7 +293,6 @@ type statsJSON struct {
 }
 
 func (d *DockerDriver) GetStats(ctx context.Context, containerID string) (*driver.ContainerStats, error) {
-	// false = один снимок, а не бесконечный стрим.
 	statsResp, err := d.cli.ContainerStats(ctx, containerID, false)
 	if err != nil {
 		return nil, fmt.Errorf("container stats %q: %w", containerID, err)
@@ -311,7 +310,7 @@ func (d *DockerDriver) GetStats(ctx context.Context, containerID string) (*drive
 	systemDelta := float64(v.CPUStats.SystemUsage) - float64(v.PreCPUStats.SystemUsage)
 	numCPU := float64(len(v.CPUStats.CPUUsage.PercpuUsage))
 	if numCPU == 0 {
-		numCPU = 1 // на некоторых системах PercpuUsage может быть nil
+		numCPU = 1
 	}
 	if systemDelta > 0 && cpuDelta > 0 {
 		cpuPercent = (cpuDelta / systemDelta) * numCPU
@@ -350,7 +349,6 @@ func (d *DockerDriver) GetStats(ctx context.Context, containerID string) (*drive
 // ──────────────────────────────────────────────
 
 // getContainerIP инспектирует контейнер и возвращает его IP.
-// Retry нужен: сразу после старта сеть может ещё не подняться.
 func (d *DockerDriver) getContainerIP(ctx context.Context, containerID string) (string, error) {
 	const maxAttempts = 5
 	for i := range maxAttempts {

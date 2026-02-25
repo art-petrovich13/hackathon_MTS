@@ -13,9 +13,9 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
-	// ── ИЗМЕНЕНИЕ: заменяем sim на docker ──────────────────────────────────
+	
 	dockerdriver "github.com/art-petrovich13/hackathon_MTS/internal/compute/docker"
-	// ───────────────────────────────────────────────────────────────────────
+	
 	"github.com/art-petrovich13/hackathon_MTS/internal/config"
 	"github.com/art-petrovich13/hackathon_MTS/internal/handlers"
 	"github.com/art-petrovich13/hackathon_MTS/internal/repository"
@@ -44,28 +44,18 @@ func main() {
 	nodeRepo := repository.NewNodeRepository(db)
 	vmRepo := repository.NewVMRepository(db)
 
-	// ── ИЗМЕНЕНИЕ: Docker-драйвер вместо симуляционного ────────────────────
-	//
-	// NewDockerDriver читает переменную DOCKER_HOST из окружения.
-	// Если DOCKER_HOST не задан — подключается к локальному сокету
-	// /var/run/docker.sock (стандартное поведение Docker SDK).
-	//
-	// При запуске через docker-compose не забудь пробросить сокет:
-	//   volumes:
-	//     - /var/run/docker.sock:/var/run/docker.sock
-	//
+	// Docker-драйвер вместо симуляционного ────────────────────
 	computeDriver, err := dockerdriver.NewDockerDriver()
 	if err != nil {
 		slog.Error("failed to create docker driver", "error", err)
 		os.Exit(1)
 	}
 	slog.Info("using DOCKER compute driver")
-	// ───────────────────────────────────────────────────────────────────────
 
 	// ── Сервисы ─────────────────────────────────────────────────────────────
 	vmService := services.NewVMService(db, vmRepo, flavorRepo, imageRepo, nodeRepo, computeDriver)
 
-	// ── Воркер ──────────────────────────────────────────────────────────────────
+	// ── Воркеры ──────────────────────────────────────────────────────────────────
 	workerCtx, workerCancel := context.WithCancel(context.Background())
 	defer workerCancel()
 
@@ -73,11 +63,16 @@ func main() {
 	go vmWorker.Start(workerCtx)
 	slog.Info("vm worker launched")
 
+	reconcileWorker := worker.NewReconcileWorker(db, computeDriver, vmRepo, nodeRepo, 1*time.Minute)
+	go reconcileWorker.Start(workerCtx)
+	slog.Info("reconcile worker launched")
+
 	// ── Хендлеры ────────────────────────────────────────────────────────────
 	flavorHandler := handlers.NewFlavorHandler(flavorRepo)
 	imageHandler := handlers.NewImageHandler(imageRepo)
 	nodeHandler := handlers.NewNodeHandler(nodeRepo)
 	vmHandler := handlers.NewVMHandler(vmService)
+	healthHandler := handlers.NewHealthHandler(db)
 
 	// ── Роутер ──────────────────────────────────────────────────────────────
 	r := chi.NewRouter()
@@ -91,6 +86,7 @@ func main() {
 		r.Get("/flavors", flavorHandler.List)
 		r.Get("/images", imageHandler.List)
 		r.Get("/nodes", nodeHandler.List)
+		r.Get("/health", healthHandler.Check)
 
 		r.Post("/vms", vmHandler.Create)
 		r.Get("/vms", vmHandler.List)

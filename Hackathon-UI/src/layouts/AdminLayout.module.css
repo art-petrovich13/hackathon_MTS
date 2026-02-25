@@ -1,0 +1,142 @@
+
+/* ── Основная сетка ─────────────────────────────────────────────────────── */
+.shell {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  min-height: 100vh;
+  /* Плавный переход фона при смене темы */
+  transition: background 0.2s ease;
+}
+
+/* ── Сайдбар ─────────────────────────────────────────────────────────────── */
+.sidebar {
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0; left: 0;
+  width: 220px;
+  height: 100vh;
+  z-index: 100;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 18px 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.logoMark { font-size: 22px; color: var(--accent); line-height: 1; }
+
+.logoText {
+  font-family: 'Syne', sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-pri);
+  letter-spacing: -0.3px;
+}
+.logoText em { font-style: normal; color: var(--accent); }
+
+.nav {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 16px 10px;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  color: var(--text-sec);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  transition: background 0.15s, color 0.15s;
+  cursor: pointer;
+}
+.navItem:hover    { background: var(--bg-raised); color: var(--text-pri); }
+.navItemActive    { background: var(--accent-dim); color: var(--accent); }
+
+.navIcon { font-size: 15px; width: 18px; text-align: center; flex-shrink: 0; }
+
+.sidebarFooter {
+  padding: 14px 18px;
+  border-top: 1px solid var(--border);
+}
+.version { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-dim); }
+
+/* ── Основная область ───────────────────────────────────────────────────── */
+.main {
+  margin-left: 220px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  transition: background 0.2s ease;
+}
+
+.topbar {
+  height: 52px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.topbarLeft  { display: flex; align-items: center; gap: 12px; }
+.topbarRight { display: flex; align-items: center; gap: 12px; }
+
+.content { flex: 1; padding: 28px 24px; }
+
+/* ── Health badge ────────────────────────────────────────────────────────── */
+.healthBadge {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--text-sec);
+}
+.healthDot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: background 0.3s;
+}
+.healthOk  { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.healthErr { background: var(--red);   box-shadow: 0 0 6px var(--red); }
+
+/* ── Theme toggle button ─────────────────────────────────────────────────── */
+.themeToggle {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-raised);
+  color: var(--text-sec);
+  font-size: 16px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  flex-shrink: 0;
+}
+.themeToggle:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-dim);
+}

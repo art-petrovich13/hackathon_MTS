@@ -3,12 +3,12 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { AdminLayout } from '../layouts/AdminLayout'
 
 // Страницы (создадим их позже, один за другим)
-// import { VMListPage }    from '../pages/VMListPage'
-// import { CreateVMPage }  from '../pages/CreateVMPage'
-// import { NodesPage }     from '../pages/NodesPage'
-// import { ImagesPage }    from '../pages/ImagesPage'
-// import { FlavorsPage }   from '../pages/FlavorsPage'
-// import { NotFoundPage }  from '../pages/NotFoundPage'
+import { VMListPage }    from '../pages/VMListPage/VMListPage'
+import { CreateVMPage }  from '../pages/CreateVMPage/CreateVMPage'
+import { NodesPage }     from '../pages/NodesPage/NodesPage'
+import { ImagesPage }    from '../pages/ImagesPage/ImagesPage'
+import { FlavorsPage }   from '../pages/FlavorsPage/FlavorsPage'
+import { NotFoundPage }  from '../pages/NotFoundPage/NotFoundPage'
 
 export function AppRoutes() {
   return (
@@ -18,20 +18,20 @@ export function AppRoutes() {
 
         {/* Главная → редирект на список VM */}
         <Route index element={<Navigate to="/vms" replace />} />
-    
+
         {/* VM */}
-        <Route path="vms"        />
-        <Route path="vms/create"  />
+        <Route path="vms"        element={<VMListPage />} />
+        <Route path="vms/create" element={<CreateVMPage />} />
 
         {/* Инфраструктура */}
-        <Route path="nodes"   />
-        <Route path="images"   />
-        <Route path="flavors" />
+        <Route path="nodes"   element={<NodesPage />} />
+        <Route path="images"  element={<ImagesPage />} />
+        <Route path="flavors" element={<FlavorsPage />} />
 
       </Route>
 
       {/* 404 */}
-      <Route path="*"  />
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   )
 }

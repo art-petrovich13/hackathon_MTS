@@ -1,0 +1,39 @@
+/* src/pages/FlavorsPage.module.css */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 14px;
+}
+
+.card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transition: border-color 0.15s, transform 0.15s;
+}
+.card:hover { border-color: var(--accent); transform: translateY(-2px); }
+
+.cardName {
+  font-family: var(--font-ui);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-pri);
+  text-transform: capitalize;
+}
+
+.specs { display: flex; flex-direction: column; gap: 8px; }
+
+.specRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.specIcon  { font-size: 13px; color: var(--accent); width: 16px; text-align: center; flex-shrink: 0; }
+.specLabel { font-family: var(--font-mono); font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.4px; flex: 1; }
+.specValue { font-family: var(--font-mono); font-size: 13px; font-weight: 600; color: var(--text-pri); }

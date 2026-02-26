@@ -1,0 +1,10 @@
+/* src/pages/NotFoundPage.module.css */
+.page {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  min-height: 60vh; gap: 12px;
+}
+.code { font-family: var(--font-mono); font-size: 80px; font-weight: 700; color: var(--border); line-height: 1; }
+.msg  { font-family: var(--font-ui); font-size: 16px; color: var(--text-sec); }
+.link { font-family: var(--font-mono); font-size: 13px; color: var(--accent); }
+.link:hover { text-decoration: underline; }

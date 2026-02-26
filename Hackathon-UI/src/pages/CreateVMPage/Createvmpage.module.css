@@ -1,0 +1,156 @@
+/* src/pages/CreateVMPage.module.css */
+
+.page  { display: flex; flex-direction: column; max-width: 760px; }
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 28px;
+}
+
+.back {
+  background: none; border: none;
+  color: var(--text-sec); font-family: var(--font-ui); font-size: 13px;
+  cursor: pointer; padding: 0; width: fit-content;
+  transition: color 0.15s;
+}
+.back:hover { color: var(--accent); }
+
+/* ── Форма ───────────────────────────────────────────────────────────────── */
+.form { display: flex; flex-direction: column; gap: 28px; }
+
+/* ── Секция ──────────────────────────────────────────────────────────────── */
+.section { display: flex; flex-direction: column; gap: 12px; }
+
+.sectionHeader { display: flex; align-items: baseline; gap: 10px; }
+
+.sectionTitle {
+  font-family: var(--font-ui);
+  font-size: 14px; font-weight: 700;
+  color: var(--text-pri);
+}
+
+.sectionHint {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+/* ── Input ───────────────────────────────────────────────────────────────── */
+.input {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-pri);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  padding: 11px 14px;
+  outline: none;
+  transition: border-color 0.15s, background 0.15s;
+  width: 100%;
+}
+.input:focus    { border-color: var(--accent); background: var(--bg-raised); }
+.input::placeholder { color: var(--text-dim); }
+
+/* ── Flavor grid ─────────────────────────────────────────────────────────── */
+.flavorGrid { display: flex; gap: 12px; flex-wrap: wrap; }
+
+.flavorCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 16px 20px;
+  min-width: 130px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s;
+}
+.flavorCard:hover { border-color: var(--accent); }
+.flavorCard.selected {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.flavorName { font-family: var(--font-ui); font-size: 15px; font-weight: 700; color: var(--text-pri); }
+.flavorSpec { font-family: var(--font-mono); font-size: 11px; color: var(--text-sec); }
+
+/* ── Image list ──────────────────────────────────────────────────────────── */
+.imageList { display: flex; flex-direction: column; gap: 8px; }
+
+.imageRow {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 16px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s;
+}
+.imageRow:hover { border-color: var(--accent); }
+.imageRow.selected {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.imageIcon  { font-size: 20px; color: var(--text-dim); flex-shrink: 0; }
+.imageInfo  { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+.imageName  { font-family: var(--font-ui); font-size: 14px; font-weight: 600; color: var(--text-pri); }
+.imageTag   { font-family: var(--font-mono); font-size: 11px; color: var(--accent); }
+.imageMeta  { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.imageVer   { font-family: var(--font-mono); font-size: 11px; color: var(--text-sec); }
+.imageOs    { font-family: var(--font-mono); font-size: 10px; color: var(--text-dim); }
+
+/* ── Checkmark ───────────────────────────────────────────────────────────── */
+.checkmark {
+  position: absolute;
+  top: 8px; right: 10px;
+  font-size: 12px;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+/* ── Error ───────────────────────────────────────────────────────────────── */
+.errorBox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: color-mix(in srgb, var(--red) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--red) 25%, transparent);
+  border-radius: 8px;
+  color: var(--red);
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+.errorIcon { font-size: 15px; flex-shrink: 0; }
+
+/* ── Footer ──────────────────────────────────────────────────────────────── */
+.footer {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.btnCancel {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-sec);
+  padding: 9px 20px;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.btnCancel:hover { border-color: var(--text-sec); color: var(--text-pri); }

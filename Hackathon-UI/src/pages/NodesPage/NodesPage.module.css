@@ -1,90 +1,133 @@
-/* src/pages/VMListPage.module.css */
+/* src/pages/NodesPage.module.css */
 
-.page { display: flex; flex-direction: column; }
-
-/* ── Summary ─────────────────────────────────────────────────────────────── */
-.summary {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 24px;
-  flex-wrap: wrap;
-}
-
-.summaryCard {
+.page {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding: 14px 22px;
+  width: 100%;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
   background: var(--bg-surface);
   border: 1px solid var(--border);
-  border-radius: 10px;
-  min-width: 80px;
+  border-radius: 12px;
   transition: border-color 0.15s;
 }
-.summaryCard:hover { border-color: var(--accent); }
+.card:hover { border-color: var(--accent); }
 
-.summaryValue {
-  font-family: var(--font-mono);
-  font-size: 24px;
-  font-weight: 700;
-  line-height: 1;
+/* ── Шапка карточки ──────────────────────────────────────────────────────── */
+.cardTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
 }
 
-.summaryLabel {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
-  color: var(--text-dim);
-  margin-top: 2px;
-}
-
-/* ── Empty state ─────────────────────────────────────────────────────────── */
-.empty {
+.nodeInfo {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 80px 20px;
-  border: 1px dashed var(--border);
-  border-radius: 12px;
-  text-align: center;
+  gap: 3px;
+  min-width: 0;
 }
 
-.emptyIcon  { font-size: 48px; color: var(--text-dim); line-height: 1; }
-.emptyTitle { font-size: 16px; font-weight: 600; color: var(--text-sec); }
-.emptyHint  { font-size: 13px; color: var(--text-dim); }
+.nodeName {
+  font-family: 'Syne', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-pri);
+}
 
-/* ── Actions ─────────────────────────────────────────────────────────────── */
-.actions { display: flex; gap: 6px; }
+.nodeEndpoint {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-dim);
+  word-break: break-all;
+}
 
-.actionBtn {
-  width: 30px;
-  height: 30px;
+/* ── Прогресс-бары ───────────────────────────────────────────────────────── */
+.bars {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bar {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.barHeader {
   display: flex;
   align-items: center;
-  justify-content: center;
-  border-radius: 6px;
-  border: 1px solid var(--border);
-  background: var(--bg-raised);
-  color: var(--text-sec);
-  font-size: 11px;
-  cursor: pointer;
-  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  justify-content: space-between;
+  gap: 8px;
 }
-.actionBtn:disabled { opacity: 0.3; cursor: not-allowed; }
 
-.actionBtn_start:hover:not(:disabled) {
-  border-color: var(--green); color: var(--green);
-  background: color-mix(in srgb, var(--green) 10%, transparent);
+.barLabel {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-sec);
 }
-.actionBtn_stop:hover:not(:disabled) {
-  border-color: var(--yellow); color: var(--yellow);
-  background: color-mix(in srgb, var(--yellow) 10%, transparent);
+
+.barInfo {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-sec);
 }
-.actionBtn_delete:hover:not(:disabled) {
-  border-color: var(--red); color: var(--red);
-  background: color-mix(in srgb, var(--red) 10%, transparent);
+
+.barTrack {
+  height: 8px;
+  background: var(--bg-raised);
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.barFill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.5s ease, background 0.3s ease;
+}
+
+/* ── Свободные ресурсы ───────────────────────────────────────────────────── */
+.freeRow {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+  padding-top: 4px;
+  border-top: 1px solid var(--border);
+}
+
+.freeItem {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.freeLabel {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-dim);
+}
+
+.freeValue {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-pri);
 }

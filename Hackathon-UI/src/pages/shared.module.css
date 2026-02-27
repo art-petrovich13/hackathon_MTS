@@ -1,5 +1,4 @@
-/* src/pages/shared.module.css
-   Общие стили для всех страниц — заголовки, таблицы, состояния */
+/* src/pages/shared.module.css */
 
 /* ── Заголовок страницы ─────────────────────────────────────────────────── */
 .pageHeader {
@@ -8,31 +7,34 @@
   justify-content: space-between;
   gap: 16px;
   margin-bottom: 24px;
+  flex-wrap: wrap;
 }
 
 .pageTitle {
-  font-family: var(--font-ui);
-  font-size: 22px;
+  font-family: 'Syne', sans-serif;
+  font-size: 24px;
   font-weight: 700;
   color: var(--text-pri);
   line-height: 1.2;
+  margin: 0;
 }
 
 .pageSubtitle {
-  font-family: var(--font-mono);
+  font-family: 'JetBrains Mono', monospace;
   font-size: 12px;
   color: var(--text-sec);
-  margin-top: 4px;
+  margin-top: 5px;
+  margin-bottom: 0;
 }
 
-/* ── Кнопка основного действия ──────────────────────────────────────────── */
+/* ── Кнопки ─────────────────────────────────────────────────────────────── */
 .btnPrimary {
   background: var(--accent);
   color: #fff;
   border: none;
-  padding: 9px 20px;
+  padding: 10px 22px;
   border-radius: 8px;
-  font-family: var(--font-ui);
+  font-family: 'Syne', sans-serif;
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
@@ -40,7 +42,7 @@
   flex-shrink: 0;
   transition: opacity 0.15s;
 }
-.btnPrimary:hover:not(:disabled) { opacity: 0.85; }
+.btnPrimary:hover:not(:disabled) { opacity: 0.82; }
 .btnPrimary:disabled { opacity: 0.4; cursor: not-allowed; }
 
 /* ── Состояния загрузки / ошибки ────────────────────────────────────────── */
@@ -49,16 +51,17 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  padding: 64px 20px;
+  gap: 12px;
+  padding: 80px 20px;
   text-align: center;
 }
-.stateIcon { font-size: 36px; opacity: 0.3; }
-.stateText { font-family: var(--font-mono); font-size: 13px; color: var(--text-sec); }
-.stateTextErr { font-family: var(--font-mono); font-size: 13px; color: var(--red); }
+.stateIcon    { font-size: 36px; opacity: 0.25; }
+.stateText    { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--text-sec); }
+.stateTextErr { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--red); }
 
 /* ── Таблица ────────────────────────────────────────────────────────────── */
 .tableWrap {
+  width: 100%;
   border: 1px solid var(--border);
   border-radius: 12px;
   overflow: hidden;
@@ -69,6 +72,7 @@
   width: 100%;
   border-collapse: collapse;
   font-size: 13px;
+  table-layout: auto;
 }
 
 .table thead tr {
@@ -78,8 +82,8 @@
 
 .table th {
   text-align: left;
-  padding: 11px 16px;
-  font-family: var(--font-mono);
+  padding: 12px 16px;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
@@ -101,32 +105,37 @@
   vertical-align: middle;
 }
 
-/* ── Типы ячеек ─────────────────────────────────────────────────────────── */
-.cellBold { font-weight: 600; }
-.cellMono { font-family: var(--font-mono); font-size: 12px; color: var(--text-sec); }
+/* ── Ячейки ─────────────────────────────────────────────────────────────── */
+.cellBold { font-weight: 600; color: var(--text-pri); }
+.cellMono { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-sec); }
 .cellDim  { font-size: 12px; color: var(--text-dim); }
 
-/* ── Badge ──────────────────────────────────────────────────────────────── */
+/* ── Badge (без color-mix — используем явные цвета) ─────────────────────── */
 .badge {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 3px 10px;
+  padding: 4px 10px;
   border-radius: 20px;
-  font-family: var(--font-mono);
+  font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
   font-weight: 600;
   white-space: nowrap;
-  color: var(--c, var(--text-sec));
-  background: color-mix(in srgb, var(--c, var(--text-sec)) 10%, transparent);
-  border: 1px solid color-mix(in srgb, var(--c, var(--text-sec)) 25%, transparent);
 }
+
+/* Варианты badge по цвету */
+.badgeGreen  { color: #00c853; background: rgba(0,200,83,0.12);  border: 1px solid rgba(0,200,83,0.3); }
+.badgeRed    { color: #ff4d6a; background: rgba(255,77,106,0.12); border: 1px solid rgba(255,77,106,0.3); }
+.badgeYellow { color: #ffd740; background: rgba(255,215,64,0.12); border: 1px solid rgba(255,215,64,0.3); }
+.badgeBlue   { color: #40c4ff; background: rgba(64,196,255,0.12); border: 1px solid rgba(64,196,255,0.3); }
+.badgeGray   { color: #7a7f94; background: rgba(122,127,148,0.12); border: 1px solid rgba(122,127,148,0.25); }
+.badgeOrange { color: #ff9100; background: rgba(255,145,0,0.12);  border: 1px solid rgba(255,145,0,0.3); }
 
 .badgeSpinner {
   width: 7px; height: 7px;
   border-radius: 50%;
-  border: 1.5px solid transparent;
-  border-top-color: var(--c);
+  border: 1.5px solid currentColor;
+  border-top-color: transparent;
   animation: spin 0.75s linear infinite;
   flex-shrink: 0;
 }

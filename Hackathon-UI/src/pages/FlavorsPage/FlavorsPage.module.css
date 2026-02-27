@@ -1,5 +1,11 @@
 /* src/pages/FlavorsPage.module.css */
 
+.page {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -7,33 +13,57 @@
 }
 
 .card {
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 20px;
   display: flex;
   flex-direction: column;
   gap: 16px;
-  transition: border-color 0.15s, transform 0.15s;
+  padding: 20px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  transition: border-color 0.15s, transform 0.12s;
 }
 .card:hover { border-color: var(--accent); transform: translateY(-2px); }
 
 .cardName {
-  font-family: var(--font-ui);
+  font-family: 'Syne', sans-serif;
   font-size: 18px;
   font-weight: 700;
   color: var(--text-pri);
-  text-transform: capitalize;
 }
 
-.specs { display: flex; flex-direction: column; gap: 8px; }
+.specList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
 
 .specRow {
   display: flex;
+  flex-direction: row;
   align-items: center;
   gap: 8px;
 }
 
-.specIcon  { font-size: 13px; color: var(--accent); width: 16px; text-align: center; flex-shrink: 0; }
-.specLabel { font-family: var(--font-mono); font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.4px; flex: 1; }
-.specValue { font-family: var(--font-mono); font-size: 13px; font-weight: 600; color: var(--text-pri); }
+.specIcon {
+  font-size: 13px;
+  color: var(--accent);
+  width: 16px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.specLabel {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-dim);
+  flex: 1;
+}
+
+.specValue {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-pri);
+}

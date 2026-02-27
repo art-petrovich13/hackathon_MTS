@@ -82,11 +82,12 @@ func main() {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
+	r.Get("/health", healthHandler.Check)
+
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Get("/flavors", flavorHandler.List)
 		r.Get("/images", imageHandler.List)
 		r.Get("/nodes", nodeHandler.List)
-		r.Get("/health", healthHandler.Check)
 
 		r.Post("/vms", vmHandler.Create)
 		r.Get("/vms", vmHandler.List)

@@ -3,10 +3,10 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import {
-  getVMs, startVM, stopVM, deleteVM,
-  type VirtualMachine, type VMStatus,
-} from '../../api/api'
-import s from '../shared.module.css'
+  getVMs, startVM, stopVM, deleteVM
+} from '../../../api/api'
+import { type VirtualMachine, type VMStatus } from '../../../types/api'
+import s from '../../shared.module.css'
 import styles from './VMListPage.module.css'
 
 type StatusCfg = { label: string; badgeClass: string }
@@ -41,7 +41,7 @@ const SUMMARY_COLORS: Record<string, string> = {
   Error: '#ff4d6a',
 }
 
-export function VMListPage() {
+export function AdminVMsPage() {
   const navigate = useNavigate()
   const qc = useQueryClient()
   const [filter, setFilter] = useState<FilterKey>('all')
@@ -74,7 +74,7 @@ export function VMListPage() {
           <h1 className={s.pageTitle}>Virtual Machines</h1>
           <p className={s.pageSubtitle}>auto-refresh every 5 s · click a card to filter</p>
         </div>
-        <button className={s.btnPrimary} onClick={() => navigate('/vms/create')}>
+        <button className={s.btnPrimary} onClick={() => navigate('/admin/vms/create')}>
           + New VM
         </button>
       </div>
@@ -118,7 +118,7 @@ export function VMListPage() {
           <span className={styles.emptyIcon}>▣</span>
           <p className={styles.emptyTitle}>No virtual machines yet</p>
           <p className={styles.emptyHint}>Create your first VM to get started</p>
-          <button className={s.btnPrimary} onClick={() => navigate('/vms/create')}>
+          <button className={s.btnPrimary} onClick={() => navigate('/admin/vms/create')}>
             + New VM
           </button>
         </div>

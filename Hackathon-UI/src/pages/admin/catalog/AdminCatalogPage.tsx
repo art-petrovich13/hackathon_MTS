@@ -1,13 +1,13 @@
 // src/pages/FlavorsPage.tsx
 import { useQuery } from '@tanstack/react-query'
-import { getFlavors } from '../../api/api'
-import s from '../shared.module.css'
-import styles from './FlavorsPage.module.css'
+import { getFlavors } from '../../../api/api'
+import s from '../../shared.module.css'
+import styles from './AdminCatalogPage.module.css'
 
-export function FlavorsPage() {
+export function AdminCatalogPage() {
   const { data: flavors = [], isLoading, isError } = useQuery({
     queryKey: ['flavors'],
-    queryFn: getFlavors,
+    queryFn: () => getFlavors(),
   })
 
   return (

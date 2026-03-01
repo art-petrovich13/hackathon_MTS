@@ -140,3 +140,24 @@
   color: var(--accent);
   background: var(--accent-dim);
 }
+
+.navSection {
+  margin-bottom: 6px;
+}
+
+.navSectionLabel {
+  display: block;
+  padding: 8px 16px 3px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #475569;
+}
+
+/* убедись что .navItem уже имеет display:flex — если нет, добавь */
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}

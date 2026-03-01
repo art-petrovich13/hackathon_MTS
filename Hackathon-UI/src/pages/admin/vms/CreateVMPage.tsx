@@ -2,8 +2,10 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getFlavors, getImages, createVM, type Flavor, type Image } from '../../api/api'
-import s from '../shared.module.css'
+import { getFlavors, getImages, createVM } from '../../../api/api'
+import { type Image } from "../../../types/api"
+import type { Flavor } from '../../../types/api'
+import s from '../../shared.module.css'
 import styles from './CreateVMPage.module.css'
 
 const DEFAULT_PROJECT_ID = '18b192b4-57c2-4f9e-ad30-135160284b1d'
@@ -17,14 +19,14 @@ export function CreateVMPage() {
   const [imageId, setImageId] = useState('')
   const [formError, setFormError] = useState('')
 
-  const { data: flavors = [], isLoading: loadFlavors } = useQuery({ queryKey: ['flavors'], queryFn: getFlavors })
+  const { data: flavors = [], isLoading: loadFlavors } = useQuery({ queryKey: ['flavors'], queryFn: () => getFlavors() })
   const { data: images = [], isLoading: loadImages } = useQuery({ queryKey: ['images'], queryFn: getImages })
 
   const mutation = useMutation({
     mutationFn: createVM,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['vms'] })
-      navigate('/vms')
+      navigate('/admin/vms')
     },
     onError: (err: any) => {
       setFormError(err.response?.data?.message ?? 'Failed to create VM.')
@@ -52,7 +54,7 @@ export function CreateVMPage() {
   return (
     <div className={styles.page}>
       <div className={styles.header}>
-        <button className={styles.backBtn} onClick={() => navigate('/vms')}>← Back</button>
+        <button className={styles.backBtn} onClick={() => navigate('/admin/vms')}>← Back</button>
         <h1 className={s.pageTitle}>Create Virtual Machine</h1>
         <p className={s.pageSubtitle}>VM is created asynchronously — status changes to Running in a few seconds.</p>
       </div>
@@ -106,7 +108,7 @@ export function CreateVMPage() {
 
         {/* ── Footer ─────────────────────────────────────────────────── */}
         <div className={styles.formFooter}>
-          <button type="button" className={styles.btnCancel} onClick={() => navigate('/vms')}>
+          <button type="button" className={styles.btnCancel} onClick={() => navigate('/admin/vms')}>
             Cancel
           </button>
           <button type="submit" className={s.btnPrimary} disabled={mutation.isPending}>

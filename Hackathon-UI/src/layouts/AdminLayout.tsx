@@ -4,12 +4,49 @@ import { useQuery } from '@tanstack/react-query'
 import { useTheme } from '../context/ThemeContext'
 import { getHealth } from '../api/api'
 import styles from './AdminLayout.module.css'
+import {
+  Monitor, Server, Database, HardDrive, Smartphone,
+  Users, LayoutGrid, BarChart2, TrendingUp, Camera, Image,
+} from 'lucide-react'
 
-const NAV_ITEMS = [
-  { to: '/vms',     label: 'Virtual Machines', icon: '▣' },
-  { to: '/nodes',   label: 'Compute Nodes',    icon: '◈' },
-  { to: '/images',  label: 'Images',           icon: '◉' },
-  { to: '/flavors', label: 'Flavors',          icon: '◆' },
+const NAV_SECTIONS = [
+  {
+    label: 'Compute',
+    items: [
+      { to: '/admin/vms', label: 'Virtual Machines', Icon: Monitor },
+      { to: '/admin/nodes', label: 'Nodes', Icon: Server },
+    ],
+  },
+  {
+    label: 'Databases',
+    items: [
+      { to: '/admin/databases', label: 'Databases', Icon: Database },
+    ],
+  },
+  {
+    label: 'Storage',
+    items: [
+      { to: '/admin/storage/object', label: 'Object Storage', Icon: HardDrive },
+      { to: '/admin/storage/file', label: 'File Storage', Icon: HardDrive },
+    ],
+  },
+  {
+    label: 'Devices',
+    items: [
+      { to: '/admin/mobile', label: 'Mobile Farm', Icon: Smartphone },
+    ],
+  },
+  {
+    label: 'System',
+    items: [
+      { to: '/admin/users', label: 'Users', Icon: Users },
+      { to: '/admin/catalog', label: 'Service Catalog', Icon: LayoutGrid },
+      { to: '/admin/metrics', label: 'Metrics', Icon: BarChart2 },
+      { to: '/admin/recommendations', label: 'Recommendations', Icon: TrendingUp },
+      { to: '/admin/snapshots', label: 'Snapshots', Icon: Camera },
+      { to: '/admin/images', label: 'Images', Icon: Image },
+    ],
+  },
 ]
 
 export function AdminLayout() {
@@ -25,17 +62,22 @@ export function AdminLayout() {
         </div>
 
         <nav className={styles.nav}>
-          {NAV_ITEMS.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }) =>
-                `${styles.navItem} ${isActive ? styles.navItemActive : ''}`
-              }
-            >
-              <span className={styles.navIcon}>{item.icon}</span>
-              <span>{item.label}</span>
-            </NavLink>
+          {NAV_SECTIONS.map(section => (
+            <div key={section.label} className={styles.navSection}>
+              <span className={styles.navSectionLabel}>{section.label}</span>
+              {section.items.map(({ to, label, Icon }) => (
+                <NavLink
+                  key={to}
+                  to={to}
+                  className={({ isActive }) =>
+                    `${styles.navItem} ${isActive ? styles.navItemActive : ''}`
+                  }
+                >
+                  <Icon size={15} />
+                  <span>{label}</span>
+                </NavLink>
+              ))}
+            </div>
           ))}
         </nav>
 

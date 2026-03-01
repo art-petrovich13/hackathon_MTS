@@ -1,10 +1,10 @@
 // src/pages/ImagesPage.tsx
 import { useQuery } from '@tanstack/react-query'
-import { getImages } from '../../api/api'
-import s from '../shared.module.css'
+import { getImages } from '../../../api/api'
+import s from '../../shared.module.css'
 import styles from './ImagesPage.module.css'
 
-export function ImagesPage() {
+export function AdminImagesPage() {
   const { data: images = [], isLoading, isError } = useQuery({
     queryKey: ['images'],
     queryFn: getImages,

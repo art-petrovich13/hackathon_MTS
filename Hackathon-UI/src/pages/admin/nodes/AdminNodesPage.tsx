@@ -1,10 +1,11 @@
 // src/pages/NodesPage.tsx
 import { useQuery } from '@tanstack/react-query'
-import { getNodes, type ComputeNode } from '../../api/api'
-import s from '../shared.module.css'
-import styles from './NodesPage.module.css'
+import { getNodes } from '../../../api/api'
+import { type ComputeNode } from '../../../types/api'
+import s from '../../shared.module.css'
+import styles from './AdminNodesPage.module.css'
 
-export function NodesPage() {
+export function AdminNodesPage() {
   const { data: nodes = [], isLoading, isError } = useQuery({
     queryKey: ['nodes'],
     queryFn: getNodes,

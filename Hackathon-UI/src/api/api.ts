@@ -1,13 +1,22 @@
 // src/api/api.ts
 import axios from 'axios'
 
+// Типы — только импорт, не объявление
+import type {
+  VirtualMachine, CreateVMPayload,
+  Flavor, Image, ComputeNode,
+  ServiceCatalogItem, ServiceCatalogItemWithFlavors,
+  ManagedDatabase, CreateDatabaseRequest,
+  ObjectStorage, CreateObjectStorageRequest,
+  FileStorage, MobileDevice,
+} from '../types/api'
+
 // ── Базовый клиент ────────────────────────────────────────────────────────────
 const client = axios.create({
   baseURL: '/api/v1',
   headers: { 'Content-Type': 'application/json' },
 })
 
-// Перехватчик — логируем ошибки и пробрасываем дальше
 client.interceptors.response.use(
   (res) => res,
   (err) => {
@@ -17,73 +26,7 @@ client.interceptors.response.use(
   }
 )
 
-// ── TypeScript-типы (повторяют Go-модели) ────────────────────────────────────
-
-export type VMStatus =
-  | 'pending'
-  | 'creating'
-  | 'running'
-  | 'pending-start'
-  | 'pending-stop'
-  | 'stopped'
-  | 'error'
-
-export interface VirtualMachine {
-  id: string
-  name: string
-  project_id: string
-  flavor_id: string
-  image_id: string
-  status: VMStatus
-  docker_container_id: string | null
-  ip_address: string | null
-  node_id: string | null
-  created_at: string
-  updated_at: string
-}
-
-export interface Flavor {
-  id: string
-  name: string
-  cpu: number
-  ram_mb: number
-  disk_gb: number
-}
-
-export interface Image {
-  id: string
-  name: string
-  docker_image: string
-  os_type: string
-  version: string
-  status: string
-}
-
-export interface ComputeNode {
-  id: string
-  name: string
-  endpoint: string
-  total_cpu: number
-  total_ram_mb: number
-  free_cpu: number
-  free_ram_mb: number
-  status: string
-}
-
-export interface CreateVMPayload {
-  name: string
-  project_id: string
-  flavor_id: string
-  image_id: string
-}
-
-export interface ApiError {
-  code: string
-  message: string
-}
-
 // ── VM API ────────────────────────────────────────────────────────────────────
-
 export const getVMs = async (): Promise<VirtualMachine[]> => {
   const { data } = await client.get<VirtualMachine[]>('/vms')
   return data ?? []
@@ -112,29 +55,93 @@ export const deleteVM = async (id: string): Promise<void> => {
 }
 
 // ── Flavors API ───────────────────────────────────────────────────────────────
-
-export const getFlavors = async (): Promise<Flavor[]> => {
-  const { data } = await client.get<Flavor[]>('/flavors')
+// serviceType — опциональный, появился в Day 13 (?service_type=db_postgres)
+export const getFlavors = async (serviceType?: string): Promise<Flavor[]> => {
+  const params = serviceType ? { service_type: serviceType } : {}
+  const { data } = await client.get<Flavor[]>('/flavors', { params })
   return data ?? []
 }
 
 // ── Images API ────────────────────────────────────────────────────────────────
-
 export const getImages = async (): Promise<Image[]> => {
   const { data } = await client.get<Image[]>('/images')
   return data ?? []
 }
 
 // ── Nodes API ─────────────────────────────────────────────────────────────────
-
 export const getNodes = async (): Promise<ComputeNode[]> => {
   const { data } = await client.get<ComputeNode[]>('/nodes')
   return data ?? []
 }
 
 // ── Health API ────────────────────────────────────────────────────────────────
-
 export const getHealth = async (): Promise<{ status: string; db: string; timestamp: string }> => {
   const { data } = await axios.get('/health')
   return data
+}
+
+// ── Service Catalog API (новый в Day 13) ──────────────────────────────────────
+export const getServiceCatalog = async (): Promise<ServiceCatalogItem[]> => {
+  const { data } = await client.get<ServiceCatalogItem[]>('/service-catalog')
+  return data ?? []
+}
+
+export const getServiceCatalogFull = async (): Promise<ServiceCatalogItemWithFlavors[]> => {
+  const { data } = await client.get<ServiceCatalogItemWithFlavors[]>('/service-catalog/full')
+  return data ?? []
+}
+
+// ── Databases API (новый в Day 13) ────────────────────────────────────────────
+export const getDatabases = async (): Promise<ManagedDatabase[]> => {
+  const { data } = await client.get<ManagedDatabase[]>('/databases')
+  return data ?? []
+}
+
+export const getDatabase = async (id: string): Promise<ManagedDatabase> => {
+  const { data } = await client.get<ManagedDatabase>(`/databases/${id}`)
+  return data
+}
+
+export const createDatabase = async (payload: CreateDatabaseRequest): Promise<ManagedDatabase> => {
+  const { data } = await client.post<ManagedDatabase>('/databases', payload)
+  return data
+}
+
+export const deleteDatabase = async (id: string): Promise<void> => {
+  await client.delete(`/databases/${id}`)
+}
+
+// ── Object Storage API (эндпоинты появятся в Day 16) ─────────────────────────
+export const getObjectStorages = async (): Promise<ObjectStorage[]> => {
+  const { data } = await client.get<ObjectStorage[]>('/object-storages')
+  return data ?? []
+}
+
+export const createObjectStorage = async (payload: CreateObjectStorageRequest): Promise<ObjectStorage> => {
+  const { data } = await client.post<ObjectStorage>('/object-storages', payload)
+  return data
+}
+
+export const deleteObjectStorage = async (id: string): Promise<void> => {
+  await client.delete(`/object-storages/${id}`)
+}
+
+// ── File Storage API (эндпоинты появятся в Day 17) ───────────────────────────
+export const getFileStorages = async (): Promise<FileStorage[]> => {
+  const { data } = await client.get<FileStorage[]>('/file-storages')
+  return data ?? []
+}
+
+export const deleteFileStorage = async (id: string): Promise<void> => {
+  await client.delete(`/file-storages/${id}`)
+}
+
+// ── Mobile API (эндпоинты появятся в Day 17) ─────────────────────────────────
+export const getMobileDevices = async (): Promise<MobileDevice[]> => {
+  const { data } = await client.get<MobileDevice[]>('/mobile-devices')
+  return data ?? []
+}
+
+export const deleteMobileDevice = async (id: string): Promise<void> => {
+  await client.delete(`/mobile-devices/${id}`)
 }

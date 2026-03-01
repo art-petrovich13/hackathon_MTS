@@ -15,7 +15,9 @@ func NewFlavorHandler(repo *repository.FlavorRepository) *FlavorHandler {
 
 // List возвращает список всех доступных конфигураций (flavors).
 func (h *FlavorHandler) List(w http.ResponseWriter, r *http.Request) {
-	flavors, err := h.repo.List(r.Context())
+	serviceType := r.URL.Query().Get("service_type")
+
+	flavors, err := h.repo.ListByServiceType(r.Context(), serviceType)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "Failed to fetch flavors")
 		return

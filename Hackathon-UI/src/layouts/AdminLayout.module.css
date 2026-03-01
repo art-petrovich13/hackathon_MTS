@@ -155,9 +155,3 @@
   color: #475569;
 }
 
-/* убедись что .navItem уже имеет display:flex — если нет, добавь */
-.navItem {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-}

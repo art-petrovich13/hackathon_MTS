@@ -1,22 +1,21 @@
-// src/pages/FlavorsPage.tsx
 import { useQuery } from '@tanstack/react-query'
-import { getFlavors } from '../../../api/api'
+import { getServiceCatalogFull } from '../../../api/api'
 import s from '../../shared.module.css'
 import styles from './AdminCatalogPage.module.css'
 
 export function AdminCatalogPage() {
-  const { data: flavors = [], isLoading, isError } = useQuery({
-    queryKey: ['flavors'],
-    queryFn: () => getFlavors(),
+  const { data: catalog = [], isLoading, isError } = useQuery({
+    queryKey: ['service-catalog-full'],
+    queryFn: getServiceCatalogFull,
   })
 
   return (
     <div className={styles.page}>
       <div className={s.pageHeader}>
         <div>
-          <h1 className={s.pageTitle}>Flavors</h1>
+          <h1 className={s.pageTitle}>Service Catalog</h1>
           <p className={s.pageSubtitle}>
-            {flavors.length} flavor{flavors.length !== 1 ? 's' : ''} configured
+            {catalog.length} service{catalog.length !== 1 ? 's' : ''} available
           </p>
         </div>
       </div>
@@ -24,49 +23,67 @@ export function AdminCatalogPage() {
       {isLoading && (
         <div className={s.stateBox}>
           <div className={s.stateIcon}>◆</div>
-          <p className={s.stateText}>Loading flavors…</p>
+          <p className={s.stateText}>Loading catalog…</p>
         </div>
       )}
       {isError && (
         <div className={s.stateBox}>
-          <p className={s.stateTextErr}>Failed to load flavors.</p>
+          <p className={s.stateTextErr}>Failed to load catalog.</p>
         </div>
       )}
 
-      {!isLoading && !isError && flavors.length === 0 && (
-        <div className={s.stateBox}>
-          <div className={s.stateIcon}>◆</div>
-          <p className={s.stateText}>No flavors found in database.</p>
-        </div>
-      )}
+      {!isLoading && !isError && (
+        <div className={styles.catalogGrid}>
+          {catalog.map(svc => (
+            <div key={svc.id} className={styles.card}>
 
-      {!isLoading && !isError && flavors.length > 0 && (
-        <div className={styles.grid}>
-          {flavors.map(f => {
-            const ram = f.ram_mb >= 1024 ? `${f.ram_mb / 1024} GB` : `${f.ram_mb} MB`
-            return (
-              <div key={f.id} className={styles.card}>
-                <div className={styles.cardName}>{f.name}</div>
-                <div className={styles.specList}>
-                  <SpecRow icon="⚡" label="vCPU" value={String(f.cpu)} />
-                  <SpecRow icon="◧" label="RAM" value={ram} />
-                  <SpecRow icon="▤" label="Disk" value={`${f.disk_gb} GB`} />
+              {/* ── Заголовок карточки сервиса ────────────────────────── */}
+              <div className={styles.cardHeader}>
+                <span style={{ fontSize: 32, lineHeight: 1 }}>{svc.icon ?? '⚙️'}</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className={styles.cardName}>{svc.name}</div>
+                  {svc.description && (
+                    <div className={styles.cardDesc}>{svc.description}</div>
+                  )}
                 </div>
+                <span className={styles.availBadge} data-available={svc.is_available}>
+                  {svc.is_available ? 'Available' : 'Unavailable'}
+                </span>
               </div>
-            )
-          })}
+
+              {/* ── Таблица flavors внутри карточки ──────────────────── */}
+              {svc.flavors.length > 0 ? (
+                <table className={styles.flavorTable}>
+                  <thead>
+                    <tr>
+                      {['Name', 'CPU', 'RAM', 'Disk'].map(h => (
+                        <th key={h}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {svc.flavors.map(f => {
+                      const ram = f.ram_mb >= 1024
+                        ? `${f.ram_mb / 1024} GB`
+                        : `${f.ram_mb} MB`
+                      return (
+                        <tr key={f.id}>
+                          <td style={{ fontWeight: 600 }}>{f.name}</td>
+                          <td>{f.cpu} vCPU</td>
+                          <td>{ram}</td>
+                          <td>{f.disk_gb} GB</td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              ) : (
+                <p className={styles.noFlavors}>No flavors configured</p>
+              )}
+            </div>
+          ))}
         </div>
       )}
-    </div>
-  )
-}
-
-function SpecRow({ icon, label, value }: { icon: string; label: string; value: string }) {
-  return (
-    <div className={styles.specRow}>
-      <span className={styles.specIcon}>{icon}</span>
-      <span className={styles.specLabel}>{label}</span>
-      <span className={styles.specValue}>{value}</span>
     </div>
   )
 }

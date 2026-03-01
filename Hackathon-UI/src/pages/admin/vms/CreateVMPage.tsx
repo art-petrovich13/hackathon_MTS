@@ -19,7 +19,11 @@ export function CreateVMPage() {
   const [imageId, setImageId] = useState('')
   const [formError, setFormError] = useState('')
 
-  const { data: flavors = [], isLoading: loadFlavors } = useQuery({ queryKey: ['flavors'], queryFn: () => getFlavors() })
+  
+  const { data: flavors = [], isLoading: loadFlavors } = useQuery({
+  queryKey: ['flavors', 'compute'],
+  queryFn: () => getFlavors('compute'),
+})
   const { data: images = [], isLoading: loadImages } = useQuery({ queryKey: ['images'], queryFn: getImages })
 
   const mutation = useMutation({

@@ -1,4 +1,4 @@
-/* src/pages/FlavorsPage.module.css */
+/* src/pages/admin/catalog/AdminCatalogPage.module.css */
 
 .page {
   display: flex;
@@ -6,64 +6,99 @@
   width: 100%;
 }
 
-.grid {
+/* Сетка карточек сервисов */
+.catalogGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 16px;
 }
 
+/* Карточка одного сервиса */
 .card {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
   padding: 20px;
   background: var(--bg-surface);
   border: 1px solid var(--border);
   border-radius: 12px;
-  transition: border-color 0.15s, transform 0.12s;
+  transition: border-color 0.15s;
 }
-.card:hover { border-color: var(--accent); transform: translateY(-2px); }
+.card:hover { border-color: var(--accent); }
+
+/* Шапка карточки: иконка + название + бейдж */
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
 
 .cardName {
   font-family: 'Syne', sans-serif;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--text-pri);
+  margin: 0;
 }
 
-.specList {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+.cardDesc {
+  font-size: 12px;
+  color: var(--text-sec);
+  margin-top: 3px;
 }
 
-.specRow {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
-}
-
-.specIcon {
-  font-size: 13px;
-  color: var(--accent);
-  width: 16px;
-  text-align: center;
+/* Бейдж Available / Unavailable */
+.availBadge {
   flex-shrink: 0;
-}
-
-.specLabel {
-  font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-  color: var(--text-dim);
-  flex: 1;
+  font-weight: 600;
+  padding: 2px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+.availBadge[data-available="true"] {
+  color: var(--green);
+  background: rgba(0, 230, 118, 0.1);
+  border: 1px solid rgba(0, 230, 118, 0.25);
+}
+.availBadge[data-available="false"] {
+  color: var(--red);
+  background: rgba(255, 77, 106, 0.1);
+  border: 1px solid rgba(255, 77, 106, 0.25);
 }
 
-.specValue {
+/* Таблица flavors внутри карточки */
+.flavorTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.flavorTable thead tr {
+  border-bottom: 1px solid var(--border);
+}
+
+.flavorTable th {
+  text-align: left;
+  padding: 4px 8px;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 13px;
+  font-size: 10px;
   font-weight: 600;
-  color: var(--text-pri);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+}
+
+.flavorTable td {
+  padding: 5px 8px;
+  color: var(--text-sec);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.flavorTable tr:hover td { color: var(--text-pri); }
+
+.noFlavors {
+  font-size: 12px;
+  color: var(--text-dim);
+  font-style: italic;
 }

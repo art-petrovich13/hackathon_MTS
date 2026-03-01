@@ -1,4 +1,3 @@
-// cmd/api/main.go
 package main
 
 import (
@@ -13,9 +12,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
-	
 	dockerdriver "github.com/art-petrovich13/hackathon_MTS/internal/compute/docker"
-	
 	"github.com/art-petrovich13/hackathon_MTS/internal/config"
 	"github.com/art-petrovich13/hackathon_MTS/internal/handlers"
 	"github.com/art-petrovich13/hackathon_MTS/internal/repository"
@@ -39,12 +36,18 @@ func main() {
 	slog.Info("database connected")
 
 	// ── Репозитории ─────────────────────────────────────────────────────────
-	flavorRepo := repository.NewFlavorRepository(db)
-	imageRepo := repository.NewImageRepository(db)
-	nodeRepo := repository.NewNodeRepository(db)
-	vmRepo := repository.NewVMRepository(db)
+	flavorRepo  := repository.NewFlavorRepository(db)
+	imageRepo   := repository.NewImageRepository(db)
+	nodeRepo    := repository.NewNodeRepository(db)
+	vmRepo      := repository.NewVMRepository(db)
+	catalogRepo := repository.NewServiceCatalogRepository(db)
+	dbRepo      := repository.NewManagedDatabaseRepository(db)
+	// Следующие репозитории добавим сейчас — воркеры для них напишем на Дни 14-17
+	_ = repository.NewObjectStorageRepository(db)
+	_ = repository.NewFileStorageRepository(db)
+	_ = repository.NewMobileDeviceRepository(db)
 
-	// Docker-драйвер вместо симуляционного ────────────────────
+	// ── Compute Driver ───────────────────────────────────────────────────────
 	computeDriver, err := dockerdriver.NewDockerDriver()
 	if err != nil {
 		slog.Error("failed to create docker driver", "error", err)
@@ -55,7 +58,7 @@ func main() {
 	// ── Сервисы ─────────────────────────────────────────────────────────────
 	vmService := services.NewVMService(db, vmRepo, flavorRepo, imageRepo, nodeRepo, computeDriver)
 
-	// ── Воркеры ──────────────────────────────────────────────────────────────────
+	// ── Воркеры ─────────────────────────────────────────────────────────────
 	workerCtx, workerCancel := context.WithCancel(context.Background())
 	defer workerCancel()
 
@@ -68,15 +71,16 @@ func main() {
 	slog.Info("reconcile worker launched")
 
 	// ── Хендлеры ────────────────────────────────────────────────────────────
-	flavorHandler := handlers.NewFlavorHandler(flavorRepo)
-	imageHandler := handlers.NewImageHandler(imageRepo)
-	nodeHandler := handlers.NewNodeHandler(nodeRepo)
-	vmHandler := handlers.NewVMHandler(vmService)
-	healthHandler := handlers.NewHealthHandler(db)
+	flavorHandler  := handlers.NewFlavorHandler(flavorRepo)
+	imageHandler   := handlers.NewImageHandler(imageRepo)
+	nodeHandler    := handlers.NewNodeHandler(nodeRepo)
+	vmHandler      := handlers.NewVMHandler(vmService)
+	healthHandler  := handlers.NewHealthHandler(db)
+	catalogHandler := handlers.NewServiceCatalogHandler(catalogRepo, flavorRepo)
+	databaseHandler := handlers.NewDatabaseHandler(dbRepo, flavorRepo, db)
 
 	// ── Роутер ──────────────────────────────────────────────────────────────
 	r := chi.NewRouter()
-
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
@@ -85,16 +89,29 @@ func main() {
 	r.Get("/health", healthHandler.Check)
 
 	r.Route("/api/v1", func(r chi.Router) {
+		// Flavors — теперь поддерживает ?service_type=
 		r.Get("/flavors", flavorHandler.List)
+
 		r.Get("/images", imageHandler.List)
 		r.Get("/nodes", nodeHandler.List)
 
+		// VMs
 		r.Post("/vms", vmHandler.Create)
 		r.Get("/vms", vmHandler.List)
 		r.Get("/vms/{id}", vmHandler.Get)
 		r.Delete("/vms/{id}", vmHandler.Delete)
 		r.Post("/vms/{id}/start", vmHandler.Start)
 		r.Post("/vms/{id}/stop", vmHandler.Stop)
+
+		// Service Catalog (НОВОЕ)
+		r.Get("/service-catalog", catalogHandler.List)
+		r.Get("/service-catalog/full", catalogHandler.ListWithFlavors)
+
+		// Managed Databases (НОВОЕ)
+		r.Post("/databases", databaseHandler.Create)
+		r.Get("/databases", databaseHandler.List)
+		r.Get("/databases/{id}", databaseHandler.Get)
+		r.Delete("/databases/{id}", databaseHandler.Delete)
 	})
 
 	// ── HTTP-сервер + Graceful shutdown ─────────────────────────────────────

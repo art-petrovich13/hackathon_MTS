@@ -12,8 +12,9 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
-	dbcompute    "github.com/art-petrovich13/hackathon_MTS/internal/compute/db"
+	dbcompute "github.com/art-petrovich13/hackathon_MTS/internal/compute/db"
 	dockerdriver "github.com/art-petrovich13/hackathon_MTS/internal/compute/docker"
+	objectcompute "github.com/art-petrovich13/hackathon_MTS/internal/compute/object"
 	"github.com/art-petrovich13/hackathon_MTS/internal/config"
 	"github.com/art-petrovich13/hackathon_MTS/internal/handlers"
 	"github.com/art-petrovich13/hackathon_MTS/internal/repository"
@@ -35,15 +36,16 @@ func main() {
 	slog.Info("database connected")
 
 	// ── Репозитории ─────────────────────────────────────────────────────────
-	flavorRepo  := repository.NewFlavorRepository(db)
-	imageRepo   := repository.NewImageRepository(db)
-	nodeRepo    := repository.NewNodeRepository(db)
-	vmRepo      := repository.NewVMRepository(db)
+	flavorRepo := repository.NewFlavorRepository(db)
+	imageRepo := repository.NewImageRepository(db)
+	nodeRepo := repository.NewNodeRepository(db)
+	vmRepo := repository.NewVMRepository(db)
 	catalogRepo := repository.NewServiceCatalogRepository(db)
-	dbRepo      := repository.NewManagedDatabaseRepository(db)
-	_            = repository.NewObjectStorageRepository(db)
-	_            = repository.NewFileStorageRepository(db)
-	_            = repository.NewMobileDeviceRepository(db)
+	dbRepo := repository.NewManagedDatabaseRepository(db)
+	osRepo := repository.NewObjectStorageRepository(db) // было: _ = repository.NewObjectStorageRepository(db)
+	fsRepo := repository.NewFileStorageRepository(db)   // было: _ = repository.NewFileStorageRepository(db)
+
+	_ = repository.NewMobileDeviceRepository(db)
 
 	// ── Compute Driver (для VM) ──────────────────────────────────────────────
 	computeDriver, err := dockerdriver.NewDockerDriver()
@@ -60,6 +62,21 @@ func main() {
 		os.Exit(1)
 	}
 	slog.Info("database driver initialized")
+
+	// MinIO Driver
+	minioDriver, err := objectcompute.NewMinIODriver()
+	if err != nil {
+		slog.Error("failed to create minio driver", "error", err)
+		os.Exit(1)
+	}
+	slog.Info("minio driver initialized")
+
+	// File Storage Worker
+	fsWorker, err := worker.NewFileStorageWorker(db, fsRepo, nodeRepo, 5*time.Second)
+	if err != nil {
+		slog.Error("failed to create file storage worker", "error", err)
+		os.Exit(1)
+	}
 
 	// ── Сервисы ─────────────────────────────────────────────────────────────
 	vmService := services.NewVMService(db, vmRepo, flavorRepo, imageRepo, nodeRepo, computeDriver)
@@ -80,15 +97,24 @@ func main() {
 	go dbWorker.Start(workerCtx)
 	slog.Info("db worker launched")
 
+	osWorker := worker.NewObjectStorageWorker(db, minioDriver, osRepo, nodeRepo, 5*time.Second)
+	go osWorker.Start(workerCtx)
+	slog.Info("object storage worker launched")
+
+	go fsWorker.Start(workerCtx)
+	slog.Info("file storage worker launched")
+
 	// ── Хендлеры ────────────────────────────────────────────────────────────
-	flavorHandler   := handlers.NewFlavorHandler(flavorRepo)
-	imageHandler    := handlers.NewImageHandler(imageRepo)
-	nodeHandler     := handlers.NewNodeHandler(nodeRepo)
-	vmHandler       := handlers.NewVMHandler(vmService)
-	healthHandler   := handlers.NewHealthHandler(db)
-	catalogHandler  := handlers.NewServiceCatalogHandler(catalogRepo, flavorRepo)
+	flavorHandler := handlers.NewFlavorHandler(flavorRepo)
+	imageHandler := handlers.NewImageHandler(imageRepo)
+	nodeHandler := handlers.NewNodeHandler(nodeRepo)
+	vmHandler := handlers.NewVMHandler(vmService)
+	healthHandler := handlers.NewHealthHandler(db)
+	catalogHandler := handlers.NewServiceCatalogHandler(catalogRepo, flavorRepo)
 	databaseHandler := handlers.NewDatabaseHandler(dbRepo, flavorRepo, db, databaseDriver)
-	
+	osHandler := handlers.NewObjectStorageHandler(osRepo, flavorRepo, db, minioDriver)
+	fsHandler := handlers.NewFileStorageHandler(fsRepo, flavorRepo, db)
+
 	// ── Роутер ──────────────────────────────────────────────────────────────
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
@@ -117,6 +143,16 @@ func main() {
 		r.Get("/databases", databaseHandler.List)
 		r.Get("/databases/{id}", databaseHandler.Get)
 		r.Delete("/databases/{id}", databaseHandler.Delete)
+
+		r.Post("/object-storages", osHandler.Create)
+		r.Get("/object-storages", osHandler.List)
+		r.Get("/object-storages/{id}", osHandler.Get)
+		r.Delete("/object-storages/{id}", osHandler.Delete)
+
+		r.Post("/file-storages", fsHandler.Create)
+		r.Get("/file-storages", fsHandler.List)
+		r.Get("/file-storages/{id}", fsHandler.Get)
+		r.Delete("/file-storages/{id}", fsHandler.Delete)	
 	})
 
 	// ── HTTP сервер + Graceful Shutdown ─────────────────────────────────────

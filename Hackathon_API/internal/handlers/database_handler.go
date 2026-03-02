@@ -180,10 +180,22 @@ func (h *DatabaseHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Освобождаем порт (если был выделен)
+	// Освобождаем порт и возвращаем ресурсы ноде
 	if record.Port != nil && record.NodeID != nil {
 		tx, _ := h.db.BeginTxx(r.Context(), nil)
 		_ = utils.FreePort(tx, *record.NodeID, *record.Port)
+
+		// Возвращаем CPU/RAM ноде
+		flavor, err := h.flavorRepo.GetByID(r.Context(), record.FlavorID)
+		if err == nil && flavor != nil {
+			if _, err := tx.ExecContext(r.Context(),
+				`UPDATE compute_nodes SET free_cpu = free_cpu + $1, free_ram_mb = free_ram_mb + $2 WHERE id = $3`,
+				flavor.CPU, flavor.RAMMB, *record.NodeID,
+			); err != nil {
+				slog.Warn("delete db: restore node resources failed", "error", err)
+			}
+		}
+
 		_ = tx.Commit()
 	}
 

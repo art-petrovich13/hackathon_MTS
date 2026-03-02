@@ -11,20 +11,26 @@ import (
 
 	"github.com/art-petrovich13/hackathon_MTS/internal/models"
 	"github.com/art-petrovich13/hackathon_MTS/internal/repository"
+
+	"log/slog"
+	dbcompute "github.com/art-petrovich13/hackathon_MTS/internal/compute/db"
+	"github.com/art-petrovich13/hackathon_MTS/internal/utils"
 )
 
 type DatabaseHandler struct {
 	dbRepo     *repository.ManagedDatabaseRepository
 	flavorRepo *repository.FlavorRepository
 	db         *sqlx.DB
+	dbDriver   *dbcompute.DatabaseDriver
 }
 
 func NewDatabaseHandler(
 	dbRepo *repository.ManagedDatabaseRepository,
 	flavorRepo *repository.FlavorRepository,
 	db *sqlx.DB,
+	dbDriver *dbcompute.DatabaseDriver, 
 ) *DatabaseHandler {
-	return &DatabaseHandler{dbRepo: dbRepo, flavorRepo: flavorRepo, db: db}
+	return &DatabaseHandler{dbRepo: dbRepo, flavorRepo: flavorRepo, db: db, dbDriver: dbDriver}
 }
 
 // Create обрабатывает POST /api/v1/databases
@@ -142,6 +148,7 @@ func (h *DatabaseHandler) Get(w http.ResponseWriter, r *http.Request) {
 }
 
 // Delete обрабатывает DELETE /api/v1/databases/{id}
+// Заменить метод Delete:
 func (h *DatabaseHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -149,23 +156,47 @@ func (h *DatabaseHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Проверяем что запись существует
-	db, err := h.dbRepo.GetByID(r.Context(), id)
+	record, err := h.dbRepo.GetByID(r.Context(), id)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "Failed to fetch database")
 		return
 	}
-	if db == nil {
+	if record == nil {
 		respondError(w, http.StatusNotFound, "Database not found")
 		return
 	}
 
-	// TODO (День 14-15): остановить Docker-контейнер и освободить порт
-	// через DatabaseWorker или синхронный вызов DockerDriver.
+	// Если контейнер существует — удаляем его
+	if record.DockerContainerID != nil && *record.DockerContainerID != "" {
+		if err := h.dbDriver.DeleteDatabase(r.Context(), *record.DockerContainerID); err != nil {
+			slog.Warn("failed to delete db container, proceeding",
+				"id", id, "container", *record.DockerContainerID, "error", err)
+		}
+	}
 
+	// Мягкое удаление записи
 	if err := h.dbRepo.Delete(r.Context(), id); err != nil {
 		respondError(w, http.StatusInternalServerError, "Failed to delete database")
 		return
+	}
+
+	// Освобождаем порт и возвращаем ресурсы ноде
+	if record.Port != nil && record.NodeID != nil {
+		tx, _ := h.db.BeginTxx(r.Context(), nil)
+		_ = utils.FreePort(tx, *record.NodeID, *record.Port)
+
+		// Возвращаем CPU/RAM ноде
+		flavor, err := h.flavorRepo.GetByID(r.Context(), record.FlavorID)
+		if err == nil && flavor != nil {
+			if _, err := tx.ExecContext(r.Context(),
+				`UPDATE compute_nodes SET free_cpu = free_cpu + $1, free_ram_mb = free_ram_mb + $2 WHERE id = $3`,
+				flavor.CPU, flavor.RAMMB, *record.NodeID,
+			); err != nil {
+				slog.Warn("delete db: restore node resources failed", "error", err)
+			}
+		}
+
+		_ = tx.Commit()
 	}
 
 	w.WriteHeader(http.StatusNoContent)

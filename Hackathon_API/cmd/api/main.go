@@ -12,7 +12,9 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
+	dbcompute "github.com/art-petrovich13/hackathon_MTS/internal/compute/db"
 	dockerdriver "github.com/art-petrovich13/hackathon_MTS/internal/compute/docker"
+	objectcompute "github.com/art-petrovich13/hackathon_MTS/internal/compute/object"
 	"github.com/art-petrovich13/hackathon_MTS/internal/config"
 	"github.com/art-petrovich13/hackathon_MTS/internal/handlers"
 	"github.com/art-petrovich13/hackathon_MTS/internal/repository"
@@ -21,13 +23,11 @@ import (
 )
 
 func main() {
-	// ── Конфигурация ────────────────────────────────────────────────────────
 	cfg, err := config.Load()
 	if err != nil {
 		log.Fatal("cannot load config:", err)
 	}
 
-	// ── БД ──────────────────────────────────────────────────────────────────
 	db, err := repository.NewDB(cfg)
 	if err != nil {
 		log.Fatal("cannot connect to db:", err)
@@ -36,24 +36,47 @@ func main() {
 	slog.Info("database connected")
 
 	// ── Репозитории ─────────────────────────────────────────────────────────
-	flavorRepo  := repository.NewFlavorRepository(db)
-	imageRepo   := repository.NewImageRepository(db)
-	nodeRepo    := repository.NewNodeRepository(db)
-	vmRepo      := repository.NewVMRepository(db)
+	flavorRepo := repository.NewFlavorRepository(db)
+	imageRepo := repository.NewImageRepository(db)
+	nodeRepo := repository.NewNodeRepository(db)
+	vmRepo := repository.NewVMRepository(db)
 	catalogRepo := repository.NewServiceCatalogRepository(db)
-	dbRepo      := repository.NewManagedDatabaseRepository(db)
-	// Следующие репозитории добавим сейчас — воркеры для них напишем на Дни 14-17
-	_ = repository.NewObjectStorageRepository(db)
-	_ = repository.NewFileStorageRepository(db)
+	dbRepo := repository.NewManagedDatabaseRepository(db)
+	osRepo := repository.NewObjectStorageRepository(db) // было: _ = repository.NewObjectStorageRepository(db)
+	fsRepo := repository.NewFileStorageRepository(db)   // было: _ = repository.NewFileStorageRepository(db)
+
 	_ = repository.NewMobileDeviceRepository(db)
 
-	// ── Compute Driver ───────────────────────────────────────────────────────
+	// ── Compute Driver (для VM) ──────────────────────────────────────────────
 	computeDriver, err := dockerdriver.NewDockerDriver()
 	if err != nil {
 		slog.Error("failed to create docker driver", "error", err)
 		os.Exit(1)
 	}
 	slog.Info("using DOCKER compute driver")
+
+	// ── Database Driver (для managed databases) ──────────────────────────────
+	databaseDriver, err := dbcompute.NewDatabaseDriver()
+	if err != nil {
+		slog.Error("failed to create database driver", "error", err)
+		os.Exit(1)
+	}
+	slog.Info("database driver initialized")
+
+	// MinIO Driver
+	minioDriver, err := objectcompute.NewMinIODriver()
+	if err != nil {
+		slog.Error("failed to create minio driver", "error", err)
+		os.Exit(1)
+	}
+	slog.Info("minio driver initialized")
+
+	// File Storage Worker
+	fsWorker, err := worker.NewFileStorageWorker(db, fsRepo, nodeRepo, 5*time.Second)
+	if err != nil {
+		slog.Error("failed to create file storage worker", "error", err)
+		os.Exit(1)
+	}
 
 	// ── Сервисы ─────────────────────────────────────────────────────────────
 	vmService := services.NewVMService(db, vmRepo, flavorRepo, imageRepo, nodeRepo, computeDriver)
@@ -70,14 +93,27 @@ func main() {
 	go reconcileWorker.Start(workerCtx)
 	slog.Info("reconcile worker launched")
 
+	dbWorker := worker.NewDBWorker(db, databaseDriver, dbRepo, nodeRepo, 5*time.Second)
+	go dbWorker.Start(workerCtx)
+	slog.Info("db worker launched")
+
+	osWorker := worker.NewObjectStorageWorker(db, minioDriver, osRepo, nodeRepo, 5*time.Second)
+	go osWorker.Start(workerCtx)
+	slog.Info("object storage worker launched")
+
+	go fsWorker.Start(workerCtx)
+	slog.Info("file storage worker launched")
+
 	// ── Хендлеры ────────────────────────────────────────────────────────────
-	flavorHandler  := handlers.NewFlavorHandler(flavorRepo)
-	imageHandler   := handlers.NewImageHandler(imageRepo)
-	nodeHandler    := handlers.NewNodeHandler(nodeRepo)
-	vmHandler      := handlers.NewVMHandler(vmService)
-	healthHandler  := handlers.NewHealthHandler(db)
+	flavorHandler := handlers.NewFlavorHandler(flavorRepo)
+	imageHandler := handlers.NewImageHandler(imageRepo)
+	nodeHandler := handlers.NewNodeHandler(nodeRepo)
+	vmHandler := handlers.NewVMHandler(vmService)
+	healthHandler := handlers.NewHealthHandler(db)
 	catalogHandler := handlers.NewServiceCatalogHandler(catalogRepo, flavorRepo)
-	databaseHandler := handlers.NewDatabaseHandler(dbRepo, flavorRepo, db)
+	databaseHandler := handlers.NewDatabaseHandler(dbRepo, flavorRepo, db, databaseDriver)
+	osHandler := handlers.NewObjectStorageHandler(osRepo, flavorRepo, db, minioDriver)
+	fsHandler := handlers.NewFileStorageHandler(fsRepo, flavorRepo, db)
 
 	// ── Роутер ──────────────────────────────────────────────────────────────
 	r := chi.NewRouter()
@@ -89,13 +125,10 @@ func main() {
 	r.Get("/health", healthHandler.Check)
 
 	r.Route("/api/v1", func(r chi.Router) {
-		// Flavors — теперь поддерживает ?service_type=
 		r.Get("/flavors", flavorHandler.List)
-
 		r.Get("/images", imageHandler.List)
 		r.Get("/nodes", nodeHandler.List)
 
-		// VMs
 		r.Post("/vms", vmHandler.Create)
 		r.Get("/vms", vmHandler.List)
 		r.Get("/vms/{id}", vmHandler.Get)
@@ -103,18 +136,26 @@ func main() {
 		r.Post("/vms/{id}/start", vmHandler.Start)
 		r.Post("/vms/{id}/stop", vmHandler.Stop)
 
-		// Service Catalog (НОВОЕ)
 		r.Get("/service-catalog", catalogHandler.List)
 		r.Get("/service-catalog/full", catalogHandler.ListWithFlavors)
 
-		// Managed Databases (НОВОЕ)
 		r.Post("/databases", databaseHandler.Create)
 		r.Get("/databases", databaseHandler.List)
 		r.Get("/databases/{id}", databaseHandler.Get)
 		r.Delete("/databases/{id}", databaseHandler.Delete)
+
+		r.Post("/object-storages", osHandler.Create)
+		r.Get("/object-storages", osHandler.List)
+		r.Get("/object-storages/{id}", osHandler.Get)
+		r.Delete("/object-storages/{id}", osHandler.Delete)
+
+		r.Post("/file-storages", fsHandler.Create)
+		r.Get("/file-storages", fsHandler.List)
+		r.Get("/file-storages/{id}", fsHandler.Get)
+		r.Delete("/file-storages/{id}", fsHandler.Delete)	
 	})
 
-	// ── HTTP-сервер + Graceful shutdown ─────────────────────────────────────
+	// ── HTTP сервер + Graceful Shutdown ─────────────────────────────────────
 	srv := &http.Server{
 		Addr:         ":" + cfg.APIPort,
 		Handler:      r,
@@ -134,7 +175,7 @@ func main() {
 	}()
 
 	<-quit
-	slog.Info("shutting down server...")
+	slog.Info("shutting down...")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()

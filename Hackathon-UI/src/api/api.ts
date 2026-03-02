@@ -8,7 +8,8 @@ import type {
   ServiceCatalogItem, ServiceCatalogItemWithFlavors,
   ManagedDatabase, CreateDatabaseRequest,
   ObjectStorage, CreateObjectStorageRequest,
-  FileStorage, MobileDevice,
+  FileStorage, CreateFileStorageRequest,   // ← убедись что оба здесь
+  MobileDevice,
 } from '../types/api'
 
 // ── Базовый клиент ────────────────────────────────────────────────────────────
@@ -131,6 +132,17 @@ export const getFileStorages = async (): Promise<FileStorage[]> => {
   const { data } = await client.get<FileStorage[]>('/file-storages')
   return data ?? []
 }
+
+
+
+
+// ↓ ДОБАВИТЬ ЭТУ ФУНКЦИЮ
+export const createFileStorage = async (payload: CreateFileStorageRequest): Promise<FileStorage> => {
+  const { data } = await client.post<FileStorage>('/file-storages', payload)
+  return data
+}
+
+
 
 export const deleteFileStorage = async (id: string): Promise<void> => {
   await client.delete(`/file-storages/${id}`)

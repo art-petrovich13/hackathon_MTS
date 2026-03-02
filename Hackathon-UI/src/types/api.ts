@@ -166,6 +166,14 @@ export interface CreateObjectStorageRequest {
   bucket_name: string
 }
 
+export interface CreateFileStorageRequest {
+  name: string
+  project_id: string
+  flavor_id: string
+  bucket_name?: string
+}
+
+
 // ─── File Storage (новый, эндпоинты в Day 17) ────────────────────────────────
 export interface FileStorage {
   id: string

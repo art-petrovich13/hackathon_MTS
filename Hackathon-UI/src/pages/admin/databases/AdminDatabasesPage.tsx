@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { CSSProperties, FormEvent } from 'react'
+import type { FormEvent } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { getDatabases, createDatabase, deleteDatabase, getFlavors } from '../../../api/api'
@@ -7,7 +7,8 @@ import type { ManagedDatabase, DBEngine, Flavor } from '../../../types/api'
 import { StatusBadge } from '../../../components/ui/StatusBadge'
 import { EngineBadge } from '../../../components/ui/EngineBadge'
 import { CredentialsModal, type CredField } from '../../../components/ui/CredentialsModal'
-import s from '../../shared.module.css'
+
+import s from './AdminDatabasesStyle.module.css'
 
 // Тот же project_id что в CreateVMPage
 const DEFAULT_PROJECT_ID = '9d320322-31f5-48d5-ade8-43f1b03b5b59'
@@ -67,7 +68,7 @@ export function AdminDatabasesPage() {
   const hasPending = dbs.some(d => ACTIVE_STATUSES.has(d.status))
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+    <div className={s.container}>
 
       {/* ── Шапка ─────────────────────────────────────────────────────────── */}
       <div className={s.pageHeader}>
@@ -77,37 +78,28 @@ export function AdminDatabasesPage() {
             {dbs.length} database{dbs.length !== 1 ? 's' : ''}
             {hasPending && ' · auto-refresh 3s'}
           </p>
+          <button className={s.btnPrimary} onClick={() => setShowCreate(true)}>
+            + New Database
+          </button>
         </div>
-        <button className={s.btnPrimary} onClick={() => setShowCreate(true)}>
-          + New Database
-        </button>
       </div>
 
       {/* ── Загрузка / ошибка ─────────────────────────────────────────────── */}
       {isLoading && (
         <div className={s.stateBox}>
-          <div className={s.stateIcon}>🗄️</div>
           <p className={s.stateText}>Loading databases…</p>
         </div>
       )}
       {isError && (
-        <div className={s.stateBox}>
-          <p className={s.stateTextErr}>Failed to load databases.</p>
-        </div>
+          <div className={s.stateBox}>
+            <p className={s.stateTextErr}>Failed to load databases.</p>
+          </div>
       )}
 
       {/* ── Пустое состояние ──────────────────────────────────────────────── */}
       {!isLoading && !isError && dbs.length === 0 && (
         <div className={s.stateBox}>
-          <div className={s.stateIcon}>🗄️</div>
           <p className={s.stateText}>No databases yet</p>
-          <button
-            className={s.btnPrimary}
-            style={{ marginTop: 12 }}
-            onClick={() => setShowCreate(true)}
-          >
-            + Create first database
-          </button>
         </div>
       )}
 
@@ -139,7 +131,7 @@ export function AdminDatabasesPage() {
                     <td className={s.cellMono}>
                       {db.host && db.port
                         ? `${db.host}:${db.port}`
-                        : <span style={{ color: 'var(--text-dim)' }}>—</span>
+                        : <span className={s.span}>—</span>
                       }
                     </td>
                     <td className={s.cellMono}>{db.db_name ?? '—'}</td>
@@ -147,29 +139,28 @@ export function AdminDatabasesPage() {
                       {new Date(db.created_at).toLocaleString('ru-RU')}
                     </td>
                     <td>
-                      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                      <div className={s.cred}>
                         {db.status === 'running' && (
                           <button
                             onClick={() => setCredsFor(db)}
-                            style={actionBtn('#0f2a47', '#60a5fa')}
+                            className={`${s.actionButton} ${s.credentialsButton}`}
                           >
                             🔑 Credentials
                           </button>
                         )}
 
-                        {/* Кнопка удаления — двойное подтверждение прямо в строке */}
                         {isConfirming ? (
                           <>
                             <button
                               onClick={() => deleteMut.mutate(db.id)}
                               disabled={deleteMut.isPending}
-                              style={actionBtn('#4a0f0f', '#f87171')}
+                              className={`${s.actionButton} ${s.confirmDeleteButton}`}
                             >
                               {deleteMut.isPending ? '...' : 'Да, удалить'}
                             </button>
                             <button
                               onClick={() => setConfirmDeleteId(null)}
-                              style={actionBtn('transparent', 'var(--text-sec)')}
+                              className={`${s.actionButton} ${s.cancelButton}`}
                             >
                               Отмена
                             </button>
@@ -178,11 +169,7 @@ export function AdminDatabasesPage() {
                           <button
                             onClick={() => setConfirmDeleteId(db.id)}
                             disabled={isActive}
-                            style={{
-                              ...actionBtn('#2a1515', '#f87171'),
-                              opacity: isActive ? 0.4 : 1,
-                              cursor: isActive ? 'not-allowed' : 'pointer',
-                            }}
+                            className={`${s.actionButton} ${s.deleteButton}`}
                           >
                             ✕ Delete
                           </button>
@@ -218,15 +205,6 @@ export function AdminDatabasesPage() {
       )}
     </div>
   )
-}
-
-// Вспомогательная функция стилей кнопок таблицы
-function actionBtn(bg: string, color: string): CSSProperties {
-  return {
-    padding: '4px 12px', borderRadius: 6, border: 'none',
-    background: bg, color, cursor: 'pointer', fontSize: 12, fontWeight: 600,
-    whiteSpace: 'nowrap',
-  }
 }
 
 // ─── Модал создания БД ─────────────────────────────────────────────────────────
@@ -299,178 +277,108 @@ function CreateDatabaseModal({ onClose, onCreated }: CreateDBModalProps) {
     })
   }
 
-  return (
-    // Overlay — клик вне закрывает
-    <div
-      onClick={onClose}
-      style={{
-        position: 'fixed', inset: 0, zIndex: 200,
-        background: 'rgba(0,0,0,0.65)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-      }}
-    >
-      {/* Сам модал — клик внутри не закрывает */}
-      <div
-        onClick={e => e.stopPropagation()}
-        style={{
-          background: 'var(--bg-surface)',
-          border: '1px solid var(--border)',
-          borderRadius: 16, padding: 28,
-          width: 500, maxWidth: '95vw',
-          maxHeight: '90vh', overflowY: 'auto',
-        }}
-      >
-        <h2 style={{ margin: '0 0 20px', fontSize: 18, fontWeight: 700, color: 'var(--text-pri)' }}>
-          🗄️ Create Database
-        </h2>
+return (
+  <div className={s.modalOverlay} onClick={onClose}>
+    <div className={s.modalContent} onClick={e => e.stopPropagation()}>
+      <h2 className={s.modalTitle}>🗄️ Create Database</h2>
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+      <form className={s.modalForm} onSubmit={handleSubmit}>
+        <div className={s.formGroup}>
+          <label className={s.label}>Имя сервиса</label>
+          <input
+            className={s.input}
+            value={name}
+            onChange={e => setName(e.target.value)}
+            placeholder="e.g. production-db"
+            autoFocus
+          />
+        </div>
 
-          {/* ── Имя сервиса ─────────────────────────────────────────────── */}
-          <div>
-            <label style={labelStyle}>Имя сервиса</label>
-            <input
-              value={name}
-              onChange={e => setName(e.target.value)}
-              placeholder="e.g. production-db"
-              autoFocus
-              style={inputStyle}
-            />
+        <div className={s.formGroup}>
+          <label className={s.label}>Движок</label>
+          <div className={s.engineGrid}>
+            {ENGINE_OPTIONS.map(opt => (
+              <button
+                key={opt.engine}
+                type="button"
+                className={`${s.engineButton} ${engine === opt.engine ? s.engineButtonSelected : ''}`}
+                onClick={() => handleEngineChange(opt.engine)}
+              >
+                <div className={s.engineIcon}>{opt.icon}</div>
+                <div className={s.engineLabel}>{opt.label}</div>
+                <div className={s.engineDesc}>{opt.desc}</div>
+              </button>
+            ))}
           </div>
+        </div>
 
-          {/* ── Выбор движка ────────────────────────────────────────────── */}
-          <div>
-            <label style={labelStyle}>Движок</label>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
-              {ENGINE_OPTIONS.map(opt => (
-                <button
-                  key={opt.engine}
-                  type="button"
-                  onClick={() => handleEngineChange(opt.engine)}
-                  style={{
-                    padding: '12px 8px', borderRadius: 10, cursor: 'pointer',
-                    textAlign: 'center' as const, transition: 'border-color 0.15s',
-                    border: `2px solid ${engine === opt.engine ? 'var(--accent)' : 'var(--border)'}`,
-                    background: engine === opt.engine ? 'var(--accent-dim)' : 'transparent',
-                  }}
-                >
-                  <div style={{ fontSize: 24, marginBottom: 4 }}>{opt.icon}</div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-pri)' }}>{opt.label}</div>
-                  <div style={{ fontSize: 11, color: 'var(--text-sec)', marginTop: 2 }}>{opt.desc}</div>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* ── Выбор flavor ────────────────────────────────────────────── */}
-          <div>
-            <label style={labelStyle}>Конфигурация</label>
-            {loadFlavors ? (
-              <p style={{ color: 'var(--text-sec)', fontSize: 13 }}>Загрузка...</p>
-            ) : flavors.length === 0 ? (
-              <p style={{ color: 'var(--red)', fontSize: 13 }}>
-                Нет доступных конфигураций для {engine}
-              </p>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {flavors.map(f => {
-                  const ram = f.ram_mb >= 1024 ? `${f.ram_mb / 1024} GB` : `${f.ram_mb} MB`
-                  const selected = flavorId === f.id
-                  return (
-                    <button
-                      key={f.id}
-                      type="button"
-                      onClick={() => setFlavorId(f.id)}
-                      style={{
-                        padding: '10px 14px', borderRadius: 8, textAlign: 'left' as const,
-                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                        cursor: 'pointer',
-                        border: `1px solid ${selected ? 'var(--accent)' : 'var(--border)'}`,
-                        background: selected ? 'var(--accent-dim)' : 'transparent',
-                      }}
-                    >
-                      <span style={{ fontWeight: 600, fontSize: 14, color: 'var(--text-pri)' }}>
-                        {f.name}
-                      </span>
-                      <span style={{ fontSize: 12, color: 'var(--text-sec)' }}>
-                        {f.cpu} vCPU · {ram} · {f.disk_gb} GB
-                      </span>
-                      {selected && <span style={{ color: 'var(--accent)', marginLeft: 8 }}>✓</span>}
-                    </button>
-                  )
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* ── Имя БД ──────────────────────────────────────────────────── */}
-          <div>
-            <label style={labelStyle}>Имя базы данных</label>
-            <input
-              value={dbName}
-              onChange={e => setDbName(e.target.value)}
-              placeholder="e.g. myapp_db"
-              style={inputStyle}
-            />
-            <p style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 4 }}>
-              Имя БД внутри контейнера. Credentials генерируются автоматически.
-            </p>
-          </div>
-
-          {/* ── Ошибка ──────────────────────────────────────────────────── */}
-          {error && (
-            <div style={{
-              padding: '10px 14px', borderRadius: 8,
-              background: 'rgba(255,77,106,0.08)',
-              border: '1px solid rgba(255,77,106,0.3)',
-              color: 'var(--red)', fontSize: 13,
-            }}>
-              ⚠ {error}
+        <div className={s.formGroup}>
+          <label className={s.label}>Конфигурация</label>
+          {loadFlavors ? (
+            <p className={s.loadingText}>Загрузка...</p>
+          ) : flavors.length === 0 ? (
+            <p className={s.errorText}>Нет доступных конфигураций для {engine}</p>
+          ) : (
+            <div className={s.flavorList}>
+              {flavors.map(f => {
+                const ram = f.ram_mb >= 1024 ? `${f.ram_mb / 1024} GB` : `${f.ram_mb} MB`
+                const selected = flavorId === f.id
+                return (
+                  <button
+                    key={f.id}
+                    type="button"
+                    className={`${s.flavorButton} ${selected ? s.flavorButtonSelected : ''}`}
+                    onClick={() => setFlavorId(f.id)}
+                  >
+                    <span className={s.flavorName}>{f.name}</span>
+                    <span className={s.flavorSpecs}>
+                      {f.cpu} vCPU · {ram} · {f.disk_gb} GB
+                    </span>
+                    {selected && <span className={s.flavorCheck}>✓</span>}
+                  </button>
+                )
+              })}
             </div>
           )}
+        </div>
 
-          {/* ── Кнопки ──────────────────────────────────────────────────── */}
-          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 4 }}>
-            <button
-              type="button"
-              onClick={onClose}
-              style={{
-                padding: '10px 20px', borderRadius: 8,
-                border: '1px solid var(--border)',
-                background: 'transparent', cursor: 'pointer',
-                fontWeight: 600, color: 'var(--text-pri)',
-              }}
-            >
-              Отмена
-            </button>
-            <button
-              type="submit"
-              disabled={mutation.isPending}
-              style={{
-                padding: '10px 20px', borderRadius: 8,
-                background: 'var(--accent)', border: 'none', color: '#fff',
-                cursor: mutation.isPending ? 'not-allowed' : 'pointer',
-                fontWeight: 600, opacity: mutation.isPending ? 0.6 : 1,
-              }}
-            >
-              {mutation.isPending ? 'Создаём...' : 'Создать →'}
-            </button>
+        <div className={s.formGroup}>
+          <label className={s.label}>Имя базы данных</label>
+          <input
+            className={s.input}
+            value={dbName}
+            onChange={e => setDbName(e.target.value)}
+            placeholder="e.g. myapp_db"
+          />
+          <p className={s.hintText}>
+            Имя БД внутри контейнера. Credentials генерируются автоматически.
+          </p>
+        </div>
+
+        {error && (
+          <div className={s.errorBox}>
+            ⚠ {error}
           </div>
-        </form>
-      </div>
+        )}
+
+        <div className={s.buttonGroup}>
+          <button
+            type="button"
+            className={s.buttonSecondary}
+            onClick={onClose}
+          >
+            Отмена
+          </button>
+          <button
+            type="submit"
+            className={s.buttonPrimary}
+            disabled={mutation.isPending}
+          >
+            {mutation.isPending ? 'Создаём...' : 'Создать →'}
+          </button>
+        </div>
+      </form>
     </div>
-  )
-}
-
-const labelStyle: CSSProperties = {
-  display: 'block', fontSize: 11, fontWeight: 700,
-  color: 'var(--text-sec)', marginBottom: 8,
-  textTransform: 'uppercase', letterSpacing: '0.06em',
-}
-
-const inputStyle: CSSProperties = {
-  width: '100%', padding: '10px 14px', borderRadius: 8,
-  border: '1px solid var(--border)',
-  background: 'var(--bg-raised)', color: 'var(--text-pri)',
-  fontSize: 14, outline: 'none', boxSizing: 'border-box',
+  </div>
+)
 }

@@ -447,12 +447,7 @@ function CreateObjectStorageModal({
             <button
               type="submit"
               disabled={mutation.isPending}
-              style={{
-                padding: '10px 20px', borderRadius: 8,
-                background: 'var(--accent)', border: 'none', color: '#0d0f14',
-                cursor: mutation.isPending ? 'not-allowed' : 'pointer',
-                fontWeight: 700, opacity: mutation.isPending ? 0.6 : 1,
-              }}
+              className={s.btnPrimary}
             >
               {mutation.isPending ? 'Создаём...' : 'Создать →'}
             </button>

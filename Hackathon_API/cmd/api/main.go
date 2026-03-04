@@ -12,6 +12,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
+	"github.com/art-petrovich13/hackathon_MTS/internal/agent"
 	dbcompute "github.com/art-petrovich13/hackathon_MTS/internal/compute/db"
 	dockerdriver "github.com/art-petrovich13/hackathon_MTS/internal/compute/docker"
 	mobilecompute "github.com/art-petrovich13/hackathon_MTS/internal/compute/mobile"
@@ -134,6 +135,14 @@ func main() {
 	authHandler := handlers.NewAuthHandler(userRepo, projectRepo)
 	userHandler := handlers.NewUserHandler(userRepo, projectRepo, limitRepo)
 
+	// ── AgentMesh ────────────────────────────────────────────────────────────────
+	vmAgentA := agent.NewVmAgent(flavorRepo)
+	dbAgentA := agent.NewDbAgent(flavorRepo)
+	storageAgentA := agent.NewStorageAgent(flavorRepo)
+	orchestrator := agent.NewOrchestrator(vmAgentA, dbAgentA, storageAgentA, cfg.OpenRouterKey)
+	deployer := agent.NewDeployer(vmService, dbRepo, osRepo, flavorRepo, imageRepo, db)
+	agentHandler := handlers.NewAgentHandler(orchestrator, deployer)
+
 	// ── Роутер ──────────────────────────────────────────────────────────────
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
@@ -199,6 +208,10 @@ func main() {
 		r.Delete("/mobile-devices/{id}", mobileHandler.Delete)
 		r.Post("/mobile-devices/{id}/start", mobileHandler.Start)
 		r.Post("/mobile-devices/{id}/stop", mobileHandler.Stop)
+
+		// ── AgentMesh SSE эндпоинты ──────────────────────────────────────────────
+		r.Post("/agent/chat", agentHandler.Chat)
+		r.Post("/agent/execute", agentHandler.Execute)
 	})
 
 	// ── HTTP сервер + Graceful Shutdown ─────────────────────────────────────

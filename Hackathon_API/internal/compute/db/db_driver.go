@@ -257,3 +257,20 @@ func containsPattern(s, pattern string) bool {
 			return false
 		}()
 }
+
+// StartContainer — запускает остановленный контейнер БД.
+func (d *DatabaseDriver) StartContainer(ctx context.Context, containerID string) error {
+	if err := d.cli.ContainerStart(ctx, containerID, container.StartOptions{}); err != nil {
+		return fmt.Errorf("container start %q: %w", containerID, err)
+	}
+	return nil
+}
+
+// StopContainer — мягко останавливает контейнер БД (SIGTERM -> SIGKILL).
+func (d *DatabaseDriver) StopContainer(ctx context.Context, containerID string) error {
+	timeoutSec := 10
+	if err := d.cli.ContainerStop(ctx, containerID, container.StopOptions{Timeout: &timeoutSec}); err != nil {
+		return fmt.Errorf("container stop %q: %w", containerID, err)
+	}
+	return nil
+}

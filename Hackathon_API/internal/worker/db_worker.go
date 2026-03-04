@@ -86,6 +86,14 @@ func (w *DBWorker) processBatch(ctx context.Context) {
 	slog.Info("db worker: processing batch", "count", len(dbs))
 
 	for _, db := range dbs {
+		switch db.Status {
+		case "pending-start":
+			w.processStart(ctx, tx, db)
+			continue
+		case "pending-stop":
+			w.processStop(ctx, tx, db)
+			continue
+		}
 		// Ищем любую активную ноду для выделения порта
 		node, err := w.findNode(ctx, tx)
 		if err != nil || node == nil {
@@ -303,4 +311,94 @@ func extractVersion(dockerImage string) string {
 		return dockerImage[idx+1:]
 	}
 	return "latest"
+}
+
+func (w *DBWorker) processStart(ctx context.Context, tx *sqlx.Tx, db models.ManagedDatabase) {
+	log := slog.With("db_id", db.ID, "op", "start")
+	log.Info("db worker: starting database")
+
+	if db.DockerContainerID == nil || *db.DockerContainerID == "" {
+		log.Error("db worker: container_id is nil, cannot start")
+		w.setError(ctx, tx, db.ID)
+		return
+	}
+
+	if db.NodeID != nil {
+		var flavor models.Flavor
+		if err := tx.GetContext(ctx, &flavor,
+			`SELECT id, name, cpu, ram_mb, disk_gb FROM flavors WHERE id = $1`, db.FlavorID,
+		); err != nil {
+			log.Error("db worker: flavor not found for start", "error", err)
+			w.setError(ctx, tx, db.ID)
+			return
+		}
+		if _, err := tx.ExecContext(ctx,
+			`UPDATE compute_nodes SET free_cpu = free_cpu - $1, free_ram_mb = free_ram_mb - $2 WHERE id = $3`,
+			flavor.CPU, flavor.RAMMB, *db.NodeID,
+		); err != nil {
+			log.Error("db worker: reserve resources failed", "error", err)
+			w.setError(ctx, tx, db.ID)
+			return
+		}
+	}
+
+	if err := w.driver.StartContainer(ctx, *db.DockerContainerID); err != nil {
+		log.Error("db worker: docker start failed", "error", err)
+		w.setError(ctx, tx, db.ID)
+		return
+	}
+
+	if _, err := tx.ExecContext(ctx,
+		`UPDATE managed_databases SET status = 'running', updated_at = NOW() WHERE id = $1`, db.ID,
+	); err != nil {
+		log.Error("db worker: update status failed after start", "error", err)
+		w.setError(ctx, tx, db.ID)
+		return
+	}
+
+	log.Info("db worker: database started successfully")
+}
+
+func (w *DBWorker) processStop(ctx context.Context, tx *sqlx.Tx, db models.ManagedDatabase) {
+	log := slog.With("db_id", db.ID, "op", "stop")
+	log.Info("db worker: stopping database")
+
+	if db.DockerContainerID == nil || *db.DockerContainerID == "" {
+		log.Error("db worker: container_id is nil, cannot stop")
+		w.setError(ctx, tx, db.ID)
+		return
+	}
+
+	if err := w.driver.StopContainer(ctx, *db.DockerContainerID); err != nil {
+		log.Error("db worker: docker stop failed", "error", err)
+		w.setError(ctx, tx, db.ID)
+		return
+	}
+
+	if db.NodeID != nil {
+		var flavor models.Flavor
+		if err := tx.GetContext(ctx, &flavor,
+			`SELECT id, name, cpu, ram_mb, disk_gb FROM flavors WHERE id = $1`, db.FlavorID,
+		); err != nil {
+			// Контейнер уже остановлен -- логируем, но не прерываем
+			log.Error("db worker: flavor not found for stop, resources not restored", "error", err)
+		} else {
+			if _, err := tx.ExecContext(ctx,
+				`UPDATE compute_nodes SET free_cpu = free_cpu + $1, free_ram_mb = free_ram_mb + $2 WHERE id = $3`,
+				flavor.CPU, flavor.RAMMB, *db.NodeID,
+			); err != nil {
+				log.Error("db worker: restore resources failed", "error", err)
+			}
+		}
+	}
+
+	if _, err := tx.ExecContext(ctx,
+		`UPDATE managed_databases SET status = 'stopped', updated_at = NOW() WHERE id = $1`, db.ID,
+	); err != nil {
+		log.Error("db worker: update status failed after stop", "error", err)
+		w.setError(ctx, tx, db.ID)
+		return
+	}
+
+	log.Info("db worker: database stopped successfully")
 }

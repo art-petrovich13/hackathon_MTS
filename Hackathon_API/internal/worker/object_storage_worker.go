@@ -72,6 +72,14 @@ func (w *ObjectStorageWorker) processBatch(ctx context.Context) {
 	slog.Info("os worker: processing batch", "count", len(storages))
 
 	for _, os := range storages {
+		switch os.Status {
+		case "pending-start":
+			w.processStart(ctx, tx, os)
+			continue
+		case "pending-stop":
+			w.processStop(ctx, tx, os)
+			continue
+		}
 		node, err := w.findOSNode(ctx, tx)
 		if err != nil || node == nil {
 			slog.Warn("os worker: no active node", "os_id", os.ID)
@@ -231,4 +239,94 @@ func (w *ObjectStorageWorker) findOSNode(ctx context.Context, tx *sqlx.Tx) (*mod
 		return nil, err
 	}
 	return &node, nil
+}
+
+func (w *ObjectStorageWorker) processStart(ctx context.Context, tx *sqlx.Tx, os models.ObjectStorage) {
+	log := slog.With("os_id", os.ID, "op", "start")
+	log.Info("os worker: starting object storage")
+
+	if os.DockerContainerID == nil || *os.DockerContainerID == "" {
+		log.Error("os worker: container_id is nil, cannot start")
+		w.setOSError(ctx, tx, os.ID)
+		return
+	}
+
+	if os.NodeID != nil {
+		var flavor models.Flavor
+		if err := tx.GetContext(ctx, &flavor,
+			`SELECT id, name, cpu, ram_mb, disk_gb FROM flavors WHERE id = $1`, os.FlavorID,
+		); err != nil {
+			log.Error("os worker: flavor not found for start", "error", err)
+			w.setOSError(ctx, tx, os.ID)
+			return
+		}
+		if _, err := tx.ExecContext(ctx,
+			`UPDATE compute_nodes SET free_cpu = free_cpu - $1, free_ram_mb = free_ram_mb - $2 WHERE id = $3`,
+			flavor.CPU, flavor.RAMMB, *os.NodeID,
+		); err != nil {
+			log.Error("os worker: reserve resources failed", "error", err)
+			w.setOSError(ctx, tx, os.ID)
+			return
+		}
+	}
+
+	if err := w.driver.StartContainer(ctx, *os.DockerContainerID); err != nil {
+		log.Error("os worker: docker start failed", "error", err)
+		w.setOSError(ctx, tx, os.ID)
+		return
+	}
+
+	if _, err := tx.ExecContext(ctx,
+		`UPDATE object_storages SET status = 'running', updated_at = NOW() WHERE id = $1`, os.ID,
+	); err != nil {
+		log.Error("os worker: update status failed after start", "error", err)
+		w.setOSError(ctx, tx, os.ID)
+		return
+	}
+
+	log.Info("os worker: object storage started successfully")
+}
+
+func (w *ObjectStorageWorker) processStop(ctx context.Context, tx *sqlx.Tx, os models.ObjectStorage) {
+	log := slog.With("os_id", os.ID, "op", "stop")
+	log.Info("os worker: stopping object storage")
+
+	if os.DockerContainerID == nil || *os.DockerContainerID == "" {
+		log.Error("os worker: container_id is nil, cannot stop")
+		w.setOSError(ctx, tx, os.ID)
+		return
+	}
+
+	if err := w.driver.StopContainer(ctx, *os.DockerContainerID); err != nil {
+		log.Error("os worker: docker stop failed", "error", err)
+		w.setOSError(ctx, tx, os.ID)
+		return
+	}
+
+	if os.NodeID != nil {
+		var flavor models.Flavor
+		if err := tx.GetContext(ctx, &flavor,
+			`SELECT id, name, cpu, ram_mb, disk_gb FROM flavors WHERE id = $1`, os.FlavorID,
+		); err != nil {
+			// Контейнер уже остановлен -- логируем, но не прерываем
+			log.Error("os worker: flavor not found for stop, resources not restored", "error", err)
+		} else {
+			if _, err := tx.ExecContext(ctx,
+				`UPDATE compute_nodes SET free_cpu = free_cpu + $1, free_ram_mb = free_ram_mb + $2 WHERE id = $3`,
+				flavor.CPU, flavor.RAMMB, *os.NodeID,
+			); err != nil {
+				log.Error("os worker: restore resources failed", "error", err)
+			}
+		}
+	}
+
+	if _, err := tx.ExecContext(ctx,
+		`UPDATE object_storages SET status = 'stopped', updated_at = NOW() WHERE id = $1`, os.ID,
+	); err != nil {
+		log.Error("os worker: update status failed after stop", "error", err)
+		w.setOSError(ctx, tx, os.ID)
+		return
+	}
+
+	log.Info("os worker: object storage stopped successfully")
 }

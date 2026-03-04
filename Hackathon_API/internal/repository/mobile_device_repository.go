@@ -63,22 +63,25 @@ func (r *MobileDeviceRepository) List(ctx context.Context, projectID uuid.UUID) 
 	return devices, err
 }
 
-func (r *MobileDeviceRepository) UpdateAfterCreate(ctx context.Context, tx *sqlx.Tx, id uuid.UUID,
-	containerID string, nodeID uuid.UUID, adbHost string, adbPort, vncPort, novncPort int) error {
-	_, err := tx.ExecContext(ctx, `
-		UPDATE mobile_devices SET
-			status              = 'running',
-			docker_container_id = $2,
-			node_id             = $3,
-			adb_host            = $4,
-			adb_port            = $5,
-			vnc_port            = $6,
-			novnc_port          = $7,
-			updated_at          = NOW()
-		WHERE id = $1`,
-		id, containerID, nodeID, adbHost, adbPort, vncPort, novncPort,
-	)
-	return err
+func (r *MobileDeviceRepository) UpdateAfterCreate(
+    ctx context.Context, tx *sqlx.Tx, id uuid.UUID,
+    containerID string, nodeID uuid.UUID,
+    adbHost string, adbPort, vncPort, novncPort int,
+) error {
+    _, err := tx.ExecContext(ctx, `
+        UPDATE mobile_devices SET
+            status               = 'running',
+            docker_container_id  = $1,
+            node_id              = $2,
+            adb_host             = $3,
+            adb_port             = $4,
+            vnc_port             = $5,
+            novnc_port           = $6,
+            updated_at           = NOW()
+        WHERE id = $7`,
+        containerID, nodeID, adbHost, adbPort, vncPort, novncPort, id,
+    )
+    return err
 }
 
 func (r *MobileDeviceRepository) GetPendingForUpdate(ctx context.Context, tx *sqlx.Tx) ([]models.MobileDevice, error) {
@@ -87,7 +90,7 @@ func (r *MobileDeviceRepository) GetPendingForUpdate(ctx context.Context, tx *sq
 		`SELECT id, name, project_id, flavor_id, device_type, os_version, status,
 		        docker_container_id, node_id, adb_host, adb_port, vnc_port, novnc_port,
 		        created_at, updated_at
-		 FROM mobile_devices WHERE status = 'pending'
+		 FROM mobile_devices WHERE status IN ('pending', 'pending-start', 'pending-stop')
 		 FOR UPDATE SKIP LOCKED LIMIT 3`,
 	)
 	return devices, err

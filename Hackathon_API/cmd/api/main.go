@@ -14,6 +14,7 @@ import (
 
 	dbcompute "github.com/art-petrovich13/hackathon_MTS/internal/compute/db"
 	dockerdriver "github.com/art-petrovich13/hackathon_MTS/internal/compute/docker"
+	mobilecompute "github.com/art-petrovich13/hackathon_MTS/internal/compute/mobile"
 	objectcompute "github.com/art-petrovich13/hackathon_MTS/internal/compute/object"
 	"github.com/art-petrovich13/hackathon_MTS/internal/config"
 	"github.com/art-petrovich13/hackathon_MTS/internal/handlers"
@@ -44,8 +45,7 @@ func main() {
 	dbRepo := repository.NewManagedDatabaseRepository(db)
 	osRepo := repository.NewObjectStorageRepository(db) // было: _ = repository.NewObjectStorageRepository(db)
 	fsRepo := repository.NewFileStorageRepository(db)   // было: _ = repository.NewFileStorageRepository(db)
-
-	_ = repository.NewMobileDeviceRepository(db)
+	mobileRepo := repository.NewMobileDeviceRepository(db)
 
 	// ── Compute Driver (для VM) ──────────────────────────────────────────────
 	computeDriver, err := dockerdriver.NewDockerDriver()
@@ -70,6 +70,14 @@ func main() {
 		os.Exit(1)
 	}
 	slog.Info("minio driver initialized")
+
+	// Mobile Driver
+	mobileDriver, err := mobilecompute.NewMobileDriver()
+	if err != nil {
+		slog.Error("failed to create mobile driver", "error", err)
+		os.Exit(1)
+	}
+	slog.Info("mobile driver initialized")
 
 	// File Storage Worker
 	fsWorker, err := worker.NewFileStorageWorker(db, fsRepo, nodeRepo, 5*time.Second)
@@ -104,6 +112,10 @@ func main() {
 	go fsWorker.Start(workerCtx)
 	slog.Info("file storage worker launched")
 
+	mobileWorker := worker.NewMobileWorker(db, mobileDriver, mobileRepo, nodeRepo, 5*time.Second)
+	go mobileWorker.Start(workerCtx)
+	slog.Info("mobile worker launched")
+
 	// ── Хендлеры ────────────────────────────────────────────────────────────
 	flavorHandler := handlers.NewFlavorHandler(flavorRepo)
 	imageHandler := handlers.NewImageHandler(imageRepo)
@@ -114,6 +126,7 @@ func main() {
 	databaseHandler := handlers.NewDatabaseHandler(dbRepo, flavorRepo, db, databaseDriver)
 	osHandler := handlers.NewObjectStorageHandler(osRepo, flavorRepo, db, minioDriver)
 	fsHandler := handlers.NewFileStorageHandler(fsRepo, flavorRepo, db)
+	mobileHandler := handlers.NewMobileHandler(mobileRepo, flavorRepo, db, mobileDriver)
 
 	// ── Роутер ──────────────────────────────────────────────────────────────
 	r := chi.NewRouter()
@@ -143,16 +156,29 @@ func main() {
 		r.Get("/databases", databaseHandler.List)
 		r.Get("/databases/{id}", databaseHandler.Get)
 		r.Delete("/databases/{id}", databaseHandler.Delete)
+		r.Post("/databases/{id}/start", databaseHandler.Start)
+		r.Post("/databases/{id}/stop", databaseHandler.Stop)
 
 		r.Post("/object-storages", osHandler.Create)
 		r.Get("/object-storages", osHandler.List)
 		r.Get("/object-storages/{id}", osHandler.Get)
 		r.Delete("/object-storages/{id}", osHandler.Delete)
+		r.Post("/object-storages/{id}/start", osHandler.Start)
+		r.Post("/object-storages/{id}/stop", osHandler.Stop)
 
 		r.Post("/file-storages", fsHandler.Create)
 		r.Get("/file-storages", fsHandler.List)
 		r.Get("/file-storages/{id}", fsHandler.Get)
-		r.Delete("/file-storages/{id}", fsHandler.Delete)	
+		r.Delete("/file-storages/{id}", fsHandler.Delete)
+		r.Post("/file-storages/{id}/start", fsHandler.Start)
+		r.Post("/file-storages/{id}/stop", fsHandler.Stop)
+
+		r.Post("/mobile-devices", mobileHandler.Create)
+		r.Get("/mobile-devices", mobileHandler.List)
+		r.Get("/mobile-devices/{id}", mobileHandler.Get)
+		r.Delete("/mobile-devices/{id}", mobileHandler.Delete)
+		r.Post("/mobile-devices/{id}/start", mobileHandler.Start)
+		r.Post("/mobile-devices/{id}/stop", mobileHandler.Stop)
 	})
 
 	// ── HTTP сервер + Graceful Shutdown ─────────────────────────────────────

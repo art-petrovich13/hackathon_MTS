@@ -1,0 +1,25 @@
+-- Восстанавливаем старые constraints без pending-start/pending-stop
+
+ALTER TABLE managed_databases
+  DROP CONSTRAINT IF EXISTS managed_databases_status_check;
+ALTER TABLE managed_databases
+  ADD CONSTRAINT managed_databases_status_check
+  CHECK (status IN ('pending','creating','running','stopping','stopped','error','deleted'));
+
+ALTER TABLE object_storages
+  DROP CONSTRAINT IF EXISTS object_storages_status_check;
+ALTER TABLE object_storages
+  ADD CONSTRAINT object_storages_status_check
+  CHECK (status IN ('pending','creating','running','stopping','stopped','error','deleted'));
+
+ALTER TABLE file_storages
+  DROP CONSTRAINT IF EXISTS file_storages_status_check;
+ALTER TABLE file_storages
+  ADD CONSTRAINT file_storages_status_check
+  CHECK (status IN ('pending','creating','running','stopping','stopped','error','deleted'));
+
+ALTER TABLE mobile_devices
+  DROP CONSTRAINT IF EXISTS mobile_devices_status_check;
+ALTER TABLE mobile_devices
+  ADD CONSTRAINT mobile_devices_status_check
+  CHECK (status IN ('pending','creating','running','stopping','stopped','error','deleted'));

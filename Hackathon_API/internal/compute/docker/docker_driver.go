@@ -14,6 +14,7 @@ import (
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
+	"github.com/docker/go-connections/nat"
 
 	"github.com/art-petrovich13/hackathon_MTS/internal/compute/driver"
 )
@@ -57,27 +58,50 @@ func (d *DockerDriver) CreateVM(ctx context.Context, opts *driver.CreateVMOpts) 
 	}
 
 	// 2. Формируем конфигурацию контейнера.
+	// 2. Формируем конфигурацию контейнера.
 	containerName := "vm-" + randString(10)
+
+	// Определяем Cmd: для VNC-образов (novnc_port > 0) не переопределяем CMD —
+	// образ dorowu/ubuntu-desktop-lxde-vnc имеет собственный entrypoint.
+	// Для обычных образов (alpine, ubuntu) нужен sleep infinity, иначе контейнер сразу выйдет.
+	var cmd []string
+	if opts.NoVNCPort == 0 {
+		cmd = []string{"sleep", "infinity"}
+	}
 
 	cfg := &container.Config{
 		Image:    opts.ImageName,
 		Hostname: opts.Name,
-		// sleep infinity держит контейнер живым, имитируя работающую VM.
-		Cmd: []string{"sleep", "infinity"},
+		Cmd:      cmd, // nil для VNC-образов — Docker использует CMD из Dockerfile
 		Labels: map[string]string{
 			"iaas.vm.name": opts.Name,
 			"iaas.managed": "true",
 		},
 	}
 
+	// Формируем port bindings — только если нужен noVNC
+	var portBindings nat.PortMap
+	var exposedPorts nat.PortSet
+
+	if opts.NoVNCPort > 0 {
+		portBindings = nat.PortMap{
+			// Образ dorowu/ubuntu-desktop-lxde-vnc экспортирует noVNC на порту 80
+			"80/tcp": []nat.PortBinding{
+				{HostIP: "0.0.0.0", HostPort: fmt.Sprintf("%d", opts.NoVNCPort)},
+			},
+		}
+		exposedPorts = nat.PortSet{
+			"80/tcp": struct{}{},
+		}
+		cfg.ExposedPorts = exposedPorts
+	}
+
 	hostCfg := &container.HostConfig{
 		Resources: container.Resources{
-			// Docker принимает CPU в единицах NanoCPU (1 CPU = 1_000_000_000).
 			NanoCPUs: int64(opts.CPU) * 1_000_000_000,
-			// RAM в байтах.
-			Memory: int64(opts.RAMMB) * 1024 * 1024,
+			Memory:   int64(opts.RAMMB) * 1024 * 1024,
 		},
-		// Перезапускаем контейнер при падении.
+		PortBindings:  portBindings, // nil если noVNC не нужен
 		RestartPolicy: container.RestartPolicy{Name: "unless-stopped"},
 	}
 
@@ -105,6 +129,7 @@ func (d *DockerDriver) CreateVM(ctx context.Context, opts *driver.CreateVMOpts) 
 		Name:      containerName,
 		Status:    "running",
 		IPAddress: ip,
+		NoVNCPort: opts.NoVNCPort, // возвращаем обратно чтобы воркер сохранил в БД
 	}, nil
 }
 

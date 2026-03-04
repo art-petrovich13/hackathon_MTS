@@ -12,6 +12,7 @@ import (
 	"github.com/art-petrovich13/hackathon_MTS/internal/compute/driver"
 	"github.com/art-petrovich13/hackathon_MTS/internal/models"
 	"github.com/art-petrovich13/hackathon_MTS/internal/repository"
+	"github.com/art-petrovich13/hackathon_MTS/internal/utils"
 )
 
 type VMWorker struct {
@@ -103,9 +104,11 @@ func (w *VMWorker) processBatch(ctx context.Context) {
 // соединение, и UPDATE ресурсов тихо потеряется.
 //
 // Решение — два этапа с двумя короткими транзакциями:
-//   Этап 1 (быстро, в рамках общего tx): найти узел, зарезервировать
-//           ресурсы, поставить VM статус "creating".
-//   Этап 2 (после Docker, отдельный tx): обновить VM с container_id и ip.
+//
+//	Этап 1 (быстро, в рамках общего tx): найти узел, зарезервировать
+//	        ресурсы, поставить VM статус "creating".
+//	Этап 2 (после Docker, отдельный tx): обновить VM с container_id и ip.
+//
 // ──────────────────────────────────────────────────────────────────────────
 func (w *VMWorker) processCreate(ctx context.Context, tx *sqlx.Tx, vm models.VirtualMachine) {
 	log := slog.With("vm_id", vm.ID, "vm_name", vm.Name, "op", "create")
@@ -155,7 +158,12 @@ func (w *VMWorker) processCreate(ctx context.Context, tx *sqlx.Tx, vm models.Vir
 		w.setError(ctx, tx, vm.ID)
 		return
 	}
-
+	// Аллоцируем порт для noVNC (будет использоваться только VNC-образами).
+	novncPort, novncErr := utils.AllocatePort(tx, node.ID, "vm_novnc", vm.ID)
+	if novncErr != nil {
+		log.Warn("worker: failed to allocate novnc port, vm will run without VNC", "error", novncErr)
+		novncPort = 0 // не критично — VM создастся без VNC
+	}
 	// Меняем статус VM на "creating", записываем node_id.
 	// Так при следующем тике воркер не возьмёт эту VM снова.
 	if _, err := tx.ExecContext(ctx,
@@ -177,7 +185,7 @@ func (w *VMWorker) processCreate(ctx context.Context, tx *sqlx.Tx, vm models.Vir
 	// tx.Commit() → ресурсы в БД зафиксированы → горутина вызывает Docker
 	// → по завершении открывает новую короткую транзакцию и обновляет VM.
 
-	go func(vmID, nodeID interface{}, flavorCPU, flavorRAMMB int, imageName, vmName string) {
+	go func(vmID, nodeID interface{}, flavorCPU, flavorRAMMB int, imageName, vmName string, novncPort int) {
 		dockerCtx := context.Background() // отдельный контекст, не зависит от запроса
 
 		instance, err := w.drv.CreateVM(dockerCtx, &driver.CreateVMOpts{
@@ -185,6 +193,7 @@ func (w *VMWorker) processCreate(ctx context.Context, tx *sqlx.Tx, vm models.Vir
 			CPU:       flavorCPU,
 			RAMMB:     flavorRAMMB,
 			ImageName: imageName,
+			NoVNCPort: novncPort,
 		})
 		if err != nil {
 			log.Error("worker: docker create failed", "error", err)
@@ -206,12 +215,13 @@ func (w *VMWorker) processCreate(ctx context.Context, tx *sqlx.Tx, vm models.Vir
 
 		if _, err := updateTx.ExecContext(updateCtx,
 			`UPDATE vms SET
-				status              = 'running',
-				docker_container_id = $1,
-				ip_address          = $2,
-				updated_at          = NOW()
-			 WHERE id = $3`,
-			instance.ID, instance.IPAddress, vmID,
+        status              = 'running',
+        docker_container_id = $1,
+        ip_address          = $2,
+        novnc_port          = $3,
+        updated_at          = NOW()
+     WHERE id = $4`,
+			instance.ID, instance.IPAddress, instance.NoVNCPort, vmID,
 		); err != nil {
 			log.Error("worker: update vm after docker create failed", "error", err)
 			_ = w.drv.DeleteVM(dockerCtx, instance.ID)
@@ -230,7 +240,7 @@ func (w *VMWorker) processCreate(ctx context.Context, tx *sqlx.Tx, vm models.Vir
 			"container_id", instance.ID,
 			"ip", instance.IPAddress,
 		)
-	}(vm.ID, node.ID, flavor.CPU, flavor.RAMMB, img.DockerImage, vm.Name)
+	}(vm.ID, node.ID, flavor.CPU, flavor.RAMMB, img.DockerImage, vm.Name, novncPort)
 }
 
 // compensateFailedCreate — компенсирующая транзакция при ошибке Docker:

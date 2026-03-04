@@ -6,22 +6,20 @@ import "context"
 // VMInstance представляет информацию о виртуальной машине (контейнере)
 // после выполнения операции создания или получения статуса.
 type VMInstance struct {
-	// ID контейнера, присвоенный Docker (реальный или симулированный)
-	ID string
-	// Имя контейнера (обычно соответствует имени VM)
-	Name string
-	// Статус: running, stopped, error, pending и т.д.
-	Status string
-	// IP-адрес контейнера в сети Docker
+	ID        string
+	Name      string
+	Status    string
 	IPAddress string
+	NoVNCPort int // реально выделенный host-порт для noVNC (0 если не выделялся)
 }
 
 // CreateVMOpts содержит все параметры, необходимые для создания новой VM.
 type CreateVMOpts struct {
-	Name      string // Желаемое имя VM
-	CPU       int    // Количество ядер CPU (целое число)
-	RAMMB     int    // Объём RAM в мегабайтах
-	ImageName string // Имя Docker-образа (например, "ubuntu:22.04")
+	Name      string
+	CPU       int
+	RAMMB     int
+	ImageName string
+	NoVNCPort int // 0 = не биндить noVNC порт; > 0 = биндить этот host-порт на контейнерный 80
 }
 
 // ContainerStats содержит метрики использования ресурсов контейнера.

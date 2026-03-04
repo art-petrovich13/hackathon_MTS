@@ -10,9 +10,10 @@ INSERT INTO flavors (id, name, cpu, ram_mb, disk_gb) VALUES
 
 -- 2. Добавляем образы (images)
 INSERT INTO images (id, name, docker_image, os_type, version, imported, status) VALUES
-(gen_random_uuid(), 'Alpine latest', 'alpine:latest', 'linux', 'latest', false, 'active'),
-(gen_random_uuid(), 'Ubuntu 20.04',  'ubuntu:20.04',  'linux', '20.04', false, 'active');
-
+(gen_random_uuid(), 'Alpine latest',       'alpine:latest',                        'linux', 'latest', false, 'active'),
+(gen_random_uuid(), 'Ubuntu 20.04',        'ubuntu:20.04',                         'linux', '20.04',  false, 'active'),
+(gen_random_uuid(), 'Ubuntu Desktop (VNC)','dorowu/ubuntu-desktop-lxde-vnc:focal', 'linux', '20.04',  false, 'active')
+ON CONFLICT DO NOTHING;
 -- 3. Добавляем вычислительный узел (локальный Docker)
 -- Здесь total_cpu и total_ram_mb должны соответствовать ресурсам вашей машины.
 -- Для примера: 8 ядер, 16 GB RAM.

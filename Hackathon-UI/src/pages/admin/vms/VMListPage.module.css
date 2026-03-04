@@ -3,16 +3,20 @@
 .page {
   display: flex;
   flex-direction: column;
-  width: 100%;
+  flex: 1;
+  min-width: 0;
+  width: 100%;          /* 100vw было неверно — включало сайдбар */
+  box-sizing: border-box;
 }
 
 /* ── Summary карточки — горизонтальный ряд ──────────────────────────────── */
-.summary {
+.summaryRow {
   display: flex;
-  flex-direction: row;   /* явно горизонтально */
+  flex-direction: row;
   flex-wrap: wrap;
   gap: 12px;
   margin-bottom: 24px;
+  width: 100%;
 }
 
 .summaryCard {
@@ -26,6 +30,7 @@
   border: 1px solid var(--border);
   border-radius: 10px;
   min-width: 90px;
+  flex: 1;              /* растягиваем карточки на всю ширину строки */
   cursor: pointer;
   transition: border-color 0.15s, transform 0.15s;
   user-select: none;
@@ -56,7 +61,7 @@
   margin-bottom: 12px;
 }
 
-.filterHintBtn {
+.filterClear {
   background: none;
   border: none;
   color: var(--accent);
@@ -69,7 +74,7 @@
 }
 
 /* ── Empty ───────────────────────────────────────────────────────────────── */
-.empty {
+.emptyBox {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -79,6 +84,8 @@
   border: 1px dashed var(--border);
   border-radius: 12px;
   text-align: center;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .emptyIcon  { font-size: 48px; color: var(--text-dim); line-height: 1; }

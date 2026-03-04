@@ -1,0 +1,446 @@
+:root {
+  --red-primary: #C62E26;
+  --red-dark: #7B1814;
+  --red-gradient: linear-gradient(135deg, var(--red-dark), var(--red-primary));
+}
+
+.container { 
+  display: flex;
+  flex-direction: column;
+  justify-content: center;  /* центрирует по вертикали */
+  align-items: center;      /* центрирует по горизонтали */
+  min-height: calc(100vh - 100px);  /* высота минус шапка */
+  width: 100%;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.pageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+  width: 100%;
+}
+
+.pageTitle {
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--text-pri);
+}
+
+.pageSubtitle {
+  font-size: 14px;
+  color: var(--text-sec);
+  margin: 0;
+}
+
+.span {
+  color: var(--text-dim);
+}
+
+.cred {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+/* Основная кнопка New Database */
+.btnPrimary {
+  padding: 10px 20px;
+  border-radius: 8px;
+  background: var(--red-gradient);
+  border: none;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btnPrimary:hover {
+  opacity: 0.9;
+}
+
+.stateBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;  /* используем vh вместо пикселей */
+  width: 100%;
+  margin: 0;
+  position: relative;
+  left: 0;
+  overflow-y: auto;
+}
+
+.stateText {
+  font-size: 18px;
+  color: var(--text-sec);
+  margin: 0;
+}
+
+/* Action Buttons */
+.actionButton {
+  padding: 6px 16px;
+  border-radius: 30px;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.actionButton:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Credentials button */
+.credentialsButton {
+  background: var(--red-gradient);
+  color: white;
+}
+
+/* Confirm delete button */
+.confirmDeleteButton {
+  background: linear-gradient(135deg, #7f1d1d, #991b1b);
+  color: white;
+}
+
+/* Cancel button */
+.cancelButton {
+  background: transparent;
+  color: var(--text-sec);
+  border: 1px solid var(--border);
+  box-shadow: none;
+}
+
+.cancelButton:hover {
+  background: var(--bg-raised);
+}
+
+/* Delete button */
+.deleteButton {
+  background: linear-gradient(135deg, #2d1a1a, #3b1e1e);
+  color: #fca5a5;
+}
+
+.deleteButton:hover:not(:disabled) {
+  background: linear-gradient(135deg, #3b1e1e, #4a2323);
+  color: #fecaca;
+}
+
+/* Modal buttons */
+.buttonPrimary {
+  padding: 12px 28px;
+  border-radius: 40px;
+  background: var(--red-gradient);
+  border: none;
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.buttonPrimary:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.buttonPrimary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.buttonSecondary {
+  padding: 12px 28px;
+  border-radius: 40px;
+  border: 1px solid var(--border);
+  background: transparent;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-pri);
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.buttonSecondary:hover {
+  background: var(--bg-raised);
+}
+
+/* Анимация */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stateBox, .tableWrap {
+  animation: fadeInUp 0.4s ease-out;
+}
+
+/* Таблица */
+.tableWrap {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--bg-surface);
+  margin-top: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 900px;
+}
+
+.table th {
+  text-align: left;
+  padding: 16px 16px 12px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-sec);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 16px;
+  font-size: 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-pri);
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.cellBold {
+  font-weight: 600;
+}
+
+.cellMono {
+  font-family: 'SF Mono', 'Monaco', 'Menlo', monospace;
+  font-size: 13px;
+}
+
+.cellDim {
+  color: var(--text-dim);
+  font-size: 13px;
+}
+
+/* Модальное окно */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(0,0,0,0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modalContent {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px;
+  width: 500px;
+  max-width: 95vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.modalTitle {
+  margin: 0 0 20px 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-pri);
+}
+
+.modalForm {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.formGroup {
+  width: 100%;
+}
+
+.label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-sec);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.input {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-raised);
+  color: var(--text-pri);
+  font-size: 14px;
+  outline: none;
+  box-sizing: border-box;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.input:focus {
+  border-color: var(--red-primary);
+  box-shadow: 0 0 0 3px rgba(199, 46, 38, 0.1);
+}
+
+/* Engine selection */
+.engineGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.engineButton {
+  padding: 12px 8px;
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s;
+  border: 2px solid var(--border);
+  background: transparent;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.engineButton:hover {
+  border-color: var(--red-primary);
+}
+
+.engineButton.selected {
+  border-color: var(--red-primary);
+  background: rgba(199, 46, 38, 0.05);
+}
+
+.engineIcon {
+  font-size: 24px;
+  margin-bottom: 4px;
+}
+
+.engineLabel {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-pri);
+}
+
+.engineDesc {
+  font-size: 11px;
+  color: var(--text-sec);
+  margin-top: 2px;
+}
+
+/* Flavor selection */
+.flavorList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.flavorButton {
+  padding: 10px 14px;
+  border-radius: 8px;
+  text-align: left;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: transparent;
+  width: 100%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.flavorButton:hover {
+  border-color: var(--red-primary);
+}
+
+.flavorButton.selected {
+  border-color: var(--red-primary);
+  background: rgba(199, 46, 38, 0.05);
+}
+
+.flavorName {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-pri);
+}
+
+.flavorSpecs {
+  font-size: 12px;
+  color: var(--text-sec);
+}
+
+.flavorCheck {
+  color: var(--red-primary);
+  margin-left: 8px;
+}
+
+/* Text styles */
+.loadingText {
+  color: var(--text-sec);
+  font-size: 13px;
+  margin: 8px 0;
+}
+
+.errorText {
+  color: var(--red-primary);
+  font-size: 13px;
+  margin: 8px 0;
+}
+
+.hintText {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-top: 4px;
+}
+
+.errorBox {
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: rgba(199, 46, 38, 0.05);
+  border: 1px solid rgba(199, 46, 38, 0.2);
+  color: var(--red-primary);
+  font-size: 13px;
+}
+
+/* Buttons group */
+.buttonGroup {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+.textDim {
+  color: var(--text-dim);
+}

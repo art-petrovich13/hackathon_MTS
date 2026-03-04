@@ -1,10 +1,7 @@
-
 /* ── Основная сетка ─────────────────────────────────────────────────────── */
 .shell {
-  display: grid;
-  grid-template-columns: 220px 1fr;
+  display: flex;          /* меняем grid → flex, т.к. sidebar fixed и grid ломается */
   min-height: 100vh;
-  /* Плавный переход фона при смене темы */
   transition: background 0.2s ease;
 }
 
@@ -75,11 +72,14 @@
 
 /* ── Основная область ───────────────────────────────────────────────────── */
 .main {
-  margin-left: 220px;
+  margin-left: 220px;               /* отступ = ширина фиксированного сайдбара */
+  width: calc(100vw - 220px);       /* явно задаём ширину, иначе = 100vw */
+  min-width: 0;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
   transition: background 0.2s ease;
+  box-sizing: border-box;
 }
 
 .topbar {
@@ -99,7 +99,13 @@
 .topbarLeft  { display: flex; align-items: center; gap: 12px; }
 .topbarRight { display: flex; align-items: center; gap: 12px; }
 
-.content { flex: 1; padding: 28px 24px; }
+.content {
+  flex: 1;
+  padding: 28px 24px;
+  min-width: 0;         /* не даёт дочерним flex-элементам раздуваться */
+  overflow-x: hidden;   /* страхует от горизонтального скролла */
+  box-sizing: border-box;
+}
 
 /* ── Health badge ────────────────────────────────────────────────────────── */
 .healthBadge {
@@ -154,4 +160,3 @@
   text-transform: uppercase;
   color: #475569;
 }
-

@@ -34,8 +34,11 @@ client.interceptors.request.use((config) => {
 client.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (err.response?.status === 401) {
-      // Токен истёк или невалидный — чистим сессию
+    const isLoginRequest = err.config?.url?.includes('/auth/login')
+
+    // Редиректим на /login ТОЛЬКО если это НЕ сам запрос логина
+    // Иначе ошибка "неверный пароль" вызывала бы перезагрузку страницы
+    if (err.response?.status === 401 && !isLoginRequest) {
       sessionStorage.removeItem('auth_token')
       sessionStorage.removeItem('auth_user')
       window.location.href = '/login'

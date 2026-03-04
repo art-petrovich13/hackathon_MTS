@@ -1,21 +1,29 @@
-// src/layouts/UserLayout.tsx
-import { Outlet, NavLink } from 'react-router-dom'
+import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Monitor, Database,
-  HardDrive, Smartphone, Camera, Settings,
+  HardDrive, Smartphone, Camera, Settings, LogOut,
 } from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
 
 const NAV = [
   { to: '/dashboard',  label: 'Dashboard',   Icon: LayoutDashboard },
-  { to: '/compute',    label: 'Compute',     Icon: Monitor         },
-  { to: '/databases',  label: 'Databases',   Icon: Database        },
-  { to: '/storage',    label: 'Storage',     Icon: HardDrive       },
-  { to: '/mobile',     label: 'Mobile Farm', Icon: Smartphone      },
-  { to: '/snapshots',  label: 'Snapshots',   Icon: Camera          },
-  { to: '/settings',   label: 'Settings',    Icon: Settings        },
+  { to: '/compute',    label: 'Compute',      Icon: Monitor         },
+  { to: '/databases',  label: 'Databases',    Icon: Database        },
+  { to: '/storage',    label: 'Storage',      Icon: HardDrive       },
+  { to: '/mobile',     label: 'Mobile Farm',  Icon: Smartphone      },
+  { to: '/snapshots',  label: 'Snapshots',    Icon: Camera          },
+  { to: '/settings',   label: 'Settings',     Icon: Settings        },
 ]
 
 export function UserLayout() {
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
+
+  const handleLogout = () => {
+    logout()
+    navigate('/login')
+  }
+
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
       <aside style={{
@@ -24,6 +32,7 @@ export function UserLayout() {
         borderRight: '1px solid var(--color-border, #334155)',
         display: 'flex', flexDirection: 'column',
       }}>
+        {/* Шапка сайдбара */}
         <div style={{ padding: '18px 16px 14px', borderBottom: '1px solid var(--color-border, #334155)' }}>
           <div style={{ fontWeight: 800, fontSize: 18, letterSpacing: '-0.03em' }}>
             ⬡ IaaS<em>Panel</em>
@@ -31,6 +40,7 @@ export function UserLayout() {
           <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>User Console</div>
         </div>
 
+        {/* Навигация */}
         <nav style={{ flex: 1, padding: '10px 8px', display: 'flex', flexDirection: 'column', gap: 2 }}>
           {NAV.map(({ to, label, Icon }) => (
             <NavLink
@@ -51,11 +61,33 @@ export function UserLayout() {
           ))}
         </nav>
 
-        <div style={{ padding: '10px 16px', borderTop: '1px solid var(--color-border, #334155)', fontSize: 12, color: '#475569' }}>
-          v0.2.0-dev
+        {/* Профиль + кнопка выхода */}
+        <div style={{ padding: '10px 16px', borderTop: '1px solid var(--color-border, #334155)' }}>
+          {/* Email пользователя */}
+          <div style={{
+            fontSize: 12, color: '#64748b', marginBottom: 8,
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          }}>
+            {user?.email ?? '—'}
+          </div>
+          {/* Кнопка выхода */}
+          <button
+            onClick={handleLogout}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              width: '100%', padding: '7px 12px', borderRadius: 8,
+              border: '1px solid rgba(248,113,113,0.2)',
+              background: 'rgba(248,113,113,0.06)',
+              color: '#f87171', cursor: 'pointer', fontSize: 13,
+            }}
+          >
+            <LogOut size={13} />
+            <span>Выйти</span>
+          </button>
         </div>
       </aside>
 
+      {/* Основная область */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <header style={{
           height: 50, flexShrink: 0,
@@ -67,16 +99,9 @@ export function UserLayout() {
           <span style={{ fontSize: 13, color: '#94a3b8' }}>
             Проект: <strong style={{ color: '#f1f5f9' }}>default</strong>
           </span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            <span style={{ fontSize: 13, color: '#64748b' }}>user@example.com</span>
-            <button style={{
-              fontSize: 12, padding: '4px 12px', borderRadius: 6,
-              border: '1px solid #334155', background: 'transparent',
-              cursor: 'pointer', color: '#f87171',
-            }}>
-              Выйти
-            </button>
-          </div>
+          <span style={{ fontSize: 12, color: '#475569' }}>
+            {user?.role === 'admin' ? '🔑 Admin' : '👤 User'}
+          </span>
         </header>
 
         <main style={{ flex: 1, overflow: 'auto', padding: 24 }}>

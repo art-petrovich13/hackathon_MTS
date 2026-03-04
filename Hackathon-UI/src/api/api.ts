@@ -8,9 +8,12 @@ import type {
   ServiceCatalogItem, ServiceCatalogItemWithFlavors,
   ManagedDatabase, CreateDatabaseRequest,
   ObjectStorage, CreateObjectStorageRequest,
-  FileStorage, CreateFileStorageRequest,   // ← убедись что оба здесь
-  MobileDevice, CreateMobileDeviceRequest
+  FileStorage, CreateFileStorageRequest,
+  MobileDevice, CreateMobileDeviceRequest,
+  LoginRequest, LoginResponse, UserWithProject, ProjectLimit,
 } from '../types/api'
+
+import type { AuthUser } from '../types/api'
 
 // ── Базовый клиент ────────────────────────────────────────────────────────────
 const client = axios.create({
@@ -18,14 +21,31 @@ const client = axios.create({
   headers: { 'Content-Type': 'application/json' },
 })
 
+// Request interceptor: добавляем токен из sessionStorage к каждому запросу
+client.interceptors.request.use((config) => {
+  const token = sessionStorage.getItem('auth_token')
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+  }
+  return config
+})
+
+// Response interceptor: логируем ошибки, при 401 — редирект на /login
 client.interceptors.response.use(
   (res) => res,
   (err) => {
-    const msg = err.response?.data?.message ?? err.message
+    if (err.response?.status === 401) {
+      // Токен истёк или невалидный — чистим сессию
+      sessionStorage.removeItem('auth_token')
+      sessionStorage.removeItem('auth_user')
+      window.location.href = '/login'
+    }
+    const msg = err.response?.data?.error ?? err.response?.data?.message ?? err.message
     console.error(`[API Error] ${err.config?.method?.toUpperCase()} ${err.config?.url}:`, msg)
     return Promise.reject(err)
   }
 )
+
 
 // ── VM API ────────────────────────────────────────────────────────────────────
 export const getVMs = async (): Promise<VirtualMachine[]> => {
@@ -193,4 +213,44 @@ export const startMobileDevice = async (id: string): Promise<void> => {
 
 export const stopMobileDevice = async (id: string): Promise<void> => {
   await client.post(`/mobile-devices/${id}/stop`)
+}
+
+// ── Auth API ──────────────────────────────────────────────────────────────────
+
+export const login = async (payload: LoginRequest): Promise<LoginResponse> => {
+  const { data } = await client.post<LoginResponse>('/auth/login', payload)
+  return data
+}
+
+export const getMe = async (): Promise<AuthUser> => {
+  const { data } = await client.get<AuthUser>('/auth/me')
+  return data
+}
+
+// ── Users API (только для admin) ─────────────────────────────────────────────
+
+export const getUsers = async (): Promise<UserWithProject[]> => {
+  const { data } = await client.get<UserWithProject[]>('/users')
+  return data ?? []
+}
+
+export const createUser = async (
+  email: string,
+  password: string,
+  role: string,
+): Promise<UserWithProject> => {
+  const { data } = await client.post<UserWithProject>('/users', { email, password, role })
+  return data
+}
+
+export const deleteUser = async (id: string): Promise<void> => {
+  await client.delete(`/users/${id}`)
+}
+
+export const setUserLimits = async (
+  userId: string,
+  limits: Partial<ProjectLimit>,
+): Promise<ProjectLimit> => {
+  const { data } = await client.put<ProjectLimit>(`/users/${userId}/limits`, limits)
+  return data
 }

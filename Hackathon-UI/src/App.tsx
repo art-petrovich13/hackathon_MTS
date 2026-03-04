@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from 'react-hot-toast'
 import { ThemeProvider } from './context/ThemeContext'
 import { AppRoutes } from './routes/AppRoutes'
+import { AuthProvider } from './context/AuthContext'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -20,6 +21,7 @@ export default function App() {
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
+          <AuthProvider>
           <AppRoutes />
           <Toaster
             position="top-right"
@@ -33,6 +35,7 @@ export default function App() {
               },
             }}
           />
+          </AuthProvider>
         </BrowserRouter>
       </QueryClientProvider>
     </ThemeProvider>

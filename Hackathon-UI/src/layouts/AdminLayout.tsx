@@ -7,9 +7,19 @@ import styles from './AdminLayout.module.css'
 import {
   Monitor, Server, Database, HardDrive, Smartphone,
   Users, LayoutGrid, BarChart2, TrendingUp, Camera, Image,
+  LayoutDashboard,
 } from 'lucide-react'
 
+import { useAuth } from '../context/AuthContext'
+import { useNavigate } from 'react-router-dom'
+
 const NAV_SECTIONS = [
+  {
+    label: 'Overview',
+    items: [
+      { to: '/admin/dashboard', label: 'Dashboard', Icon: LayoutDashboard },
+    ],
+  },
   {
     label: 'Compute',
     items: [
@@ -51,6 +61,13 @@ const NAV_SECTIONS = [
 
 export function AdminLayout() {
   const { theme, toggle } = useTheme()
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
+
+  const handleLogout = () => {
+    logout()
+    navigate('/login')
+  }
 
   return (
     <div className={styles.shell}>
@@ -92,7 +109,25 @@ export function AdminLayout() {
           <div className={styles.topbarLeft} />
           <div className={styles.topbarRight}>
             <HealthBadge />
-
+            {/* Имя пользователя */}
+            {user && (
+              <span style={{ fontSize: 12, color: '#64748b', maxWidth: 180,
+                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                👤 {user.email}
+              </span>
+            )}
+            {/* Кнопка выхода */}
+            <button
+              onClick={handleLogout}
+              style={{
+                fontSize: 12, padding: '4px 12px', borderRadius: 6,
+                border: '1px solid rgba(248,113,113,0.3)',
+                background: 'rgba(248,113,113,0.06)',
+                cursor: 'pointer', color: '#f87171',
+              }}
+            >
+              Выйти
+            </button>
             {/* ── Кнопка переключения темы ─────────────────────────── */}
             <button
               className={styles.themeToggle}

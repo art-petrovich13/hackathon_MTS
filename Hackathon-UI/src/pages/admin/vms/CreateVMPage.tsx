@@ -8,7 +8,7 @@ import type { Flavor } from '../../../types/api'
 import s from '../../shared.module.css'
 import styles from './CreateVMPage.module.css'
 
-const DEFAULT_PROJECT_ID = '18b192b4-57c2-4f9e-ad30-135160284b1d'
+const DEFAULT_PROJECT_ID = '9d320322-31f5-48d5-ade8-43f1b03b5b59'
 
 export function CreateVMPage() {
   const navigate = useNavigate()

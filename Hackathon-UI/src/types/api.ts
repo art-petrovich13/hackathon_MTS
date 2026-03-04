@@ -211,6 +211,51 @@ export interface MobileDevice {
   updated_at: string
 }
 
+// ─── Auth ─────────────────────────────────────────────────────────────────────
+
+export interface LoginRequest {
+  email: string
+  password: string
+}
+
+export interface AuthUser {
+  id: string
+  email: string
+  role: 'admin' | 'user'
+  project_id: string
+  created_at: string
+}
+
+export interface LoginResponse {
+  token: string
+  expires_at: string
+  user: AuthUser
+}
+
+export interface ProjectLimit {
+  id: string
+  project_id: string
+  max_vms: number
+  max_cpu: number
+  max_ram_mb: number
+  max_disk_gb: number
+  max_dbs: number
+  max_storages: number
+  max_mobile: number
+}
+
+export interface UserWithProject {
+  id: string
+  email: string
+  role: string
+  created_at: string
+  project?: {
+    id: string
+    name: string
+    user_id: string
+  }
+  limits?: ProjectLimit
+}
 
 
 
@@ -220,4 +265,3 @@ export interface CreateMobileDeviceRequest {
   flavor_id: string
   os_version: string
 }
-

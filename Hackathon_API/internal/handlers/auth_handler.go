@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -54,26 +55,31 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Ищем пользователя по email
+	fmt.Printf("DEBUG login attempt: email=%q password=%q\n", req.Email, req.Password)
+
 	user, err := h.userRepo.GetByEmail(r.Context(), req.Email)
+
+	fmt.Printf("DEBUG user found: %+v, err: %v\n", user, err)
+
 	if err != nil || user == nil {
 		respondError(w, http.StatusUnauthorized, "Invalid credentials")
 		return
 	}
 
-	// Проверяем пароль
-	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {
+	bcryptErr := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password))
+
+	fmt.Printf("DEBUG bcrypt result: %v\n", bcryptErr)
+
+	if bcryptErr != nil {
 		respondError(w, http.StatusUnauthorized, "Invalid credentials")
 		return
 	}
 
-	// Ищем проект пользователя
 	project, err := h.projectRepo.GetByUserID(r.Context(), user.ID)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "Failed to load project")
 		return
 	}
-	// Если проекта нет — создаём автоматически
 	if project == nil {
 		project = &models.Project{
 			ID:     uuid.New(),
@@ -86,7 +92,6 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Генерируем JWT токен
 	token, err := auth.GenerateToken(user.ID, user.Email, user.Role, project.ID)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "Failed to generate token")

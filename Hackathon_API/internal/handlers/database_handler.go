@@ -201,3 +201,57 @@ func (h *DatabaseHandler) Delete(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusNoContent)
 }
+
+func (h *DatabaseHandler) Start(w http.ResponseWriter, r *http.Request) {
+	id, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		respondError(w, http.StatusBadRequest, "Invalid database ID")
+		return
+	}
+	record, err := h.dbRepo.GetByID(r.Context(), id)
+	if err != nil || record == nil {
+		respondError(w, http.StatusNotFound, "Database not found")
+		return
+	}
+	if record.Status != "stopped" && record.Status != "error" {
+		respondError(w, http.StatusConflict,
+			"Database can only be started from 'stopped' or 'error', current: "+record.Status)
+		return
+	}
+	if record.DockerContainerID == nil || *record.DockerContainerID == "" {
+		respondError(w, http.StatusConflict, "Database has no associated container")
+		return
+	}
+	if err := h.dbRepo.UpdateStatus(r.Context(), id, "pending-start"); err != nil {
+		respondError(w, http.StatusInternalServerError, "Failed to queue start")
+		return
+	}
+	respondJSON(w, http.StatusOK, map[string]string{"status": "start queued"})
+}
+
+func (h *DatabaseHandler) Stop(w http.ResponseWriter, r *http.Request) {
+	id, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		respondError(w, http.StatusBadRequest, "Invalid database ID")
+		return
+	}
+	record, err := h.dbRepo.GetByID(r.Context(), id)
+	if err != nil || record == nil {
+		respondError(w, http.StatusNotFound, "Database not found")
+		return
+	}
+	if record.Status != "running" {
+		respondError(w, http.StatusConflict,
+			"Database is not running, current: "+record.Status)
+		return
+	}
+	if record.DockerContainerID == nil || *record.DockerContainerID == "" {
+		respondError(w, http.StatusConflict, "Database has no associated container")
+		return
+	}
+	if err := h.dbRepo.UpdateStatus(r.Context(), id, "pending-stop"); err != nil {
+		respondError(w, http.StatusInternalServerError, "Failed to queue stop")
+		return
+	}
+	respondJSON(w, http.StatusOK, map[string]string{"status": "stop queued"})
+}

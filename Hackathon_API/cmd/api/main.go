@@ -143,16 +143,22 @@ func main() {
 		r.Get("/databases", databaseHandler.List)
 		r.Get("/databases/{id}", databaseHandler.Get)
 		r.Delete("/databases/{id}", databaseHandler.Delete)
+		r.Post("/databases/{id}/start", databaseHandler.Start)
+		r.Post("/databases/{id}/stop", databaseHandler.Stop)
 
 		r.Post("/object-storages", osHandler.Create)
 		r.Get("/object-storages", osHandler.List)
 		r.Get("/object-storages/{id}", osHandler.Get)
 		r.Delete("/object-storages/{id}", osHandler.Delete)
+		r.Post("/object-storages/{id}/start", osHandler.Start)
+		r.Post("/object-storages/{id}/stop", osHandler.Stop)
 
 		r.Post("/file-storages", fsHandler.Create)
 		r.Get("/file-storages", fsHandler.List)
 		r.Get("/file-storages/{id}", fsHandler.Get)
-		r.Delete("/file-storages/{id}", fsHandler.Delete)	
+		r.Delete("/file-storages/{id}", fsHandler.Delete)
+		r.Post("/file-storages/{id}/start", fsHandler.Start)
+		r.Post("/file-storages/{id}/stop", fsHandler.Stop)
 	})
 
 	// ── HTTP сервер + Graceful Shutdown ─────────────────────────────────────

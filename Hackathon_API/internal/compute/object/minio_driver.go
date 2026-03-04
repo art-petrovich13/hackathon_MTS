@@ -157,3 +157,20 @@ func (d *MinIODriver) waitReady(ctx context.Context, containerID string) error {
 	// MinIO обычно стартует за <5 секунд, после 60с считаем что запустился
 	return nil
 }
+
+// StartContainer — запускает остановленный MinIO контейнер.
+func (d *MinIODriver) StartContainer(ctx context.Context, containerID string) error {
+	if err := d.cli.ContainerStart(ctx, containerID, container.StartOptions{}); err != nil {
+		return fmt.Errorf("container start %q: %w", containerID, err)
+	}
+	return nil
+}
+
+// StopContainer — мягко останавливает MinIO контейнер (SIGTERM -> SIGKILL).
+func (d *MinIODriver) StopContainer(ctx context.Context, containerID string) error {
+	timeoutSec := 10
+	if err := d.cli.ContainerStop(ctx, containerID, container.StopOptions{Timeout: &timeoutSec}); err != nil {
+		return fmt.Errorf("container stop %q: %w", containerID, err)
+	}
+	return nil
+}

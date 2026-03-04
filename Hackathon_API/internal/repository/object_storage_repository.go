@@ -87,7 +87,7 @@ func (r *ObjectStorageRepository) GetPendingForUpdate(ctx context.Context, tx *s
 		`SELECT id, name, project_id, flavor_id, status, docker_container_id, node_id,
 		        s3_endpoint, console_endpoint, access_key, secret_key, bucket_name,
 		        storage_limit_gb, created_at, updated_at
-		 FROM object_storages WHERE status = 'pending'
+		 FROM object_storages WHERE status IN ('pending', 'pending-start', 'pending-stop')
 		 FOR UPDATE SKIP LOCKED LIMIT 5`,
 	)
 	return storages, err

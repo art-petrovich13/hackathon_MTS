@@ -103,7 +103,7 @@ func (r *ManagedDatabaseRepository) GetPendingForUpdate(ctx context.Context, tx 
 		`SELECT id, name, project_id, flavor_id, engine, engine_version, status,
 		        docker_container_id, node_id, host, port, db_name, db_user, db_password,
 		        created_at, updated_at
-		 FROM managed_databases WHERE status = 'pending'
+		 FROM managed_databases WHERE status IN ('pending', 'pending-start', 'pending-stop')
 		 FOR UPDATE SKIP LOCKED LIMIT 5`,
 	)
 	return dbs, err

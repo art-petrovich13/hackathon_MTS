@@ -87,7 +87,7 @@ func (r *MobileDeviceRepository) GetPendingForUpdate(ctx context.Context, tx *sq
 		`SELECT id, name, project_id, flavor_id, device_type, os_version, status,
 		        docker_container_id, node_id, adb_host, adb_port, vnc_port, novnc_port,
 		        created_at, updated_at
-		 FROM mobile_devices WHERE status = 'pending'
+		 FROM mobile_devices WHERE status IN ('pending', 'pending-start', 'pending-stop')
 		 FOR UPDATE SKIP LOCKED LIMIT 3`,
 	)
 	return devices, err

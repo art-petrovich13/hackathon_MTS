@@ -82,7 +82,7 @@ func (r *FileStorageRepository) GetPendingForUpdate(ctx context.Context, tx *sql
 	err := tx.SelectContext(ctx, &storages,
 		`SELECT id, name, project_id, flavor_id, status, docker_container_id, node_id,
 		        volume_name, nfs_endpoint, size_gb, created_at, updated_at
-		 FROM file_storages WHERE status = 'pending'
+		 FROM file_storages WHERE status IN ('pending', 'pending-start', 'pending-stop')
 		 FOR UPDATE SKIP LOCKED LIMIT 5`,
 	)
 	return storages, err

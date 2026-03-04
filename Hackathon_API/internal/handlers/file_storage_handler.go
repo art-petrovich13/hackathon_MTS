@@ -145,3 +145,53 @@ func (h *FileStorageHandler) Delete(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusNoContent)
 }
+
+func (h *FileStorageHandler) Start(w http.ResponseWriter, r *http.Request) {
+	id, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		respondError(w, http.StatusBadRequest, "Invalid ID")
+		return
+	}
+	record, err := h.fsRepo.GetByID(r.Context(), id)
+	if err != nil || record == nil {
+		respondError(w, http.StatusNotFound, "File storage not found")
+		return
+	}
+	if record.Status != "stopped" && record.Status != "error" {
+		respondError(w, http.StatusConflict,
+			"Can only start from 'stopped' or 'error', current: "+record.Status)
+		return
+	}
+	if record.DockerContainerID == nil || *record.DockerContainerID == "" {
+		respondError(w, http.StatusConflict, "No associated container")
+		return
+	}
+	if err := h.fsRepo.UpdateStatus(r.Context(), id, "pending-start"); err != nil {
+		respondError(w, http.StatusInternalServerError, "Failed to queue start")
+		return
+	}
+	respondJSON(w, http.StatusOK, map[string]string{"status": "start queued"})
+}
+
+func (h *FileStorageHandler) Stop(w http.ResponseWriter, r *http.Request) {
+	id, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		respondError(w, http.StatusBadRequest, "Invalid ID")
+		return
+	}
+	record, err := h.fsRepo.GetByID(r.Context(), id)
+	if err != nil || record == nil {
+		respondError(w, http.StatusNotFound, "File storage not found")
+		return
+	}
+	if record.Status != "running" {
+		respondError(w, http.StatusConflict,
+			"File storage is not running, current: "+record.Status)
+		return
+	}
+	if err := h.fsRepo.UpdateStatus(r.Context(), id, "pending-stop"); err != nil {
+		respondError(w, http.StatusInternalServerError, "Failed to queue stop")
+		return
+	}
+	respondJSON(w, http.StatusOK, map[string]string{"status": "stop queued"})
+}

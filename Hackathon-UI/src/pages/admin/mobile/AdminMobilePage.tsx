@@ -11,16 +11,23 @@ import type { MobileDevice, Flavor } from '../../../types/api'
 import { StatusBadge } from '../../../components/ui/StatusBadge'
 import s from '../../shared.module.css'
 
+// Добавить к существующим импортам:
+import { VncViewer } from '../../../components/ui/VncViewer'
+import { useAuth } from '../../../context/AuthContext'
+
 // Тот же project_id что во всех остальных страницах
-const DEFAULT_PROJECT_ID = '9d320322-31f5-48d5-ade8-43f1b03b5b59'
+
 const TRANSITIONAL = new Set(['pending', 'creating', 'pending-start', 'pending-stop'])
 
 // ─── Главная страница ──────────────────────────────────────────────────────────
 
 export function AdminMobilePage() {
   const qc = useQueryClient()
-  const [showCreate, setShowCreate]           = useState(false)
+  const { user } = useAuth()
+  const projectId = user?.project_id ?? ''
+  const [showCreate, setShowCreate] = useState(false)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [viewScreen, setViewScreen] = useState<MobileDevice | null>(null)
 
   const { data: devices = [], isLoading, isError } = useQuery<MobileDevice[]>({
     queryKey: ['mobile-devices'],
@@ -129,7 +136,7 @@ export function AdminMobilePage() {
               {devices.map(dev => {
                 const trans = TRANSITIONAL.has(dev.status)
                 const novncUrl = dev.novnc_port ? `http://127.0.0.1:${dev.novnc_port}` : null
-                const adbCmd   = dev.adb_host && dev.adb_port
+                const adbCmd = dev.adb_host && dev.adb_port
                   ? `adb connect ${dev.adb_host}:${dev.adb_port}`
                   : null
                 const isConfirming = confirmDeleteId === dev.id
@@ -179,13 +186,14 @@ export function AdminMobilePage() {
                             ▶
                           </button>
                         )}
-                        {dev.status === 'running' && (
+                        {/* Кнопка просмотра экрана — только если running и порт есть */}
+                        {dev.status === 'running' && dev.novnc_port && (
                           <button
-                            disabled={trans}
-                            onClick={() => stopMut.mutate(dev.id)}
-                            style={{ ...btnStyle('#3d1a00', '#fb923c'), opacity: trans ? 0.4 : 1 }}
+                            onClick={() => setViewScreen(dev)}
+                            title="Просмотр экрана"
+                            style={btnStyle('rgba(99,102,241,0.15)', '#818cf8')}
                           >
-                            ■
+                            📺
                           </button>
                         )}
 
@@ -229,11 +237,21 @@ export function AdminMobilePage() {
         </div>
       )}
 
-      {/* ── Модал создания ────────────────────────────────────────────────── */}
       {showCreate && (
         <CreateMobileModal
           onClose={() => setShowCreate(false)}
           onCreated={() => { setShowCreate(false); invalidate() }}
+          projectId={projectId}   // ← ДОБАВИТЬ
+        />
+      )}
+
+      {/* VncViewer модал */}
+      {viewScreen && viewScreen.adb_host && viewScreen.novnc_port && (
+        <VncViewer
+          host={viewScreen.adb_host}
+          port={viewScreen.novnc_port}
+          title={`Android — ${viewScreen.name}`}
+          onClose={() => setViewScreen(null)}
         />
       )}
     </div>
@@ -251,15 +269,16 @@ function btnStyle(bg: string, color: string): CSSProperties {
 // ─── Модал создания Android-устройства ────────────────────────────────────────
 
 function CreateMobileModal({
-  onClose, onCreated,
+  onClose, onCreated, projectId,
 }: {
   onClose: () => void
   onCreated: () => void
+  projectId: string          // ← ДОБАВИТЬ
 }) {
-  const [name, setName]         = useState('')
+  const [name, setName] = useState('')
   const [flavorId, setFlavorId] = useState('')
   const [osVersion, setOsVersion] = useState('android-11')
-  const [error, setError]       = useState('')
+  const [error, setError] = useState('')
 
   const { data: flavors = [], isLoading: loadFlavors } = useQuery<Flavor[]>({
     queryKey: ['flavors', 'mobile_farm'],
@@ -283,11 +302,11 @@ function CreateMobileModal({
     e.preventDefault()
     setError('')
     if (!name.trim()) return setError('Введите имя устройства')
-    if (!flavorId)    return setError('Выберите конфигурацию')
+    if (!flavorId) return setError('Выберите конфигурацию')
     mutation.mutate({
-      name:       name.trim(),
-      project_id: DEFAULT_PROJECT_ID,
-      flavor_id:  flavorId,
+      name: name.trim(),
+      project_id: projectId,   // ← теперь из prop
+      flavor_id: flavorId,
       os_version: osVersion,
     })
   }

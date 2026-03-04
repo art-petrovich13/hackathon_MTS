@@ -9,6 +9,9 @@ import type { MobileDevice } from '../../../types/api'
 import { ResourceCard } from '../../../components/ui/ResourceCard'
 import { useCopyToClipboard } from '../../../hooks/useCopyToClipboard'
 import s from '../../shared.module.css'
+// Добавить к существующим импортам:
+import { useNavigate } from 'react-router-dom'
+import { VncViewer } from '../../../components/ui/VncViewer'
 
 const TRANSITIONAL = new Set(['pending', 'creating', 'pending-start', 'pending-stop'])
 
@@ -16,6 +19,8 @@ export function UserMobilePage() {
   const qc = useQueryClient()
   const { copy } = useCopyToClipboard()
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [viewScreen, setViewScreen] = useState<MobileDevice | null>(null)
+  const navigate = useNavigate()
 
   const { data: devices = [], isLoading, isError } = useQuery<MobileDevice[]>({
     queryKey: ['mobile-devices'],
@@ -89,10 +94,11 @@ export function UserMobilePage() {
           {devices.map(dev => {
             const trans = TRANSITIONAL.has(dev.status)
             const novncUrl = dev.novnc_port ? `http://127.0.0.1:${dev.novnc_port}` : null
-            const adbCmd   = dev.adb_host && dev.adb_port
+            const adbCmd = dev.adb_host && dev.adb_port
               ? `adb connect ${dev.adb_host}:${dev.adb_port}`
               : null
             const isConfirming = confirmDeleteId === dev.id
+            const canViewScreen = dev.status === 'running' && !!dev.adb_host && !!dev.novnc_port
 
             return (
               <ResourceCard
@@ -117,16 +123,31 @@ export function UserMobilePage() {
                         📋 {adbCmd}
                       </span>
                     )}
-                    {/* Ссылка на VNC */}
+                    {/* Ссылка / кнопки VNC */}
                     {novncUrl && (
-                      <a
-                        href={novncUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        style={{ color: 'var(--accent)', fontSize: 12, textDecoration: 'none' }}
-                      >
-                        🖥 Открыть VNC ↗
-                      </a>
+                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                        <button
+                          onClick={() => setViewScreen(dev)}
+                          style={{
+                            padding: '3px 10px', borderRadius: 6, border: 'none',
+                            background: 'rgba(99,102,241,0.15)', color: '#818cf8',
+                            cursor: 'pointer', fontSize: 11, fontWeight: 600,
+                          }}
+                        >
+                          📺 Экран
+                        </button>
+                        <button
+                          onClick={() => navigate(`/screen/${dev.id}`)}
+                          style={{
+                            padding: '3px 10px', borderRadius: 6,
+                            border: '1px solid rgba(99,102,241,0.2)',
+                            background: 'transparent', color: '#6366f1',
+                            cursor: 'pointer', fontSize: 11,
+                          }}
+                        >
+                          ⛶ Полный экран
+                        </button>
+                      </div>
                     )}
                     {/* Состояние когда running но порты ещё не назначены */}
                     {!novncUrl && dev.status === 'running' && (
@@ -216,6 +237,15 @@ export function UserMobilePage() {
             )
           })}
         </div>
+      )}
+      {/* VncViewer модал — показывается когда выбрано устройство */}
+      {viewScreen && viewScreen.adb_host && viewScreen.novnc_port && (
+        <VncViewer
+          host={viewScreen.adb_host}
+          port={viewScreen.novnc_port}
+          title={`Android — ${viewScreen.name} (${viewScreen.os_version})`}
+          onClose={() => setViewScreen(null)}
+        />
       )}
     </div>
   )

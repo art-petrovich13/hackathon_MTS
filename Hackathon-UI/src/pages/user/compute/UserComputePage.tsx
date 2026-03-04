@@ -6,6 +6,7 @@ import { getVMs, startVM, stopVM, deleteVM } from '../../../api/api'
 import type { VirtualMachine } from '../../../types/api'
 import { StatusBadge } from '../../../components/ui/StatusBadge'
 import s from '../../shared.module.css'
+import { VncViewer } from '../../../components/ui/VncViewer'
 
 const TRANSITIONAL = new Set(['pending', 'creating', 'pending-start', 'pending-stop'])
 
@@ -13,6 +14,7 @@ export function UserComputePage() {
   const navigate = useNavigate()
   const qc = useQueryClient()
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [viewVm, setViewVm] = useState<VirtualMachine | null>(null)
 
   const { data: vms = [], isLoading, isError } = useQuery<VirtualMachine[]>({
     queryKey: ['vms'],
@@ -25,12 +27,12 @@ export function UserComputePage() {
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ['vms'] })
 
-  const startMut  = useMutation({ mutationFn: startVM,  onSuccess: () => { invalidate(); toast.success('VM запускается...') },      onError: () => toast.error('Ошибка запуска VM') })
-  const stopMut   = useMutation({ mutationFn: stopVM,   onSuccess: () => { invalidate(); toast.success('VM останавливается...') },  onError: () => toast.error('Ошибка остановки VM') })
+  const startMut = useMutation({ mutationFn: startVM, onSuccess: () => { invalidate(); toast.success('VM запускается...') }, onError: () => toast.error('Ошибка запуска VM') })
+  const stopMut = useMutation({ mutationFn: stopVM, onSuccess: () => { invalidate(); toast.success('VM останавливается...') }, onError: () => toast.error('Ошибка остановки VM') })
   const deleteMut = useMutation({
     mutationFn: deleteVM,
     onSuccess: () => { invalidate(); setConfirmDeleteId(null); toast.success('VM удалена') },
-    onError:   () => toast.error('Ошибка удаления VM'),
+    onError: () => toast.error('Ошибка удаления VM'),
   })
 
   return (
@@ -79,9 +81,18 @@ export function UserComputePage() {
               onDeleteConfirm={() => deleteMut.mutate(vm.id)}
               onDeleteCancel={() => setConfirmDeleteId(null)}
               deletePending={deleteMut.isPending}
+              onViewScreen={vm.novnc_port ? () => setViewVm(vm) : undefined}
             />
           ))}
         </div>
+      )}
+      {viewVm && viewVm.novnc_port && (
+        <VncViewer
+          host={viewVm.ip_address ?? '127.0.0.1'}
+          port={viewVm.novnc_port}
+          title={`Linux VM — ${viewVm.name}`}
+          onClose={() => setViewVm(null)}
+        />
       )}
     </div>
   )
@@ -90,6 +101,7 @@ export function UserComputePage() {
 function VMCard({
   vm, isConfirming,
   onStart, onStop, onDeleteRequest, onDeleteConfirm, onDeleteCancel, deletePending,
+  onViewScreen,
 }: {
   vm: VirtualMachine
   isConfirming: boolean
@@ -99,6 +111,7 @@ function VMCard({
   onDeleteConfirm: () => void
   onDeleteCancel: () => void
   deletePending: boolean
+  onViewScreen?: () => void   // ← ДОБАВИТЬ (опциональный)
 }) {
   const trans = TRANSITIONAL.has(vm.status)
 
@@ -132,15 +145,35 @@ function VMCard({
       <div style={{ display: 'flex', gap: 8 }}>
         {vm.status === 'stopped' && (
           <button disabled={trans} onClick={onStart}
-            style={{ flex: 1, padding: '7px 0', borderRadius: 7, border: 'none',
-              background: '#14532d', color: '#4ade80', cursor: 'pointer', fontWeight: 600, fontSize: 13 }}>
+            style={{
+              flex: 1, padding: '7px 0', borderRadius: 7, border: 'none',
+              background: '#14532d', color: '#4ade80', cursor: 'pointer', fontWeight: 600, fontSize: 13
+            }}>
             ▶ Запустить
           </button>
         )}
+
+        {/* ← ДОБАВИТЬ: кнопка просмотра экрана для VNC-образов */}
+        {vm.status === 'running' && onViewScreen && (
+          <button
+            onClick={onViewScreen}
+            style={{
+              padding: '7px 10px', borderRadius: 7, border: 'none',
+              background: 'rgba(99,102,241,0.15)',
+              color: '#818cf8', cursor: 'pointer', fontSize: 13,
+            }}
+            title="Просмотр экрана VM"
+          >
+            🖥️
+          </button>
+        )}
+
         {vm.status === 'running' && (
           <button disabled={trans} onClick={onStop}
-            style={{ flex: 1, padding: '7px 0', borderRadius: 7, border: 'none',
-              background: '#431407', color: '#fb923c', cursor: 'pointer', fontWeight: 600, fontSize: 13 }}>
+            style={{
+              flex: 1, padding: '7px 0', borderRadius: 7, border: 'none',
+              background: '#431407', color: '#fb923c', cursor: 'pointer', fontWeight: 600, fontSize: 13
+            }}>
             ■ Остановить
           </button>
         )}
@@ -149,25 +182,32 @@ function VMCard({
         {isConfirming ? (
           <>
             <button onClick={onDeleteConfirm} disabled={deletePending}
-              style={{ padding: '7px 12px', borderRadius: 7, border: 'none',
-                background: '#4a0f0f', color: '#f87171', cursor: 'pointer', fontWeight: 600, fontSize: 13 }}>
+              style={{
+                padding: '7px 12px', borderRadius: 7, border: 'none',
+                background: '#4a0f0f', color: '#f87171', cursor: 'pointer', fontWeight: 600, fontSize: 13
+              }}>
               {deletePending ? '...' : 'Удалить?'}
             </button>
             <button onClick={onDeleteCancel}
-              style={{ padding: '7px 12px', borderRadius: 7, border: '1px solid var(--border)',
-                background: 'transparent', color: 'var(--text-sec)', cursor: 'pointer', fontSize: 13 }}>
+              style={{
+                padding: '7px 12px', borderRadius: 7, border: '1px solid var(--border)',
+                background: 'transparent', color: 'var(--text-sec)', cursor: 'pointer', fontSize: 13
+              }}>
               Нет
             </button>
           </>
         ) : (
           <button disabled={trans} onClick={onDeleteRequest}
-            style={{ padding: '7px 14px', borderRadius: 7, border: 'none',
+            style={{
+              padding: '7px 14px', borderRadius: 7, border: 'none',
               background: '#3f1212', color: '#f87171', cursor: 'pointer', fontWeight: 600, fontSize: 13,
-              opacity: trans ? 0.4 : 1 }}>
+              opacity: trans ? 0.4 : 1
+            }}>
             ✕
           </button>
         )}
       </div>
+
     </div>
   )
 }

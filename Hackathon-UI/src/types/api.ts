@@ -19,8 +19,9 @@ export interface VirtualMachine {
   image_id: string
   status: VMStatus
   docker_container_id: string | null
-  ip_address: string | null       // ip_address, не host
+  ip_address: string | null
   node_id: string | null
+  novnc_port: number | null   // ← ДОБАВИТЬ: порт noVNC для Ubuntu Desktop образов
   created_at: string
   updated_at: string
 }

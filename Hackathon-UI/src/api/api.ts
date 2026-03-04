@@ -9,7 +9,7 @@ import type {
   ManagedDatabase, CreateDatabaseRequest,
   ObjectStorage, CreateObjectStorageRequest,
   FileStorage, CreateFileStorageRequest,   // ← убедись что оба здесь
-  MobileDevice,
+  MobileDevice, CreateMobileDeviceRequest
 } from '../types/api'
 
 // ── Базовый клиент ────────────────────────────────────────────────────────────
@@ -53,6 +53,14 @@ export const stopVM = async (id: string): Promise<void> => {
 
 export const deleteVM = async (id: string): Promise<void> => {
   await client.delete(`/vms/${id}`)
+}
+
+export const startDatabase = async (id: string): Promise<void> => {
+  await client.post(`/databases/${id}/start`)
+}
+
+export const stopDatabase = async (id: string): Promise<void> => {
+  await client.post(`/databases/${id}/stop`)
 }
 
 // ── Flavors API ───────────────────────────────────────────────────────────────
@@ -127,6 +135,14 @@ export const deleteObjectStorage = async (id: string): Promise<void> => {
   await client.delete(`/object-storages/${id}`)
 }
 
+export const startObjectStorage = async (id: string): Promise<void> => {
+  await client.post(`/object-storages/${id}/start`)
+}
+
+export const stopObjectStorage = async (id: string): Promise<void> => {
+  await client.post(`/object-storages/${id}/stop`)
+}
+
 // ── File Storage API (эндпоинты появятся в Day 17) ───────────────────────────
 export const getFileStorages = async (): Promise<FileStorage[]> => {
   const { data } = await client.get<FileStorage[]>('/file-storages')
@@ -148,12 +164,33 @@ export const deleteFileStorage = async (id: string): Promise<void> => {
   await client.delete(`/file-storages/${id}`)
 }
 
-// ── Mobile API (эндпоинты появятся в Day 17) ─────────────────────────────────
+export const startFileStorage = async (id: string): Promise<void> => {
+  await client.post(`/file-storages/${id}/start`)
+}
+
+export const stopFileStorage = async (id: string): Promise<void> => {
+  await client.post(`/file-storages/${id}/stop`)
+}
+// ── Mobile Farm API ──────────────────────────────────────────────────────────
+
 export const getMobileDevices = async (): Promise<MobileDevice[]> => {
   const { data } = await client.get<MobileDevice[]>('/mobile-devices')
   return data ?? []
 }
 
+export const createMobileDevice = async (payload: CreateMobileDeviceRequest): Promise<MobileDevice> => {
+  const { data } = await client.post<MobileDevice>('/mobile-devices', payload)
+  return data
+}
+
 export const deleteMobileDevice = async (id: string): Promise<void> => {
   await client.delete(`/mobile-devices/${id}`)
+}
+
+export const startMobileDevice = async (id: string): Promise<void> => {
+  await client.post(`/mobile-devices/${id}/start`)
+}
+
+export const stopMobileDevice = async (id: string): Promise<void> => {
+  await client.post(`/mobile-devices/${id}/stop`)
 }

@@ -106,6 +106,8 @@ export type ServiceStatus =
   | 'creating'
   | 'running'
   | 'stopping'
+  | 'pending-start'
+  | 'pending-stop'
   | 'stopped'
   | 'error'
   | 'deleted'
@@ -196,9 +198,9 @@ export interface MobileDevice {
   name: string
   project_id: string
   flavor_id: string
-  device_type: 'android'
+  device_type: string
   os_version: string
-  status: ServiceStatus
+  status: string
   docker_container_id: string | null
   node_id: string | null
   adb_host: string | null
@@ -209,9 +211,13 @@ export interface MobileDevice {
   updated_at: string
 }
 
+
+
+
 export interface CreateMobileDeviceRequest {
   name: string
   project_id: string
   flavor_id: string
   os_version: string
 }
+

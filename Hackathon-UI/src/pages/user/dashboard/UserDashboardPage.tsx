@@ -1,7 +1,9 @@
 // Пример: src/pages/admin/databases/AdminDatabasesPage.tsx
 import { useQuery } from '@tanstack/react-query'
-import { getVMs, getDatabases, getObjectStorages, getFileStorages } from '../../../api/api'
-import type { VirtualMachine, ManagedDatabase, ObjectStorage, FileStorage } from '../../../types/api'
+
+
+import { getVMs, getDatabases, getObjectStorages, getFileStorages, getMobileDevices } from '../../../api/api'
+import type { VirtualMachine, ManagedDatabase, ObjectStorage, FileStorage, MobileDevice } from '../../../types/api'
 
 export function UserDashboardPage() {
   const { data: vms = [] } = useQuery<VirtualMachine[]>({ queryKey: ['vms'], queryFn: getVMs })
@@ -12,6 +14,10 @@ export function UserDashboardPage() {
 
   const { data: objects = [] } = useQuery<ObjectStorage[]>({ queryKey: ['object-storages'], queryFn: getObjectStorages })
   const { data: fileStorages = [] } = useQuery<FileStorage[]>({ queryKey: ['file-storages'], queryFn: getFileStorages })
+  const { data: mobiles = [] } = useQuery<MobileDevice[]>({
+    queryKey: ['mobile-devices'],
+    queryFn: getMobileDevices,
+  })
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
@@ -43,6 +49,13 @@ export function UserDashboardPage() {
           value={fileStorages.length}
           sub={`${fileStorages.filter(f => f.status === 'running').length} running`}
           color="#06b6d4"
+        />
+        <StatTile
+          icon="📱"
+          label="Mobile Devices"
+          value={mobiles.length}
+          sub={`${mobiles.filter(m => m.status === 'running').length} running`}
+          color="#8b5cf6"
         />
       </div>
 

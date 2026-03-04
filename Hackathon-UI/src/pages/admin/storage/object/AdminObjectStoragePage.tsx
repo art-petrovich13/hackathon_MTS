@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import {
   getObjectStorages, createObjectStorage, deleteObjectStorage, getFlavors,
+  startObjectStorage, stopObjectStorage,
 } from '../../../../api/api'
 import type { ObjectStorage, Flavor } from '../../../../types/api'
 import { StatusBadge } from '../../../../components/ui/StatusBadge'
@@ -12,7 +13,8 @@ import s from '../../../shared.module.css'
 
 // Тот же project_id что в CreateVMPage и AdminDatabasesPage
 const DEFAULT_PROJECT_ID = '18b192b4-57c2-4f9e-ad30-135160284b1d'
-const ACTIVE_STATUSES = new Set(['pending', 'creating'])
+
+const ACTIVE_STATUSES = new Set(['pending', 'creating', 'pending-start', 'pending-stop'])
 
 // ─── Главная страница ──────────────────────────────────────────────────────────
 
@@ -30,6 +32,24 @@ export function AdminObjectStoragePage() {
       if (!data) return 5_000
       return data.some(s => ACTIVE_STATUSES.has(s.status)) ? 3_000 : 15_000
     },
+  })
+
+  const startMut = useMutation({
+    mutationFn: startObjectStorage,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['object-storages'] })
+      toast.success('Object Storage запускается')
+    },
+    onError: () => toast.error('Ошибка при запуске'),
+  })
+
+  const stopMut = useMutation({
+    mutationFn: stopObjectStorage,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['object-storages'] })
+      toast.success('Object Storage останавливается')
+    },
+    onError: () => toast.error('Ошибка при остановке'),
   })
 
   const deleteMut = useMutation({
@@ -156,12 +176,32 @@ export function AdminObjectStoragePage() {
                     </td>
                     <td>
                       <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                        {/* Кнопка Access доступна всегда, но с данными только для running */}
+                        <button
+                          onClick={() => setCredsFor(os)}
+                          style={actionBtn('#0f2a47', '#60a5fa')}
+                          disabled={os.status !== 'running'}
+                        >
+                          🔑 Access
+                        </button>
+
+                        {/* Кнопки Start/Stop */}
+                        {os.status === 'stopped' && (
+                          <button
+                            onClick={() => startMut.mutate(os.id)}
+                            disabled={startMut.isPending}
+                            style={actionBtn('#1a3d1a', '#4ade80')}
+                          >
+                            {startMut.isPending ? '...' : '▶'}
+                          </button>
+                        )}
                         {os.status === 'running' && (
                           <button
-                            onClick={() => setCredsFor(os)}
-                            style={actionBtn('#0f2a47', '#60a5fa')}
+                            onClick={() => stopMut.mutate(os.id)}
+                            disabled={stopMut.isPending}
+                            style={actionBtn('#3d1a00', '#fb923c')}
                           >
-                            🔑 Access
+                            {stopMut.isPending ? '...' : '■'}
                           </button>
                         )}
 

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
-import { getDatabases, deleteDatabase } from '../../../api/api'
+import { getDatabases, deleteDatabase, startDatabase, stopDatabase } from '../../../api/api'
 import type { ManagedDatabase } from '../../../types/api'
 import { ResourceCard } from '../../../components/ui/ResourceCard'
 import { CredentialsModal, type CredField } from '../../../components/ui/CredentialsModal'
@@ -13,7 +13,7 @@ const ENGINE_ICONS: Record<string, string> = {
 
 export function UserDatabasesPage() {
   const qc = useQueryClient()
-  const [credsFor, setCredsFor]         = useState<ManagedDatabase | null>(null)
+  const [credsFor, setCredsFor] = useState<ManagedDatabase | null>(null)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
 
   const { data: dbs = [], isLoading, isError } = useQuery<ManagedDatabase[]>({
@@ -21,7 +21,10 @@ export function UserDatabasesPage() {
     queryFn: getDatabases,
     refetchInterval: (query) => {
       const data = query.state.data as ManagedDatabase[] | undefined
-      return data?.some(d => d.status === 'pending' || d.status === 'creating') ? 3_000 : 10_000
+      const hasTransitional = data?.some(d =>
+        ['pending', 'creating', 'pending-start', 'pending-stop'].includes(d.status)
+      )
+      return hasTransitional ? 3_000 : 10_000
     },
   })
 
@@ -34,13 +37,30 @@ export function UserDatabasesPage() {
     },
     onError: () => toast.error('Ошибка удаления'),
   })
+  const startMut = useMutation({
+    mutationFn: startDatabase,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['databases'] })
+      toast.success('База запускается...')
+    },
+    onError: () => toast.error('Ошибка запуска'),
+  })
+
+  const stopMut = useMutation({
+    mutationFn: stopDatabase,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['databases'] })
+      toast.success('База останавливается...')
+    },
+    onError: () => toast.error('Ошибка остановки'),
+  })
 
   const buildCredFields = (db: ManagedDatabase): CredField[] => {
     const fields: CredField[] = []
-    if (db.host)        fields.push({ label: 'Host',     value: db.host })
-    if (db.port)        fields.push({ label: 'Port',     value: String(db.port) })
-    if (db.db_name)     fields.push({ label: 'Database', value: db.db_name })
-    if (db.db_user)     fields.push({ label: 'Username', value: db.db_user })
+    if (db.host) fields.push({ label: 'Host', value: db.host })
+    if (db.port) fields.push({ label: 'Port', value: String(db.port) })
+    if (db.db_name) fields.push({ label: 'Database', value: db.db_name })
+    if (db.db_user) fields.push({ label: 'Username', value: db.db_user })
     if (db.db_password) fields.push({ label: 'Password', value: db.db_password, secret: true })
     return fields
   }
@@ -94,6 +114,34 @@ export function UserDatabasesPage() {
                 }
                 actions={
                   <>
+                    {/* Start/Stop кнопки */}
+                    {db.status === 'stopped' && (
+                      <button
+                        onClick={() => startMut.mutate(db.id)}
+                        disabled={startMut.isPending}
+                        style={{
+                          padding: '6px 14px', borderRadius: 6, border: 'none',
+                          background: '#1a3d1a', color: '#4ade80',
+                          cursor: 'pointer', fontWeight: 600, fontSize: 12,
+                        }}
+                      >
+                        ▶ Start
+                      </button>
+                    )}
+                    {db.status === 'running' && (
+                      <button
+                        onClick={() => stopMut.mutate(db.id)}
+                        disabled={stopMut.isPending}
+                        style={{
+                          padding: '6px 14px', borderRadius: 6, border: 'none',
+                          background: '#3d1a00', color: '#fb923c',
+                          cursor: 'pointer', fontWeight: 600, fontSize: 12,
+                        }}
+                      >
+                        ■ Stop
+                      </button>
+                    )}
+
                     {db.status === 'running' && (
                       <button
                         onClick={() => setCredsFor(db)}

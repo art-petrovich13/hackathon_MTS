@@ -3,14 +3,15 @@ import type { CSSProperties, FormEvent } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import {
-  getFileStorages, createFileStorage, deleteFileStorage, getFlavors,
+  getFileStorages, createFileStorage, deleteFileStorage,
+  startFileStorage, stopFileStorage, getFlavors,
 } from '../../../../api/api'
 import type { FileStorage, Flavor } from '../../../../types/api'
 import { StatusBadge } from '../../../../components/ui/StatusBadge'
 import s from '../../../shared.module.css'
 
 const DEFAULT_PROJECT_ID = '18b192b4-57c2-4f9e-ad30-135160284b1d'
-const ACTIVE_STATUSES = new Set(['pending', 'creating'])
+const ACTIVE_STATUSES = new Set(['pending', 'creating', 'pending-start', 'pending-stop'])
 
 // ─── Главная страница ──────────────────────────────────────────────────────────
 
@@ -38,6 +39,24 @@ export function AdminFileStoragePage() {
     },
     onError: () => toast.error('Ошибка при удалении'),
   })
+
+  const startMut = useMutation({
+  mutationFn: startFileStorage,
+  onSuccess: () => {
+    qc.invalidateQueries({ queryKey: ['file-storages'] })
+    toast.success('File Storage запускается...')
+  },
+  onError: () => toast.error('Ошибка запуска'),
+})
+
+const stopMut = useMutation({
+  mutationFn: stopFileStorage,
+  onSuccess: () => {
+    qc.invalidateQueries({ queryKey: ['file-storages'] })
+    toast.success('File Storage останавливается...')
+  },
+  onError: () => toast.error('Ошибка остановки'),
+})
 
   const hasPending = storages.some(s => ACTIVE_STATUSES.has(s.status))
 
@@ -136,6 +155,29 @@ export function AdminFileStoragePage() {
                     </td>
                     <td>
                       <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                        {/* Кнопка Start (только для stopped) */}
+                        {fs.status === 'stopped' && (
+                          <button
+                            onClick={() => startMut.mutate(fs.id)}
+                            disabled={startMut.isPending}
+                            style={actionBtn('#1a3d1a', '#4ade80')}
+                          >
+                            ▶
+                          </button>
+                        )}
+
+                        {/* Кнопка Stop (только для running) */}
+                        {fs.status === 'running' && (
+                          <button
+                            onClick={() => stopMut.mutate(fs.id)}
+                            disabled={stopMut.isPending}
+                            style={actionBtn('#3d1a00', '#fb923c')}
+                          >
+                            ■
+                          </button>
+                        )}
+
+                        {/* Существующий inline delete */}
                         {isConfirming ? (
                           <>
                             <button

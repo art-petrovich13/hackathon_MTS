@@ -12,7 +12,7 @@ import s from '../../shared.module.css'
 // Тот же project_id что в CreateVMPage
 const DEFAULT_PROJECT_ID = '9d320322-31f5-48d5-ade8-43f1b03b5b59'
 
-const ACTIVE_STATUSES = new Set(['pending', 'creating'])
+const ACTIVE_STATUSES = new Set(['pending', 'creating', 'pending-start', 'pending-stop'])
 
 // ─── Главная страница ──────────────────────────────────────────────────────────
 

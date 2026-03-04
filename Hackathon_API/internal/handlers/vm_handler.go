@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 
+	"github.com/art-petrovich13/hackathon_MTS/internal/middleware"
 	"github.com/art-petrovich13/hackathon_MTS/internal/models"
 	"github.com/art-petrovich13/hackathon_MTS/internal/services"
 )
@@ -29,6 +30,11 @@ func (h *VMHandler) Create(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		respondError(w, http.StatusBadRequest, "Invalid request body")
 		return
+	}
+	// Принудительно подставляем project_id из токена (user не может указать чужой проект)
+	claims := middleware.ClaimsFromContext(r.Context())
+	if claims != nil && claims.Role != "admin" {
+		req.ProjectID = claims.ProjectID
 	}
 
 	// Простейшая валидация
@@ -55,8 +61,12 @@ func (h *VMHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 // List возвращает все VM
 func (h *VMHandler) List(w http.ResponseWriter, r *http.Request) {
-	// TODO: получать project_id из контекста после аутентификации
-	vms, err := h.service.ListVMs(r.Context(), uuid.Nil)
+	claims := middleware.ClaimsFromContext(r.Context())
+	var projectID uuid.UUID // uuid.Nil = admin видит всё
+	if claims != nil && claims.Role != "admin" {
+		projectID = claims.ProjectID
+	}
+	vms, err := h.service.ListVMs(r.Context(), projectID)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "Failed to fetch VMs")
 		return

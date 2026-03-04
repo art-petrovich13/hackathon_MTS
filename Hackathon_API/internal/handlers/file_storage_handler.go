@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 
+	"github.com/art-petrovich13/hackathon_MTS/internal/middleware"
 	"github.com/art-petrovich13/hackathon_MTS/internal/models"
 	"github.com/art-petrovich13/hackathon_MTS/internal/repository"
 	"github.com/art-petrovich13/hackathon_MTS/internal/utils"
@@ -34,6 +35,10 @@ func (h *FileStorageHandler) Create(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		respondError(w, http.StatusBadRequest, "Invalid request body")
 		return
+	}
+	claims := middleware.ClaimsFromContext(r.Context())
+	if claims != nil && claims.Role != "admin" {
+		req.ProjectID = claims.ProjectID
 	}
 	if req.Name == "" {
 		respondError(w, http.StatusBadRequest, "name is required")
@@ -67,6 +72,7 @@ func (h *FileStorageHandler) Create(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusInternalServerError, "Failed to start transaction")
 		return
 	}
+
 	defer tx.Rollback() //nolint:errcheck
 
 	if err := h.fsRepo.Create(r.Context(), tx, record); err != nil {
@@ -84,7 +90,12 @@ func (h *FileStorageHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 // List — GET /api/v1/file-storages
 func (h *FileStorageHandler) List(w http.ResponseWriter, r *http.Request) {
-	storages, err := h.fsRepo.List(r.Context(), uuid.Nil)
+	claims := middleware.ClaimsFromContext(r.Context())
+	var projectID uuid.UUID
+	if claims != nil && claims.Role != "admin" {
+		projectID = claims.ProjectID
+	}
+	storages, err := h.fsRepo.List(r.Context(), projectID)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "Failed to fetch file storages")
 		return

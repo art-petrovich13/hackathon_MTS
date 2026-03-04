@@ -46,3 +46,15 @@ func (r *ProjectRepository) ListByUser(ctx context.Context, userID uuid.UUID) ([
 	err := r.db.SelectContext(ctx, &projects, query, userID)
 	return projects, err
 }
+
+// GetByUserID возвращает первый (default) проект пользователя.
+// Возвращает (nil, nil) если проекта нет.
+func (r *ProjectRepository) GetByUserID(ctx context.Context, userID uuid.UUID) (*models.Project, error) {
+	var p models.Project
+	err := r.db.GetContext(ctx, &p,
+		`SELECT id, name, user_id, created_at FROM projects WHERE user_id = $1 LIMIT 1`, userID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
+	}
+	return &p, err
+}

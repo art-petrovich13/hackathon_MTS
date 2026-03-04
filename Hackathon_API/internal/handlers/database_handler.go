@@ -12,7 +12,10 @@ import (
 	"github.com/art-petrovich13/hackathon_MTS/internal/models"
 	"github.com/art-petrovich13/hackathon_MTS/internal/repository"
 
+	"github.com/art-petrovich13/hackathon_MTS/internal/middleware"
+
 	"log/slog"
+
 	dbcompute "github.com/art-petrovich13/hackathon_MTS/internal/compute/db"
 	"github.com/art-petrovich13/hackathon_MTS/internal/utils"
 )
@@ -28,7 +31,7 @@ func NewDatabaseHandler(
 	dbRepo *repository.ManagedDatabaseRepository,
 	flavorRepo *repository.FlavorRepository,
 	db *sqlx.DB,
-	dbDriver *dbcompute.DatabaseDriver, 
+	dbDriver *dbcompute.DatabaseDriver,
 ) *DatabaseHandler {
 	return &DatabaseHandler{dbRepo: dbRepo, flavorRepo: flavorRepo, db: db, dbDriver: dbDriver}
 }
@@ -116,9 +119,12 @@ func (h *DatabaseHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 // List обрабатывает GET /api/v1/databases
 func (h *DatabaseHandler) List(w http.ResponseWriter, r *http.Request) {
-	// TODO (День 18): получать projectID из JWT-контекста.
-	// Пока передаём uuid.Nil → возвращаются все записи (admin-режим).
-	dbs, err := h.dbRepo.List(r.Context(), uuid.Nil)
+	claims := middleware.ClaimsFromContext(r.Context())
+	var projectID uuid.UUID
+	if claims != nil && claims.Role != "admin" {
+		projectID = claims.ProjectID
+	}
+	dbs, err := h.dbRepo.List(r.Context(), projectID)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "Failed to fetch databases")
 		return

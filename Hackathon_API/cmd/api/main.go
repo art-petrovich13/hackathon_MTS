@@ -18,6 +18,7 @@ import (
 	objectcompute "github.com/art-petrovich13/hackathon_MTS/internal/compute/object"
 	"github.com/art-petrovich13/hackathon_MTS/internal/config"
 	"github.com/art-petrovich13/hackathon_MTS/internal/handlers"
+	authmw "github.com/art-petrovich13/hackathon_MTS/internal/middleware" // ← добавить
 	"github.com/art-petrovich13/hackathon_MTS/internal/repository"
 	"github.com/art-petrovich13/hackathon_MTS/internal/services"
 	"github.com/art-petrovich13/hackathon_MTS/internal/worker"
@@ -46,6 +47,9 @@ func main() {
 	osRepo := repository.NewObjectStorageRepository(db) // было: _ = repository.NewObjectStorageRepository(db)
 	fsRepo := repository.NewFileStorageRepository(db)   // было: _ = repository.NewFileStorageRepository(db)
 	mobileRepo := repository.NewMobileDeviceRepository(db)
+	userRepo := repository.NewUserRepository(db)
+	projectRepo := repository.NewProjectRepository(db)
+	limitRepo := repository.NewProjectLimitRepository(db)
 
 	// ── Compute Driver (для VM) ──────────────────────────────────────────────
 	computeDriver, err := dockerdriver.NewDockerDriver()
@@ -127,6 +131,8 @@ func main() {
 	osHandler := handlers.NewObjectStorageHandler(osRepo, flavorRepo, db, minioDriver)
 	fsHandler := handlers.NewFileStorageHandler(fsRepo, flavorRepo, db)
 	mobileHandler := handlers.NewMobileHandler(mobileRepo, flavorRepo, db, mobileDriver)
+	authHandler := handlers.NewAuthHandler(userRepo, projectRepo)
+	userHandler := handlers.NewUserHandler(userRepo, projectRepo, limitRepo)
 
 	// ── Роутер ──────────────────────────────────────────────────────────────
 	r := chi.NewRouter()
@@ -137,7 +143,21 @@ func main() {
 
 	r.Get("/health", healthHandler.Check)
 
+	r.Post("/api/v1/auth/login", authHandler.Login)
+	r.Post("/api/v1/auth/register", authHandler.Register)
+
 	r.Route("/api/v1", func(r chi.Router) {
+		r.Use(authmw.Authenticate)
+		r.Get("/auth/me", authHandler.Me)
+		r.Group(func(r chi.Router) {
+			r.Use(authmw.RequireAdmin)
+			r.Get("/users", userHandler.ListUsers)
+			r.Post("/users", userHandler.CreateUser)
+			r.Get("/users/{id}", userHandler.GetUser)
+			r.Delete("/users/{id}", userHandler.DeleteUser)
+			r.Put("/users/{id}/limits", userHandler.SetLimits)
+		})
+
 		r.Get("/flavors", flavorHandler.List)
 		r.Get("/images", imageHandler.List)
 		r.Get("/nodes", nodeHandler.List)

@@ -10,6 +10,7 @@ import (
 	"github.com/jmoiron/sqlx"
 
 	objectcompute "github.com/art-petrovich13/hackathon_MTS/internal/compute/object"
+	"github.com/art-petrovich13/hackathon_MTS/internal/middleware"
 	"github.com/art-petrovich13/hackathon_MTS/internal/models"
 	"github.com/art-petrovich13/hackathon_MTS/internal/repository"
 	"github.com/art-petrovich13/hackathon_MTS/internal/utils"
@@ -37,6 +38,10 @@ func (h *ObjectStorageHandler) Create(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		respondError(w, http.StatusBadRequest, "Invalid request body")
 		return
+	}
+	claims := middleware.ClaimsFromContext(r.Context())
+	if claims != nil && claims.Role != "admin" {
+		req.ProjectID = claims.ProjectID
 	}
 	if req.Name == "" {
 		respondError(w, http.StatusBadRequest, "name is required")
@@ -95,7 +100,12 @@ func (h *ObjectStorageHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 // List — GET /api/v1/object-storages
 func (h *ObjectStorageHandler) List(w http.ResponseWriter, r *http.Request) {
-	storages, err := h.osRepo.List(r.Context(), uuid.Nil)
+	claims := middleware.ClaimsFromContext(r.Context())
+	var projectID uuid.UUID // uuid.Nil → admin видит всё
+	if claims != nil && claims.Role != "admin" {
+		projectID = claims.ProjectID
+	}
+	storages, err := h.osRepo.List(r.Context(), projectID)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "Failed to fetch object storages")
 		return

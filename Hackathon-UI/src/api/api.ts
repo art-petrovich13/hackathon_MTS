@@ -10,7 +10,7 @@ import type {
   ObjectStorage, CreateObjectStorageRequest,
   FileStorage, CreateFileStorageRequest,
   MobileDevice, CreateMobileDeviceRequest,
-  LoginRequest, LoginResponse, UserWithProject, ProjectLimit,
+  LoginRequest, LoginResponse, UserWithProject, ProjectLimit, AgentPlan, SSEEvent,
 } from '../types/api'
 
 import type { AuthUser } from '../types/api'
@@ -256,4 +256,61 @@ export const setUserLimits = async (
 ): Promise<ProjectLimit> => {
   const { data } = await client.put<ProjectLimit>(`/users/${userId}/limits`, limits)
   return data
+}
+
+export async function agentChat(message: string): Promise<ReadableStreamDefaultReader<Uint8Array>> {
+  const token = sessionStorage.getItem('auth_token')
+  const response = await fetch('/api/v1/agent/chat', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({ message }),
+  })
+  if (!response.ok || !response.body) {
+    throw new Error(`Agent unavailable: ${response.status}`)
+  }
+  return response.body.getReader()
+}
+
+export async function agentExecute(plan: AgentPlan): Promise<ReadableStreamDefaultReader<Uint8Array>> {
+  const token = sessionStorage.getItem('auth_token')
+  const response = await fetch('/api/v1/agent/execute', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({ plan }),
+  })
+  if (!response.ok || !response.body) {
+    throw new Error(`Deploy failed: ${response.status}`)
+  }
+  return response.body.getReader()
+}
+
+// readSSEStream — читает SSE-стрим и вызывает onEvent на каждое событие.
+// Используется и в AgentChat, и в DeployTimeline.
+export async function readSSEStream(
+  reader: ReadableStreamDefaultReader<Uint8Array>,
+  onEvent: (event: SSEEvent) => void,
+): Promise<void> {
+  const decoder = new TextDecoder()
+  let buffer = ''
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+    buffer += decoder.decode(value, { stream: true })
+    const lines = buffer.split('\n')
+    buffer = lines.pop() ?? ''
+    for (const line of lines) {
+      if (!line.startsWith('data: ')) continue
+      try {
+        onEvent(JSON.parse(line.slice(6)) as SSEEvent)
+      } catch {
+        // ignore malformed line
+      }
+    }
+  }
 }

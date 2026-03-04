@@ -5,6 +5,7 @@ import { UserLayout } from '../layouts/UserLayout'
 import { LoginPage } from '../pages/LoginPage'
 import { NotFoundPage } from '../pages/NotFoundPage/NotFoundPage'
 import { ScreenPage } from '../pages/user/screen/ScreenPage'
+import { AgentPage } from '../pages/user/agent/AgentPage'
 
 // ── Admin страницы ─────────────────────────────────────────────────────────────
 import { AdminVMsPage } from '../pages/admin/vms/AdminVMsPage'
@@ -77,6 +78,7 @@ export function AppRoutes() {
     <Route path="snapshots"       element={<UserSnapshotsPage />} />
     <Route path="recommendations" element={<UserRecommendationsPage />} />
     <Route path="settings"        element={<UserSettingsPage />} />
+   <Route path="agent" element={<AgentPage />} />
   </Route>
 </Route>
 

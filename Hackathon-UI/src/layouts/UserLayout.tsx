@@ -1,9 +1,12 @@
+// src/layouts/UserLayout.tsx
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Monitor, Database,
   HardDrive, Smartphone, Camera, Settings, LogOut,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { useTheme } from '../context/ThemeContext'
+import styles from './Layout.module.css'
 
 const NAV = [
   { to: '/dashboard',  label: 'Dashboard',   Icon: LayoutDashboard },
@@ -17,6 +20,7 @@ const NAV = [
 
 export function UserLayout() {
   const { user, logout } = useAuth()
+  const { theme, toggle } = useTheme()
   const navigate = useNavigate()
 
   const handleLogout = () => {
@@ -25,89 +29,83 @@ export function UserLayout() {
   }
 
   return (
-    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
-      <aside style={{
-        width: 220, flexShrink: 0,
-        background: 'var(--color-surface, #1e293b)',
-        borderRight: '1px solid var(--color-border, #334155)',
-        display: 'flex', flexDirection: 'column',
-      }}>
-        {/* Шапка сайдбара */}
-        <div style={{ padding: '18px 16px 14px', borderBottom: '1px solid var(--color-border, #334155)' }}>
-          <div style={{ fontWeight: 800, fontSize: 18, letterSpacing: '-0.03em' }}>
-            ⬡ IaaS<em>Panel</em>
-          </div>
-          <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>User Console</div>
+    <div className={styles.shell}>
+      {/* ── Сайдбар ───────────────────────────────────────────────── */}
+      <aside className={styles.sidebar}>
+        <div className={styles.logo}>
+          <span className={styles.logoMark}>⬡</span>
+          <span className={styles.logoText}>MTS<em>Cloud</em></span>
         </div>
 
-        {/* Навигация */}
-        <nav style={{ flex: 1, padding: '10px 8px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {NAV.map(({ to, label, Icon }) => (
-            <NavLink
-              key={to}
-              to={to}
-              style={({ isActive }) => ({
-                display: 'flex', alignItems: 'center', gap: 9,
-                padding: '8px 12px', borderRadius: 8,
-                textDecoration: 'none', fontSize: 14,
-                fontWeight: isActive ? 600 : 400,
-                color: isActive ? '#f1f5f9' : '#94a3b8',
-                background: isActive ? 'rgba(99,102,241,0.15)' : 'transparent',
-              })}
-            >
-              <Icon size={15} />
-              <span>{label}</span>
-            </NavLink>
-          ))}
+        <nav className={styles.nav}>
+          <div className={styles.navSection}>
+            <span className={styles.navSectionLabel}>User Console</span>
+            {NAV.map(({ to, label, Icon }) => (
+              <NavLink
+                key={to}
+                to={to}
+                className={({ isActive }) =>
+                  `${styles.navItem} ${isActive ? styles.navItemActive : ''}`
+                }
+              >
+                <Icon size={15} />
+                <span>{label}</span>
+              </NavLink>
+            ))}
+          </div>
         </nav>
 
-        {/* Профиль + кнопка выхода */}
-        <div style={{ padding: '10px 16px', borderTop: '1px solid var(--color-border, #334155)' }}>
-          {/* Email пользователя */}
-          <div style={{
-            fontSize: 12, color: '#64748b', marginBottom: 8,
-            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-          }}>
-            {user?.email ?? '—'}
-          </div>
-          {/* Кнопка выхода */}
-          <button
-            onClick={handleLogout}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              width: '100%', padding: '7px 12px', borderRadius: 8,
-              border: '1px solid rgba(248,113,113,0.2)',
-              background: 'rgba(248,113,113,0.06)',
-              color: '#f87171', cursor: 'pointer', fontSize: 13,
-            }}
-          >
-            <LogOut size={13} />
-            <span>Выйти</span>
-          </button>
+        <div className={styles.sidebarFooter}>
+          <span className={styles.version}>v0.1.0-alpha</span>
         </div>
       </aside>
 
-      {/* Основная область */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <header style={{
-          height: 50, flexShrink: 0,
-          background: 'var(--color-surface, #1e293b)',
-          borderBottom: '1px solid var(--color-border, #334155)',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '0 24px',
-        }}>
-          <span style={{ fontSize: 13, color: '#94a3b8' }}>
-            Проект: <strong style={{ color: '#f1f5f9' }}>default</strong>
-          </span>
-          <span style={{ fontSize: 12, color: '#475569' }}>
-            {user?.role === 'admin' ? '🔑 Admin' : '👤 User'}
-          </span>
+      {/* ── Основная область ────────────────────────────────────────── */}
+      <main className={styles.main}>
+        <header className={styles.topbar}>
+          <div className={styles.topbarLeft}>
+            <span style={{ fontSize: 13, color: 'var(--text-sec)' }}>
+              Проект: <strong style={{ color: 'var(--text-pri)' }}>default</strong>
+            </span>
+          </div>
+          <div className={styles.topbarRight}>
+            {user && (
+              <span style={{
+                fontSize: 12, color: 'var(--text-dim)',
+                maxWidth: 180, overflow: 'hidden',
+                textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              }}>
+                👤 {user.email}
+              </span>
+            )}
+            <button
+              onClick={handleLogout}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                fontSize: 12, padding: '4px 12px', borderRadius: 6,
+                border: '1px solid rgba(198,46,38,0.3)',
+                background: 'rgba(198,46,38,0.06)',
+                cursor: 'pointer', color: 'var(--red-primary)',
+              }}
+            >
+              <LogOut size={12} />
+              <span>Выйти</span>
+            </button>
+            <button
+              className={styles.themeToggle}
+              onClick={toggle}
+              title={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+              aria-label="Toggle theme"
+            >
+              {theme === 'dark' ? '☀' : '☾'}
+            </button>
+          </div>
         </header>
 
-        <main style={{ flex: 1, overflow: 'auto', padding: 24 }}>
+        <div className={styles.content}>
           <Outlet />
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
   )
 }

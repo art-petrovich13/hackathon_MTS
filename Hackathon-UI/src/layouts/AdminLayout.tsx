@@ -3,7 +3,7 @@ import { Outlet, NavLink } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useTheme } from '../context/ThemeContext'
 import { getHealth } from '../api/api'
-import styles from './AdminLayout.module.css'
+import styles from './Layout.module.css'
 import {
   Monitor, Server, Database, HardDrive, Smartphone,
   Users, LayoutGrid, BarChart2, TrendingUp, Camera, Image,
@@ -75,7 +75,7 @@ export function AdminLayout() {
       <aside className={styles.sidebar}>
         <div className={styles.logo}>
           <span className={styles.logoMark}>⬡</span>
-          <span className={styles.logoText}>IaaS<em>Panel</em></span>
+          <span className={styles.logoText}>MTS<em>Cloud</em></span>
         </div>
 
         <nav className={styles.nav}>

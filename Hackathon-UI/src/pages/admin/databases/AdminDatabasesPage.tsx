@@ -8,6 +8,10 @@ import { StatusBadge } from '../../../components/ui/StatusBadge'
 import { EngineBadge } from '../../../components/ui/EngineBadge'
 import { CredentialsModal, type CredField } from '../../../components/ui/CredentialsModal'
 
+import { UserFilter } from '../../../components/ui/UserFilter'
+import { getUsers } from '../../../api/api'
+import type { UserWithProject } from '../../../types/api'
+
 import s from './AdminDatabasesStyle.module.css'
 
 // Тот же project_id что в CreateVMPage
@@ -22,16 +26,22 @@ export function AdminDatabasesPage() {
   const [showCreate, setShowCreate] = useState(false)
   const [credsFor, setCredsFor] = useState<ManagedDatabase | null>(null)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
 
   const { data: dbs = [], isLoading, isError } = useQuery({
-    queryKey: ['databases'],
-    queryFn: getDatabases,
-    // Авто-рефреш: 3s если есть pending/creating, иначе 10s
+    queryKey: ['databases', selectedUserId],
+    queryFn: () => getDatabases(selectedUserId),
     refetchInterval: (query) => {
       const data = query.state.data as ManagedDatabase[] | undefined
       if (!data) return 5_000
       return data.some(d => ACTIVE_STATUSES.has(d.status)) ? 3_000 : 10_000
     },
+  })
+
+  const { data: users = [] } = useQuery({
+    queryKey: ['users'],
+    queryFn: getUsers,
+    staleTime: 60_000,
   })
 
   const deleteMut = useMutation({
@@ -84,6 +94,8 @@ export function AdminDatabasesPage() {
         </div>
       </div>
 
+      <UserFilter selectedUserId={selectedUserId} onChange={setSelectedUserId} />
+
       {/* ── Загрузка / ошибка ─────────────────────────────────────────────── */}
       {isLoading && (
         <div className={s.stateBox}>
@@ -91,9 +103,9 @@ export function AdminDatabasesPage() {
         </div>
       )}
       {isError && (
-          <div className={s.stateBox}>
-            <p className={s.stateTextErr}>Failed to load databases.</p>
-          </div>
+        <div className={s.stateBox}>
+          <p className={s.stateTextErr}>Failed to load databases.</p>
+        </div>
       )}
 
       {/* ── Пустое состояние ──────────────────────────────────────────────── */}
@@ -110,6 +122,7 @@ export function AdminDatabasesPage() {
             <thead>
               <tr>
                 <th>Name</th>
+                <th>Пользователь</th>
                 <th>Engine</th>
                 <th>Status</th>
                 <th>Host : Port</th>
@@ -122,9 +135,13 @@ export function AdminDatabasesPage() {
               {dbs.map(db => {
                 const isActive = ACTIVE_STATUSES.has(db.status)
                 const isConfirming = confirmDeleteId === db.id
+                const owner = users.find(u => u.project?.id === db.project_id)
 
                 return (
                   <tr key={db.id}>
+                    <td style={{ fontSize: 11, color: '#94a3b8' }}>
+                      {owner ? owner.email.split('@')[0] : '—'}
+                    </td>
                     <td className={s.cellBold}>{db.name}</td>
                     <td><EngineBadge engine={db.engine} /></td>
                     <td><StatusBadge status={db.status} /></td>
@@ -218,14 +235,14 @@ type EngineOption = { engine: DBEngine; label: string; icon: string; desc: strin
 
 const ENGINE_OPTIONS: EngineOption[] = [
   { engine: 'postgres', label: 'PostgreSQL', icon: '🐘', desc: 'Реляционная БД' },
-  { engine: 'mysql',    label: 'MySQL',      icon: '🐬', desc: 'Реляционная БД' },
-  { engine: 'redis',    label: 'Redis',      icon: '⚡', desc: 'Кэш / брокер' },
+  { engine: 'mysql', label: 'MySQL', icon: '🐬', desc: 'Реляционная БД' },
+  { engine: 'redis', label: 'Redis', icon: '⚡', desc: 'Кэш / брокер' },
 ]
 
 const ENGINE_SERVICE_TYPE: Record<DBEngine, string> = {
   postgres: 'db_postgres',
-  mysql:    'db_mysql',
-  redis:    'db_redis',
+  mysql: 'db_mysql',
+  redis: 'db_redis',
 }
 
 function CreateDatabaseModal({ onClose, onCreated }: CreateDBModalProps) {
@@ -264,121 +281,121 @@ function CreateDatabaseModal({ onClose, onCreated }: CreateDBModalProps) {
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
     setError('')
-    if (!name.trim())   return setError('Введите имя сервиса')
-    if (!flavorId)      return setError('Выберите конфигурацию')
+    if (!name.trim()) return setError('Введите имя сервиса')
+    if (!flavorId) return setError('Выберите конфигурацию')
     if (!dbName.trim()) return setError('Введите имя базы данных')
 
     mutation.mutate({
-      name:       name.trim(),
+      name: name.trim(),
       project_id: DEFAULT_PROJECT_ID,
-      flavor_id:  flavorId,
+      flavor_id: flavorId,
       engine,
-      db_name:    dbName.trim(),
+      db_name: dbName.trim(),
     })
   }
 
-return (
-  <div className={s.modalOverlay} onClick={onClose}>
-    <div className={s.modalContent} onClick={e => e.stopPropagation()}>
-      <h2 className={s.modalTitle}>🗄️ Create Database</h2>
+  return (
+    <div className={s.modalOverlay} onClick={onClose}>
+      <div className={s.modalContent} onClick={e => e.stopPropagation()}>
+        <h2 className={s.modalTitle}>🗄️ Create Database</h2>
 
-      <form className={s.modalForm} onSubmit={handleSubmit}>
-        <div className={s.formGroup}>
-          <label className={s.label}>Имя сервиса</label>
-          <input
-            className={s.input}
-            value={name}
-            onChange={e => setName(e.target.value)}
-            placeholder="e.g. production-db"
-            autoFocus
-          />
-        </div>
-
-        <div className={s.formGroup}>
-          <label className={s.label}>Движок</label>
-          <div className={s.engineGrid}>
-            {ENGINE_OPTIONS.map(opt => (
-              <button
-                key={opt.engine}
-                type="button"
-                className={`${s.engineButton} ${engine === opt.engine ? s.engineButtonSelected : ''}`}
-                onClick={() => handleEngineChange(opt.engine)}
-              >
-                <div className={s.engineIcon}>{opt.icon}</div>
-                <div className={s.engineLabel}>{opt.label}</div>
-                <div className={s.engineDesc}>{opt.desc}</div>
-              </button>
-            ))}
+        <form className={s.modalForm} onSubmit={handleSubmit}>
+          <div className={s.formGroup}>
+            <label className={s.label}>Имя сервиса</label>
+            <input
+              className={s.input}
+              value={name}
+              onChange={e => setName(e.target.value)}
+              placeholder="e.g. production-db"
+              autoFocus
+            />
           </div>
-        </div>
 
-        <div className={s.formGroup}>
-          <label className={s.label}>Конфигурация</label>
-          {loadFlavors ? (
-            <p className={s.loadingText}>Загрузка...</p>
-          ) : flavors.length === 0 ? (
-            <p className={s.errorText}>Нет доступных конфигураций для {engine}</p>
-          ) : (
-            <div className={s.flavorList}>
-              {flavors.map(f => {
-                const ram = f.ram_mb >= 1024 ? `${f.ram_mb / 1024} GB` : `${f.ram_mb} MB`
-                const selected = flavorId === f.id
-                return (
-                  <button
-                    key={f.id}
-                    type="button"
-                    className={`${s.flavorButton} ${selected ? s.flavorButtonSelected : ''}`}
-                    onClick={() => setFlavorId(f.id)}
-                  >
-                    <span className={s.flavorName}>{f.name}</span>
-                    <span className={s.flavorSpecs}>
-                      {f.cpu} vCPU · {ram} · {f.disk_gb} GB
-                    </span>
-                    {selected && <span className={s.flavorCheck}>✓</span>}
-                  </button>
-                )
-              })}
+          <div className={s.formGroup}>
+            <label className={s.label}>Движок</label>
+            <div className={s.engineGrid}>
+              {ENGINE_OPTIONS.map(opt => (
+                <button
+                  key={opt.engine}
+                  type="button"
+                  className={`${s.engineButton} ${engine === opt.engine ? s.engineButtonSelected : ''}`}
+                  onClick={() => handleEngineChange(opt.engine)}
+                >
+                  <div className={s.engineIcon}>{opt.icon}</div>
+                  <div className={s.engineLabel}>{opt.label}</div>
+                  <div className={s.engineDesc}>{opt.desc}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className={s.formGroup}>
+            <label className={s.label}>Конфигурация</label>
+            {loadFlavors ? (
+              <p className={s.loadingText}>Загрузка...</p>
+            ) : flavors.length === 0 ? (
+              <p className={s.errorText}>Нет доступных конфигураций для {engine}</p>
+            ) : (
+              <div className={s.flavorList}>
+                {flavors.map(f => {
+                  const ram = f.ram_mb >= 1024 ? `${f.ram_mb / 1024} GB` : `${f.ram_mb} MB`
+                  const selected = flavorId === f.id
+                  return (
+                    <button
+                      key={f.id}
+                      type="button"
+                      className={`${s.flavorButton} ${selected ? s.flavorButtonSelected : ''}`}
+                      onClick={() => setFlavorId(f.id)}
+                    >
+                      <span className={s.flavorName}>{f.name}</span>
+                      <span className={s.flavorSpecs}>
+                        {f.cpu} vCPU · {ram} · {f.disk_gb} GB
+                      </span>
+                      {selected && <span className={s.flavorCheck}>✓</span>}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
+          <div className={s.formGroup}>
+            <label className={s.label}>Имя базы данных</label>
+            <input
+              className={s.input}
+              value={dbName}
+              onChange={e => setDbName(e.target.value)}
+              placeholder="e.g. myapp_db"
+            />
+            <p className={s.hintText}>
+              Имя БД внутри контейнера. Credentials генерируются автоматически.
+            </p>
+          </div>
+
+          {error && (
+            <div className={s.errorBox}>
+              ⚠ {error}
             </div>
           )}
-        </div>
 
-        <div className={s.formGroup}>
-          <label className={s.label}>Имя базы данных</label>
-          <input
-            className={s.input}
-            value={dbName}
-            onChange={e => setDbName(e.target.value)}
-            placeholder="e.g. myapp_db"
-          />
-          <p className={s.hintText}>
-            Имя БД внутри контейнера. Credentials генерируются автоматически.
-          </p>
-        </div>
-
-        {error && (
-          <div className={s.errorBox}>
-            ⚠ {error}
+          <div className={s.buttonGroup}>
+            <button
+              type="button"
+              className={s.buttonSecondary}
+              onClick={onClose}
+            >
+              Отмена
+            </button>
+            <button
+              type="submit"
+              className={s.buttonPrimary}
+              disabled={mutation.isPending}
+            >
+              {mutation.isPending ? 'Создаём...' : 'Создать →'}
+            </button>
           </div>
-        )}
-
-        <div className={s.buttonGroup}>
-          <button
-            type="button"
-            className={s.buttonSecondary}
-            onClick={onClose}
-          >
-            Отмена
-          </button>
-          <button
-            type="submit"
-            className={s.buttonPrimary}
-            disabled={mutation.isPending}
-          >
-            {mutation.isPending ? 'Создаём...' : 'Создать →'}
-          </button>
-        </div>
-      </form>
+        </form>
+      </div>
     </div>
-  </div>
-)
+  )
 }

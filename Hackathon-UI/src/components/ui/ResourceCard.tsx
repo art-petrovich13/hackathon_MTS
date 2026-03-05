@@ -5,7 +5,7 @@ interface Props {
   icon: string
   title: string
   subtitle?: string
-  status: string
+  status: string | ReactNode
   details?: ReactNode
   actions?: ReactNode
 }
@@ -31,7 +31,7 @@ export function ResourceCard({ icon, title, subtitle, status, details, actions }
             <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>{subtitle}</div>
           )}
         </div>
-        <StatusBadge status={status} />
+        {typeof status === 'string' ? <StatusBadge status={status} /> : status}
       </div>
 
       {details && (

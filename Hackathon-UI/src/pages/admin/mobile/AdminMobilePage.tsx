@@ -10,6 +10,9 @@ import {
 import type { MobileDevice, Flavor } from '../../../types/api'
 import { StatusBadge } from '../../../components/ui/StatusBadge'
 import s from '../../shared.module.css'
+import { UserFilter } from '../../../components/ui/UserFilter'
+import { getUsers } from '../../../api/api'
+import type { UserWithProject } from '../../../types/api'
 
 // Добавить к существующим импортам:
 import { VncViewer } from '../../../components/ui/VncViewer'
@@ -28,14 +31,21 @@ export function AdminMobilePage() {
   const [showCreate, setShowCreate] = useState(false)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const [viewScreen, setViewScreen] = useState<MobileDevice | null>(null)
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
 
   const { data: devices = [], isLoading, isError } = useQuery<MobileDevice[]>({
-    queryKey: ['mobile-devices'],
-    queryFn: getMobileDevices,
+    queryKey: ['mobile-devices', selectedUserId],
+    queryFn: () => getMobileDevices(selectedUserId),
     refetchInterval: (query) => {
       const data = query.state.data as MobileDevice[] | undefined
       return data?.some(d => TRANSITIONAL.has(d.status)) ? 3_000 : 15_000
     },
+  })
+
+  const { data: users = [] } = useQuery({
+    queryKey: ['users'],
+    queryFn: getUsers,
+    staleTime: 60_000,
   })
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ['mobile-devices'] })
@@ -78,6 +88,8 @@ export function AdminMobilePage() {
           + New Device
         </button>
       </div>
+
+      <UserFilter selectedUserId={selectedUserId} onChange={setSelectedUserId} />
 
       {/* ── Предупреждение о требованиях ──────────────────────────────────── */}
       <div style={{
@@ -124,6 +136,7 @@ export function AdminMobilePage() {
             <thead>
               <tr>
                 <th>Name</th>
+                <th>Пользователь</th>
                 <th>OS</th>
                 <th>Status</th>
                 <th>noVNC</th>
@@ -140,10 +153,14 @@ export function AdminMobilePage() {
                   ? `adb connect ${dev.adb_host}:${dev.adb_port}`
                   : null
                 const isConfirming = confirmDeleteId === dev.id
+                const owner = users.find(u => u.project?.id === dev.project_id)
 
                 return (
                   <tr key={dev.id}>
                     <td className={s.cellBold}>{dev.name}</td>
+                    <td style={{ fontSize: 11, color: '#94a3b8' }}>
+                      {owner ? owner.email.split('@')[0] : '—'}
+                    </td>
                     <td>
                       <span style={{
                         padding: '2px 8px', borderRadius: 6, fontSize: 11, fontWeight: 700,

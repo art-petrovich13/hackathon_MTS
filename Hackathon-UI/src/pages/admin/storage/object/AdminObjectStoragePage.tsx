@@ -10,6 +10,11 @@ import type { ObjectStorage, Flavor } from '../../../../types/api'
 import { StatusBadge } from '../../../../components/ui/StatusBadge'
 import { CredentialsModal, type CredField } from '../../../../components/ui/CredentialsModal'
 import s from '../../../shared.module.css'
+import { UserFilter } from '../../../../components/ui/UserFilter'
+import { getUsers } from '../../../../api/api'
+import type { UserWithProject } from '../../../../types/api'
+
+
 
 // Тот же project_id что в CreateVMPage и AdminDatabasesPage
 const DEFAULT_PROJECT_ID = '9d320322-31f5-48d5-ade8-43f1b03b5b59'
@@ -20,18 +25,25 @@ const ACTIVE_STATUSES = new Set(['pending', 'creating', 'pending-start', 'pendin
 
 export function AdminObjectStoragePage() {
   const qc = useQueryClient()
-  const [showCreate, setShowCreate]     = useState(false)
-  const [credsFor, setCredsFor]         = useState<ObjectStorage | null>(null)
+  const [showCreate, setShowCreate] = useState(false)
+  const [credsFor, setCredsFor] = useState<ObjectStorage | null>(null)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
 
   const { data: storages = [], isLoading, isError } = useQuery<ObjectStorage[]>({
-    queryKey: ['object-storages'],
-    queryFn: getObjectStorages,
+    queryKey: ['object-storages', selectedUserId],
+    queryFn: () => getObjectStorages(selectedUserId),
     refetchInterval: (query) => {
       const data = query.state.data as ObjectStorage[] | undefined
       if (!data) return 5_000
       return data.some(s => ACTIVE_STATUSES.has(s.status)) ? 3_000 : 15_000
     },
+  })
+
+  const { data: users = [] } = useQuery({
+    queryKey: ['users'],
+    queryFn: getUsers,
+    staleTime: 60_000,
   })
 
   const startMut = useMutation({
@@ -65,11 +77,11 @@ export function AdminObjectStoragePage() {
   // Собираем поля для CredentialsModal
   const buildCredFields = (os: ObjectStorage): CredField[] => {
     const fields: CredField[] = []
-    if (os.s3_endpoint)      fields.push({ label: 'S3 Endpoint',    value: os.s3_endpoint,      isLink: true })
-    if (os.console_endpoint) fields.push({ label: 'Console UI',     value: os.console_endpoint, isLink: true })
-    if (os.access_key)       fields.push({ label: 'Access Key',     value: os.access_key })
-    if (os.secret_key)       fields.push({ label: 'Secret Key',     value: os.secret_key,       secret: true })
-    if (os.bucket_name)      fields.push({ label: 'Default Bucket', value: os.bucket_name })
+    if (os.s3_endpoint) fields.push({ label: 'S3 Endpoint', value: os.s3_endpoint, isLink: true })
+    if (os.console_endpoint) fields.push({ label: 'Console UI', value: os.console_endpoint, isLink: true })
+    if (os.access_key) fields.push({ label: 'Access Key', value: os.access_key })
+    if (os.secret_key) fields.push({ label: 'Secret Key', value: os.secret_key, secret: true })
+    if (os.bucket_name) fields.push({ label: 'Default Bucket', value: os.bucket_name })
     // AWS CLI hint — только если есть все нужные поля
     if (os.s3_endpoint && os.access_key && os.secret_key) {
       fields.push({
@@ -99,6 +111,8 @@ export function AdminObjectStoragePage() {
           + New Storage
         </button>
       </div>
+
+      <UserFilter selectedUserId={selectedUserId} onChange={setSelectedUserId} />
 
       {/* ── Состояния ─────────────────────────────────────────────────────── */}
       {isLoading && (
@@ -135,6 +149,7 @@ export function AdminObjectStoragePage() {
             <thead>
               <tr>
                 <th>Name</th>
+                <th>Пользователь</th>   
                 <th>Status</th>
                 <th>S3 Endpoint</th>
                 <th>Bucket</th>
@@ -145,12 +160,16 @@ export function AdminObjectStoragePage() {
             </thead>
             <tbody>
               {storages.map(os => {
-                const isActive     = ACTIVE_STATUSES.has(os.status)
+                const isActive = ACTIVE_STATUSES.has(os.status)
                 const isConfirming = confirmDeleteId === os.id
+                const owner = users.find(u => u.project?.id === os.project_id)
 
                 return (
                   <tr key={os.id}>
                     <td className={s.cellBold}>{os.name}</td>
+                    <td style={{ fontSize: 11, color: '#94a3b8' }}>
+                      {owner ? owner.email.split('@')[0] : '—'}
+                    </td>
                     <td><StatusBadge status={os.status} /></td>
                     <td className={s.cellMono} style={{ fontSize: 11 }}>
                       {os.s3_endpoint
@@ -285,10 +304,10 @@ function CreateObjectStorageModal({
   onClose: () => void
   onCreated: () => void
 }) {
-  const [name, setName]           = useState('')
-  const [flavorId, setFlavorId]   = useState('')
+  const [name, setName] = useState('')
+  const [flavorId, setFlavorId] = useState('')
   const [bucketName, setBucketName] = useState('')
-  const [error, setError]         = useState('')
+  const [error, setError] = useState('')
 
   const { data: flavors = [], isLoading: loadFlavors } = useQuery<Flavor[]>({
     queryKey: ['flavors', 'object_storage'],
@@ -312,11 +331,11 @@ function CreateObjectStorageModal({
     e.preventDefault()
     setError('')
     if (!name.trim()) return setError('Введите имя хранилища')
-    if (!flavorId)    return setError('Выберите конфигурацию')
+    if (!flavorId) return setError('Выберите конфигурацию')
     mutation.mutate({
-      name:        name.trim(),
-      project_id:  DEFAULT_PROJECT_ID,
-      flavor_id:   flavorId,
+      name: name.trim(),
+      project_id: DEFAULT_PROJECT_ID,
+      flavor_id: flavorId,
       // Если bucket_name не заполнен — берём имя хранилища
       bucket_name: bucketName.trim() || name.trim(),
     })

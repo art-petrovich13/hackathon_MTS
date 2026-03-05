@@ -16,7 +16,7 @@ export function ScreenPage() {
 
   const { data: devices = [], isLoading } = useQuery<MobileDevice[]>({
     queryKey: ['mobile-devices'],
-    queryFn: getMobileDevices,
+    queryFn: () => getMobileDevices(),
     // Обновляем каждые 10 сек чтобы отловить изменение статуса
     refetchInterval: 10_000,
   })

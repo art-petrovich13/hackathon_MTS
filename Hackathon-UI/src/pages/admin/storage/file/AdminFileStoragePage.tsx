@@ -10,6 +10,10 @@ import type { FileStorage, Flavor } from '../../../../types/api'
 import { StatusBadge } from '../../../../components/ui/StatusBadge'
 import s from '../../../shared.module.css'
 
+import { UserFilter } from '../../../../components/ui/UserFilter'
+import { getUsers } from '../../../../api/api'
+import type { UserWithProject } from '../../../../types/api'
+
 const DEFAULT_PROJECT_ID = '9d320322-31f5-48d5-ade8-43f1b03b5b59'
 const ACTIVE_STATUSES = new Set(['pending', 'creating', 'pending-start', 'pending-stop'])
 
@@ -17,17 +21,25 @@ const ACTIVE_STATUSES = new Set(['pending', 'creating', 'pending-start', 'pendin
 
 export function AdminFileStoragePage() {
   const qc = useQueryClient()
-  const [showCreate, setShowCreate]           = useState(false)
+  const [showCreate, setShowCreate] = useState(false)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
+
 
   const { data: storages = [], isLoading, isError } = useQuery<FileStorage[]>({
-    queryKey: ['file-storages'],
-    queryFn: getFileStorages,
+    queryKey: ['file-storages', selectedUserId],
+    queryFn: () => getFileStorages(selectedUserId),
     refetchInterval: (query) => {
       const data = query.state.data as FileStorage[] | undefined
       if (!data) return 5_000
       return data.some(s => ACTIVE_STATUSES.has(s.status)) ? 3_000 : 15_000
     },
+  })
+
+  const { data: users = [] } = useQuery({
+    queryKey: ['users'],
+    queryFn: getUsers,
+    staleTime: 60_000,
   })
 
   const deleteMut = useMutation({
@@ -41,22 +53,22 @@ export function AdminFileStoragePage() {
   })
 
   const startMut = useMutation({
-  mutationFn: startFileStorage,
-  onSuccess: () => {
-    qc.invalidateQueries({ queryKey: ['file-storages'] })
-    toast.success('File Storage запускается...')
-  },
-  onError: () => toast.error('Ошибка запуска'),
-})
+    mutationFn: startFileStorage,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['file-storages'] })
+      toast.success('File Storage запускается...')
+    },
+    onError: () => toast.error('Ошибка запуска'),
+  })
 
-const stopMut = useMutation({
-  mutationFn: stopFileStorage,
-  onSuccess: () => {
-    qc.invalidateQueries({ queryKey: ['file-storages'] })
-    toast.success('File Storage останавливается...')
-  },
-  onError: () => toast.error('Ошибка остановки'),
-})
+  const stopMut = useMutation({
+    mutationFn: stopFileStorage,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['file-storages'] })
+      toast.success('File Storage останавливается...')
+    },
+    onError: () => toast.error('Ошибка остановки'),
+  })
 
   const hasPending = storages.some(s => ACTIVE_STATUSES.has(s.status))
 
@@ -76,6 +88,8 @@ const stopMut = useMutation({
           + New Storage
         </button>
       </div>
+
+      <UserFilter selectedUserId={selectedUserId} onChange={setSelectedUserId} />
 
       {/* ── Состояния ─────────────────────────────────────────────────────── */}
       {isLoading && (
@@ -112,6 +126,7 @@ const stopMut = useMutation({
             <thead>
               <tr>
                 <th>Name</th>
+                <th>Пользователь</th>
                 <th>Status</th>
                 <th>NFS Endpoint</th>
                 <th>Volume</th>
@@ -122,12 +137,16 @@ const stopMut = useMutation({
             </thead>
             <tbody>
               {storages.map(fs => {
-                const isActive     = ACTIVE_STATUSES.has(fs.status)
+                const isActive = ACTIVE_STATUSES.has(fs.status)
                 const isConfirming = confirmDeleteId === fs.id
+                const owner = users.find(u => u.project?.id === fs.project_id)
 
                 return (
                   <tr key={fs.id}>
                     <td className={s.cellBold}>{fs.name}</td>
+                    <td style={{ fontSize: 11, color: '#94a3b8' }}>
+                      {owner ? owner.email.split('@')[0] : '—'}
+                    </td>
                     <td><StatusBadge status={fs.status} /></td>
                     <td className={s.cellMono} style={{ fontSize: 11 }}>
                       {fs.nfs_endpoint
@@ -247,9 +266,9 @@ function CreateFileStorageModal({
   onClose: () => void
   onCreated: () => void
 }) {
-  const [name, setName]         = useState('')
+  const [name, setName] = useState('')
   const [flavorId, setFlavorId] = useState('')
-  const [error, setError]       = useState('')
+  const [error, setError] = useState('')
 
   const { data: flavors = [], isLoading: loadFlavors } = useQuery<Flavor[]>({
     queryKey: ['flavors', 'file_storage'],
@@ -273,11 +292,11 @@ function CreateFileStorageModal({
     e.preventDefault()
     setError('')
     if (!name.trim()) return setError('Введите имя хранилища')
-    if (!flavorId)    return setError('Выберите конфигурацию')
+    if (!flavorId) return setError('Выберите конфигурацию')
     mutation.mutate({
-      name:       name.trim(),
+      name: name.trim(),
       project_id: DEFAULT_PROJECT_ID,
-      flavor_id:  flavorId,
+      flavor_id: flavorId,
     })
   }
 

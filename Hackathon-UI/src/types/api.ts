@@ -225,6 +225,7 @@ export interface AuthUser {
   role: 'admin' | 'user'
   project_id: string
   created_at: string
+  limits?: ProjectLimit
 }
 
 export interface LoginResponse {

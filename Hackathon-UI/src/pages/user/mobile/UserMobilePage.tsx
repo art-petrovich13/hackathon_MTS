@@ -15,6 +15,29 @@ import { VncViewer } from '../../../components/ui/VncViewer'
 
 const TRANSITIONAL = new Set(['pending', 'creating', 'pending-start', 'pending-stop'])
 
+// Компонент для статуса с анимацией
+const StatusWithSpinner = ({ status }: { status: string }) => {
+  const statusContent: Record<string, React.ReactNode> = {
+    pending: <span style={{ color: '#94a3b8' }}>⏳ В очереди</span>,
+    creating: (
+      <span style={{ color: '#f59e0b', display: 'flex', alignItems: 'center', gap: 6 }}>
+        <span className="spinner" /> Запускается (~90 сек)
+      </span>
+    ),
+    running: <span style={{ color: '#22c55e' }}>● Запущено</span>,
+    stopped: <span style={{ color: '#64748b' }}>⏸ Остановлено</span>,
+    error: <span style={{ color: '#ef4444' }}>✕ Ошибка</span>,
+    'pending-start': <span style={{ color: '#f59e0b', display: 'flex', alignItems: 'center', gap: 6 }}>
+      <span className="spinner" /> Запускается...
+    </span>,
+    'pending-stop': <span style={{ color: '#f59e0b', display: 'flex', alignItems: 'center', gap: 6 }}>
+      <span className="spinner" /> Останавливается...
+    </span>,
+  }
+  
+  return statusContent[status] ?? <span>{status}</span>
+}
+
 export function UserMobilePage() {
   const qc = useQueryClient()
   const { copy } = useCopyToClipboard()
@@ -24,7 +47,7 @@ export function UserMobilePage() {
 
   const { data: devices = [], isLoading, isError } = useQuery<MobileDevice[]>({
     queryKey: ['mobile-devices'],
-    queryFn: getMobileDevices,
+    queryFn: () => getMobileDevices(),
     refetchInterval: (query) => {
       const data = query.state.data as MobileDevice[] | undefined
       return data?.some(d => TRANSITIONAL.has(d.status)) ? 3_000 : 15_000
@@ -106,7 +129,7 @@ export function UserMobilePage() {
                 icon="📱"
                 title={dev.name}
                 subtitle={`🤖 ${dev.os_version ?? 'android-11'}`}
-                status={dev.status}
+                status={<StatusWithSpinner status={dev.status} />}
                 details={
                   <>
                     {/* ADB команда — кликабельна для копирования */}

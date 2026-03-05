@@ -8,6 +8,9 @@ import {
 import { type VirtualMachine, type VMStatus } from '../../../types/api'
 import s from '../../shared.module.css'
 import styles from './VMListPage.module.css'
+import { UserFilter } from '../../../components/ui/UserFilter'
+import { getUsers } from '../../../api/api'
+import type { UserWithProject } from '../../../types/api'
 
 type StatusCfg = { label: string; badgeClass: string }
 
@@ -46,10 +49,18 @@ export function AdminVMsPage() {
   const qc = useQueryClient()
   const [filter, setFilter] = useState<FilterKey>('all')
 
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
+
   const { data: vms = [], isLoading, isError } = useQuery({
-    queryKey: ['vms'],
-    queryFn: getVMs,
+    queryKey: ['vms', selectedUserId],
+    queryFn: () => getVMs(selectedUserId),
     refetchInterval: 5_000,
+  })
+
+  const { data: users = [] } = useQuery({
+    queryKey: ['users'],
+    queryFn: getUsers,
+    staleTime: 60_000,
   })
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ['vms'] })
@@ -78,6 +89,8 @@ export function AdminVMsPage() {
           + New VM
         </button>
       </div>
+
+      <UserFilter selectedUserId={selectedUserId} onChange={setSelectedUserId} />
 
       {/* ── Summary row ──────────────────────────────────────────────── */}
       <div className={styles.summaryRow}>
@@ -143,15 +156,20 @@ export function AdminVMsPage() {
                   <th>Container ID</th>
                   <th>Created</th>
                   <th>Actions</th>
+                  <th>Пользователь</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map(vm => {
+                  const owner = users.find(u => u.project?.id === vm.project_id)
                   const cfg = STATUS_CFG[vm.status] ?? { label: vm.status, badgeClass: s.badgeGray }
                   const trans = TRANSITIONAL.includes(vm.status)
                   return (
                     <tr key={vm.id}>
                       <td className={s.cellBold}>{vm.name}</td>
+                      <td style={{ fontSize: 11, color: '#94a3b8' }}>
+                        {owner ? owner.email.split('@')[0] : '—'}
+                      </td>
                       <td>
                         <span className={`${s.badge} ${cfg.badgeClass}`}>
                           {trans && <span className={s.badgeSpinner} />}

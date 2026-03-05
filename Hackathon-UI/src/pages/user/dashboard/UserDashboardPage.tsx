@@ -1,23 +1,62 @@
 // Пример: src/pages/admin/databases/AdminDatabasesPage.tsx
 import { useQuery } from '@tanstack/react-query'
+import { useAuth } from '../../../context/AuthContext'
 
 
 import { getVMs, getDatabases, getObjectStorages, getFileStorages, getMobileDevices } from '../../../api/api'
 import type { VirtualMachine, ManagedDatabase, ObjectStorage, FileStorage, MobileDevice } from '../../../types/api'
 
+function ResourceBar({
+  label, used, max, color = '#3b82f6'
+}: {
+  label: string
+  used: number
+  max: number
+  color?: string
+}) {
+  if (!max) return null
+  const pct = Math.min(100, Math.round(used / max * 100))
+  const barColor = pct > 85 ? '#ef4444' : pct > 60 ? '#f59e0b' : color
+
+  return (
+    <div style={{ marginBottom: 10 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+        <span style={{ fontSize: 12, color: '#94a3b8' }}>{label}</span>
+        <span style={{ fontSize: 12, color: barColor, fontWeight: 700 }}>{used} / {max}</span>
+      </div>
+      <div style={{ height: 5, background: '#1e293b', borderRadius: 3, overflow: 'hidden' }}>
+        <div style={{
+          height: '100%',
+          width: `${pct}%`,
+          background: barColor,
+          borderRadius: 3,
+          transition: 'width 0.4s ease',
+        }} />
+      </div>
+    </div>
+  )
+}
+
 export function UserDashboardPage() {
-  const { data: vms = [] } = useQuery<VirtualMachine[]>({ queryKey: ['vms'], queryFn: getVMs })
-  const { data: dbs = [] } = useQuery<ManagedDatabase[]>({ queryKey: ['databases'], queryFn: getDatabases })
+  const { data: vms = [] } = useQuery<VirtualMachine[]>({ queryKey: ['vms'], queryFn: () => getVMs() })
+  const { data: dbs = [] } = useQuery<ManagedDatabase[]>({ queryKey: ['databases'], queryFn: () => getDatabases() })
+
+  const { user } = useAuth()
 
   const runningVMs = vms.filter(v => v.status === 'running').length
   const runningDBs = dbs.filter(d => d.status === 'running').length
 
-  const { data: objects = [] } = useQuery<ObjectStorage[]>({ queryKey: ['object-storages'], queryFn: getObjectStorages })
-  const { data: fileStorages = [] } = useQuery<FileStorage[]>({ queryKey: ['file-storages'], queryFn: getFileStorages })
+  const { data: objects = [] } = useQuery<ObjectStorage[]>({ queryKey: ['object-storages'], queryFn: () => getObjectStorages() })
+  const { data: fileStorages = [] } = useQuery<FileStorage[]>({ queryKey: ['file-storages'], queryFn: () => getFileStorages() })
   const { data: mobiles = [] } = useQuery<MobileDevice[]>({
     queryKey: ['mobile-devices'],
-    queryFn: getMobileDevices,
+    queryFn: () => getMobileDevices(),
   })
+
+  const usedVMs = vms.length
+  const usedDBs = dbs.length
+  const usedStorage = objects.length + fileStorages.length
+  const usedMobile = mobiles.length
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
@@ -58,6 +97,22 @@ export function UserDashboardPage() {
           color="#8b5cf6"
         />
       </div>
+
+      {user?.limits && (
+        <div style={{
+          background: 'var(--bg-raised, #1e293b)',
+          border: '1px solid var(--border, #334155)',
+          borderRadius: 14, padding: '18px 20px',
+        }}>
+          <h3 style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 700, color: 'var(--text-pri)' }}>
+            Использование ресурсов
+          </h3>
+          <ResourceBar label="Virtual Machines" used={usedVMs} max={user.limits.max_vms} color="#3b82f6" />
+          <ResourceBar label="Databases" used={usedDBs} max={user.limits.max_dbs} color="#10b981" />
+          <ResourceBar label="Storage" used={usedStorage} max={user.limits.max_storages} color="#f59e0b" />
+          <ResourceBar label="Mobile Devices" used={usedMobile} max={user.limits.max_mobile} color="#8b5cf6" />
+        </div>
+      )}
 
       {/* ── Последние VM ───────────────────────────────────────────────── */}
       {vms.length > 0 && (

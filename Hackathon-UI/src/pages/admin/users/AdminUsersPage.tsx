@@ -4,11 +4,17 @@ import toast from 'react-hot-toast'
 import { getUsers, createUser, deleteUser, setUserLimits } from '../../../api/api'
 import type { UserWithProject, ProjectLimit } from '../../../types/api'
 import s from '../../shared.module.css'
+import {
+  getVMs, getDatabases, getObjectStorages, getFileStorages, getMobileDevices
+} from '../../../api/api'
+import type {
+  VirtualMachine, ManagedDatabase, ObjectStorage, FileStorage, MobileDevice
+} from '../../../types/api'
 
 export function AdminUsersPage() {
   const qc = useQueryClient()
-  const [showCreate, setShowCreate]           = useState(false)
-  const [limitsFor, setLimitsFor]             = useState<UserWithProject | null>(null)
+  const [showCreate, setShowCreate] = useState(false)
+  const [limitsFor, setLimitsFor] = useState<UserWithProject | null>(null)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
 
   const { data: users = [], isLoading, isError } = useQuery({
@@ -16,6 +22,12 @@ export function AdminUsersPage() {
     queryFn: getUsers,
     refetchInterval: 30_000,
   })
+
+  const { data: vms = [] } = useQuery({ queryKey: ['vms'], queryFn: () => getVMs(), staleTime: 30_000 })
+  const { data: dbs = [] } = useQuery({ queryKey: ['databases'], queryFn: () => getDatabases(), staleTime: 30_000 })
+  const { data: objects = [] } = useQuery({ queryKey: ['object-storages'], queryFn: () => getObjectStorages(), staleTime: 30_000 })
+  const { data: files = [] } = useQuery({ queryKey: ['file-storages'], queryFn: () => getFileStorages(), staleTime: 30_000 })
+  const { data: mobiles = [] } = useQuery({ queryKey: ['mobile-devices'], queryFn: () => getMobileDevices(), staleTime: 30_000 })
 
   const deleteMut = useMutation({
     mutationFn: deleteUser,
@@ -67,6 +79,7 @@ export function AdminUsersPage() {
             <thead>
               <tr>
                 <th>Email</th>
+                <th>Сервисы</th>
                 <th>Role</th>
                 <th>Project ID</th>
                 <th>Лимиты (VM / CPU / RAM)</th>
@@ -77,9 +90,25 @@ export function AdminUsersPage() {
             <tbody>
               {users.map(u => {
                 const isConfirming = confirmDeleteId === u.id
+                const pid = u.project?.id
+                const userVMs = pid ? vms.filter(v => v.project_id === pid).length : 0
+                const userDBs = pid ? dbs.filter(d => d.project_id === pid).length : 0
+                const userStorage = pid
+                  ? objects.filter(o => o.project_id === pid).length + files.filter(f => f.project_id === pid).length
+                  : 0
+                const userMobile = pid ? mobiles.filter(m => m.project_id === pid).length : 0
+
                 return (
                   <tr key={u.id}>
                     <td className={s.cellBold}>{u.email}</td>
+                    <td>
+                      <div style={{ display: 'flex', gap: 8, fontSize: 12 }}>
+                        <span title="VMs" style={{ color: '#94a3b8' }}>🖥 {userVMs}</span>
+                        <span title="DBs" style={{ color: '#94a3b8' }}>🗄 {userDBs}</span>
+                        <span title="Storage" style={{ color: '#94a3b8' }}>📦 {userStorage}</span>
+                        <span title="Mobile" style={{ color: '#94a3b8' }}>📱 {userMobile}</span>
+                      </div>
+                    </td>
                     <td>
                       <span style={{
                         padding: '3px 10px', borderRadius: 20,
@@ -182,10 +211,11 @@ function btnSt(bg: string, color: string) {
 // ── Модал создания пользователя ───────────────────────────────────────────────
 
 function CreateUserModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
-  const [email, setEmail]       = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [role, setRole]         = useState<'user' | 'admin'>('user')
-  const [error, setError]       = useState('')
+  const [role, setRole] = useState<'user' | 'admin'>('user')
+  const [error, setError] = useState('')
+
 
   const mut = useMutation({
     mutationFn: () => createUser(email.trim(), password, role),
@@ -283,7 +313,7 @@ function LimitsModal({
   const mut = useMutation({
     mutationFn: () => setUserLimits(user.id, limits),
     onSuccess: () => { toast.success('Лимиты обновлены'); onSaved() },
-    onError:   () => toast.error('Ошибка сохранения'),
+    onError: () => toast.error('Ошибка сохранения'),
   })
 
   const field = (key: keyof ProjectLimit, label: string) => (
@@ -320,13 +350,13 @@ function LimitsModal({
           {user.email}
         </p>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          {field('max_vms',      'Max VMs')}
-          {field('max_cpu',      'Max vCPU')}
-          {field('max_ram_mb',   'Max RAM (MB)')}
-          {field('max_disk_gb',  'Max Disk (GB)')}
-          {field('max_dbs',      'Max Databases')}
+          {field('max_vms', 'Max VMs')}
+          {field('max_cpu', 'Max vCPU')}
+          {field('max_ram_mb', 'Max RAM (MB)')}
+          {field('max_disk_gb', 'Max Disk (GB)')}
+          {field('max_dbs', 'Max Databases')}
           {field('max_storages', 'Max Storages')}
-          {field('max_mobile',   'Max Mobile')}
+          {field('max_mobile', 'Max Mobile')}
         </div>
         <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 20 }}>
           <button onClick={onClose} style={{

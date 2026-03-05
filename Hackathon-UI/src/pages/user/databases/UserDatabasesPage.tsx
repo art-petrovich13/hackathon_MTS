@@ -11,6 +11,8 @@ const ENGINE_ICONS: Record<string, string> = {
   postgres: '🐘', mysql: '🐬', redis: '⚡',
 }
 
+const TRANSITIONAL = new Set(['pending', 'creating', 'pending-start', 'pending-stop'])
+
 export function UserDatabasesPage() {
   const qc = useQueryClient()
   const [credsFor, setCredsFor] = useState<ManagedDatabase | null>(null)
@@ -18,12 +20,10 @@ export function UserDatabasesPage() {
 
   const { data: dbs = [], isLoading, isError } = useQuery<ManagedDatabase[]>({
     queryKey: ['databases'],
-    queryFn: getDatabases,
+    queryFn: () =>  getDatabases(),
     refetchInterval: (query) => {
       const data = query.state.data as ManagedDatabase[] | undefined
-      const hasTransitional = data?.some(d =>
-        ['pending', 'creating', 'pending-start', 'pending-stop'].includes(d.status)
-      )
+      const hasTransitional = data?.some(d => TRANSITIONAL.has(d.status))
       return hasTransitional ? 3_000 : 10_000
     },
   })
@@ -97,6 +97,8 @@ export function UserDatabasesPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
           {dbs.map(db => {
             const isConfirming = confirmDeleteId === db.id
+            const trans = TRANSITIONAL.has(db.status)
+            
             return (
               <ResourceCard
                 key={db.id}
@@ -118,27 +120,29 @@ export function UserDatabasesPage() {
                     {db.status === 'stopped' && (
                       <button
                         onClick={() => startMut.mutate(db.id)}
-                        disabled={startMut.isPending}
+                        disabled={trans || startMut.isPending}
                         style={{
                           padding: '6px 14px', borderRadius: 6, border: 'none',
                           background: '#1a3d1a', color: '#4ade80',
                           cursor: 'pointer', fontWeight: 600, fontSize: 12,
+                          opacity: trans ? 0.4 : 1
                         }}
                       >
-                        ▶ Start
+                        {startMut.isPending ? '...' : '▶ Start'}
                       </button>
                     )}
                     {db.status === 'running' && (
                       <button
                         onClick={() => stopMut.mutate(db.id)}
-                        disabled={stopMut.isPending}
+                        disabled={trans || stopMut.isPending}
                         style={{
                           padding: '6px 14px', borderRadius: 6, border: 'none',
                           background: '#3d1a00', color: '#fb923c',
                           cursor: 'pointer', fontWeight: 600, fontSize: 12,
+                          opacity: trans ? 0.4 : 1
                         }}
                       >
-                        ■ Stop
+                        {stopMut.isPending ? '...' : '■ Stop'}
                       </button>
                     )}
 
@@ -183,10 +187,12 @@ export function UserDatabasesPage() {
                     ) : (
                       <button
                         onClick={() => setConfirmDeleteId(db.id)}
+                        disabled={trans}
                         style={{
                           padding: '6px 14px', borderRadius: 6, border: 'none',
                           background: '#3f1212', color: '#f87171',
                           cursor: 'pointer', fontWeight: 600, fontSize: 12,
+                          opacity: trans ? 0.4 : 1
                         }}
                       >
                         ✕ Delete

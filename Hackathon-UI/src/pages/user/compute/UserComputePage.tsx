@@ -18,7 +18,7 @@ export function UserComputePage() {
 
   const { data: vms = [], isLoading, isError } = useQuery<VirtualMachine[]>({
     queryKey: ['vms'],
-    queryFn: getVMs,
+    queryFn: () => getVMs(),
     refetchInterval: (query) => {
       const data = query.state.data as VirtualMachine[] | undefined
       return data?.some(v => TRANSITIONAL.has(v.status)) ? 3_000 : 10_000
@@ -111,7 +111,7 @@ function VMCard({
   onDeleteConfirm: () => void
   onDeleteCancel: () => void
   deletePending: boolean
-  onViewScreen?: () => void   // ← ДОБАВИТЬ (опциональный)
+  onViewScreen?: () => void
 }) {
   const trans = TRANSITIONAL.has(vm.status)
 
@@ -153,7 +153,7 @@ function VMCard({
           </button>
         )}
 
-        {/* ← ДОБАВИТЬ: кнопка просмотра экрана для VNC-образов */}
+        {/* Кнопка просмотра экрана для VNC-образов */}
         {vm.status === 'running' && onViewScreen && (
           <button
             onClick={onViewScreen}
@@ -207,7 +207,6 @@ function VMCard({
           </button>
         )}
       </div>
-
     </div>
   )
 }

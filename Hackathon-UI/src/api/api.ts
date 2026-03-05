@@ -51,8 +51,10 @@ client.interceptors.response.use(
 
 
 // ── VM API ────────────────────────────────────────────────────────────────────
-export const getVMs = async (): Promise<VirtualMachine[]> => {
-  const { data } = await client.get<VirtualMachine[]>('/vms')
+export const getVMs = async (userId?: string | null): Promise<VirtualMachine[]> => {
+  const params: Record<string, string> = {}
+  if (userId) params.project_user_id = userId  // бэк должен поддерживать этот param
+  const { data } = await client.get<VirtualMachine[]>('/vms', { params })
   return data ?? []
 }
 
@@ -124,8 +126,10 @@ export const getServiceCatalogFull = async (): Promise<ServiceCatalogItemWithFla
 }
 
 // ── Databases API (новый в Day 13) ────────────────────────────────────────────
-export const getDatabases = async (): Promise<ManagedDatabase[]> => {
-  const { data } = await client.get<ManagedDatabase[]>('/databases')
+export const getDatabases = async (userId?: string | null): Promise<ManagedDatabase[]> => {
+  const params: Record<string, string> = {}
+  if (userId) params.project_user_id = userId
+  const { data } = await client.get<ManagedDatabase[]>('/databases', { params })
   return data ?? []
 }
 
@@ -144,8 +148,10 @@ export const deleteDatabase = async (id: string): Promise<void> => {
 }
 
 // ── Object Storage API (эндпоинты появятся в Day 16) ─────────────────────────
-export const getObjectStorages = async (): Promise<ObjectStorage[]> => {
-  const { data } = await client.get<ObjectStorage[]>('/object-storages')
+export const getObjectStorages = async (userId?: string | null): Promise<ObjectStorage[]> => {
+  const params: Record<string, string> = {}
+  if (userId) params.project_user_id = userId
+  const { data } = await client.get<ObjectStorage[]>('/object-storages', { params })
   return data ?? []
 }
 
@@ -167,8 +173,10 @@ export const stopObjectStorage = async (id: string): Promise<void> => {
 }
 
 // ── File Storage API (эндпоинты появятся в Day 17) ───────────────────────────
-export const getFileStorages = async (): Promise<FileStorage[]> => {
-  const { data } = await client.get<FileStorage[]>('/file-storages')
+export const getFileStorages = async (userId?: string | null): Promise<FileStorage[]> => {
+  const params: Record<string, string> = {}
+  if (userId) params.project_user_id = userId
+  const { data } = await client.get<FileStorage[]>('/file-storages', { params })
   return data ?? []
 }
 
@@ -196,8 +204,10 @@ export const stopFileStorage = async (id: string): Promise<void> => {
 }
 // ── Mobile Farm API ──────────────────────────────────────────────────────────
 
-export const getMobileDevices = async (): Promise<MobileDevice[]> => {
-  const { data } = await client.get<MobileDevice[]>('/mobile-devices')
+export const getMobileDevices = async (userId?: string | null): Promise<MobileDevice[]> => {
+  const params: Record<string, string> = {}
+  if (userId) params.project_user_id = userId
+  const { data } = await client.get<MobileDevice[]>('/mobile-devices', { params })
   return data ?? []
 }
 
@@ -230,6 +240,15 @@ export const getMe = async (): Promise<AuthUser> => {
   return data
 }
 
+export const getUserServices = async (userId: string) => {
+  const { data } = await client.get(`/admin/users/${userId}/services`)
+  return data
+}
+
+export const createVMForUser = async (payload: CreateVMPayload & { target_project_id?: string }) => {
+  const { data } = await client.post<VirtualMachine>('/vms', payload)
+  return data
+}
 // ── Users API (только для admin) ─────────────────────────────────────────────
 
 export const getUsers = async (): Promise<UserWithProject[]> => {

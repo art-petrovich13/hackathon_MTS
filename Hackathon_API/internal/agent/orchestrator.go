@@ -6,8 +6,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"strings"
+	"time"
 )
 
 // openRouterReq — тело запроса в OpenRouter (OpenAI-совместимый формат).
@@ -15,6 +17,13 @@ type openRouterReq struct {
 	Model     string              `json:"model"`
 	Messages  []map[string]string `json:"messages"`
 	MaxTokens int                 `json:"max_tokens"`
+	Provider  *orProvider         `json:"provider,omitempty"`
+}
+
+// orProvider позволяет исключить конкретных провайдеров.
+// Venice даёт 429 на все free-модели — исключаем его явно.
+type orProvider struct {
+	Ignore []string `json:"ignore,omitempty"`
 }
 
 // Orchestrator — главный агент-координатор.
@@ -78,6 +87,7 @@ func (o *Orchestrator) Chat(ctx context.Context, msg string, w io.Writer) error 
 	// ── Парсим намерения через Mistral или fallback ──────────────────────
 	parsed, err := o.parseIntent(ctx, msg)
 	if err != nil {
+		slog.Error("agent: parseIntent failed", "error", err)
 		o.emit(w, SSEEvent{Type: "thinking", Content: "⚠️ Онлайн-AI недоступен, использую встроенный анализатор..."})
 		parsed = o.fallbackParse(msg)
 	}
@@ -157,19 +167,44 @@ func (o *Orchestrator) buildAndEmitPlan(ctx context.Context, parsed *Parsed, w i
 	return nil
 }
 
-// parseIntent — вызывает Mistral через OpenRouter.
+// modelsToTry — актуальные бесплатные модели OpenRouter, март 2026.
+var modelsToTry = []string{
+	"meta-llama/llama-3.3-70b-instruct:free",
+	"qwen/qwen3-4b:free",
+	"mistralai/mistral-small-3.1-24b-instruct:free",
+	"google/gemma-3-4b-it:free",
+}
+
+// parseIntent — перебирает модели до первой успешной.
+// Venice даёт 429 на все :free — исключаем его через provider.ignore.
 func (o *Orchestrator) parseIntent(ctx context.Context, msg string) (*Parsed, error) {
 	if o.apiKey == "" {
 		return nil, fmt.Errorf("OPENROUTER_API_KEY не задан")
 	}
+	var lastErr error
+	for _, model := range modelsToTry {
+		parsed, err := o.tryOneModel(ctx, model, msg)
+		if err == nil {
+			slog.Info("agent: AI success", "model", model)
+			return parsed, nil
+		}
+		slog.Warn("agent: model failed, trying next", "model", model, "err", err)
+		lastErr = err
+		time.Sleep(200 * time.Millisecond)
+	}
+	return nil, fmt.Errorf("все модели недоступны: %w", lastErr)
+}
 
+// tryOneModel — один запрос. Читает тело ALWAYS. Venice исключается через Provider.Ignore.
+func (o *Orchestrator) tryOneModel(ctx context.Context, model, msg string) (*Parsed, error) {
 	reqBody, _ := json.Marshal(openRouterReq{
-		Model: "mistralai/mistral-small-3.1-24b-instruct:free",
+		Model: model,
 		Messages: []map[string]string{
 			{"role": "system", "content": systemPrompt},
 			{"role": "user", "content": msg},
 		},
 		MaxTokens: 300,
+		Provider:  &orProvider{Ignore: []string{"Venice"}},
 	})
 
 	req, err := http.NewRequestWithContext(ctx, "POST",
@@ -184,12 +219,16 @@ func (o *Orchestrator) parseIntent(ctx context.Context, msg string) (*Parsed, er
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("openrouter unreachable: %w", err)
+		return nil, fmt.Errorf("network: %w", err)
 	}
 	defer resp.Body.Close()
 
+	bodyBytes, _ := io.ReadAll(resp.Body)
+
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("openrouter status %d", resp.StatusCode)
+		slog.Error("agent: openrouter error",
+			"model", model, "status", resp.StatusCode, "body", string(bodyBytes))
+		return nil, fmt.Errorf("HTTP %d: %.300s", resp.StatusCode, bodyBytes)
 	}
 
 	var raw struct {
@@ -200,36 +239,40 @@ func (o *Orchestrator) parseIntent(ctx context.Context, msg string) (*Parsed, er
 		} `json:"choices"`
 		Error *struct {
 			Message string `json:"message"`
+			Code    int    `json:"code"`
 		} `json:"error,omitempty"`
 	}
-	if err := json.NewDecoder(resp.Body).Decode(&raw); err != nil {
-		return nil, err
+	if err := json.Unmarshal(bodyBytes, &raw); err != nil {
+		return nil, fmt.Errorf("decode: %w", err)
 	}
 	if raw.Error != nil {
-		return nil, fmt.Errorf("openrouter error: %s", raw.Error.Message)
+		return nil, fmt.Errorf("api error %d: %s", raw.Error.Code, raw.Error.Message)
 	}
-	if len(raw.Choices) == 0 {
-		return nil, fmt.Errorf("empty response from openrouter")
+	if len(raw.Choices) == 0 || raw.Choices[0].Message.Content == "" {
+		return nil, fmt.Errorf("empty choices")
 	}
 
-	// Убираем возможные markdown-обёртки
 	content := strings.TrimSpace(raw.Choices[0].Message.Content)
-	for _, prefix := range []string{"```json", "```JSON", "```"} {
-		content = strings.TrimPrefix(content, prefix)
+	slog.Info("agent: LLM response", "model", model, "content", content)
+
+	for _, pfx := range []string{"```json", "```JSON", "```"} {
+		if strings.HasPrefix(content, pfx) {
+			content = strings.TrimPrefix(content, pfx)
+			break
+		}
 	}
 	content = strings.TrimSuffix(content, "```")
 	content = strings.TrimSpace(content)
 
-	// Ищем JSON-объект если LLM добавил текст вокруг
-	if start := strings.Index(content, "{"); start > 0 {
-		if end := strings.LastIndex(content, "}"); end > start {
-			content = content[start : end+1]
+	if i := strings.Index(content, "{"); i >= 0 {
+		if j := strings.LastIndex(content, "}"); j > i {
+			content = content[i : j+1]
 		}
 	}
 
 	var parsed Parsed
 	if err := json.Unmarshal([]byte(content), &parsed); err != nil {
-		return nil, fmt.Errorf("json parse error: %w (raw: %.100s)", err, content)
+		return nil, fmt.Errorf("unmarshal: %w (%.100s)", err, content)
 	}
 	return &parsed, nil
 }

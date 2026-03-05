@@ -80,7 +80,7 @@ func (r *VMRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.Virtu
 	var vm models.VirtualMachine
 	query := `SELECT
 		id, name, project_id, flavor_id, image_id, status,
-		docker_container_id, ip_address, node_id, created_at, updated_at
+		docker_container_id, ip_address, node_id, novnc_port, created_at, updated_at
 	FROM vms WHERE id = $1`
 
 	err := r.db.GetContext(ctx, &vm, query, id)
@@ -101,7 +101,7 @@ func (r *VMRepository) List(ctx context.Context, projectID uuid.UUID) ([]models.
 	if projectID == uuid.Nil {
 		query = `SELECT
 			id, name, project_id, flavor_id, image_id, status,
-			docker_container_id, ip_address, node_id, created_at, updated_at
+			docker_container_id, ip_address, node_id, novnc_port, created_at, updated_at
 		FROM vms ORDER BY created_at DESC`
 	} else {
 		query = `SELECT
@@ -140,7 +140,7 @@ func (r *VMRepository) GetPendingForUpdate(ctx context.Context, tx *sqlx.Tx, lim
 	var vms []models.VirtualMachine
 	query := `SELECT
 		id, name, project_id, flavor_id, image_id, status,
-		docker_container_id, ip_address, node_id, created_at, updated_at
+		docker_container_id, ip_address, node_id, novnc_port, created_at, updated_at
 	FROM vms
 	WHERE status IN ('pending', 'pending-start', 'pending-stop')
 	ORDER BY created_at ASC

@@ -75,18 +75,17 @@ func (d *MobileDriver) Create(ctx context.Context, opts *CreateMobileOpts) (*Mob
 	// Если KVM недоступен — запускаем без аппаратного ускорения
 	if !d.CheckKVM() {
 		slog.Warn("mobile driver: KVM not available, using software rendering (SLOW)")
-		envs = append(envs, "EMULATOR_ARGS=-no-accel")
 	}
 
 	containerName := fmt.Sprintf("iaas-mobile-%s", opts.Name)
 
 	portBindings := nat.PortMap{
-		"5554/tcp": {{HostPort: fmt.Sprintf("%d", opts.ADBPort)}},
+		"5555/tcp": {{HostPort: fmt.Sprintf("%d", opts.ADBPort)}},
 		"5900/tcp": {{HostPort: fmt.Sprintf("%d", opts.VNCPort)}},
 		"6080/tcp": {{HostPort: fmt.Sprintf("%d", opts.NoVNCPort)}},
 	}
 	exposedPorts := nat.PortSet{
-		"5554/tcp": struct{}{},
+		"5555/tcp": struct{}{},
 		"5900/tcp": struct{}{},
 		"6080/tcp": struct{}{},
 	}
@@ -129,53 +128,64 @@ func (d *MobileDriver) Create(ctx context.Context, opts *CreateMobileOpts) (*Mob
 }
 
 // WaitForReady ждёт пока Android эмулятор внутри контейнера не будет готов.
-// Проверка через docker exec adb devices — когда появляется "emulator" в выводе.
+// WaitForReady ждёт готовности Android эмулятора.
+// Проверяет логи контейнера на наличие "Boot animation finished"
+// (надёжнее чем adb devices, работает без KVM).
 func (d *MobileDriver) WaitForReady(ctx context.Context, containerID string) error {
 	slog.Info("mobile driver: waiting for android emulator to be ready", "container", containerID[:12])
 
 	for attempt := 1; ; attempt++ {
 		select {
 		case <-ctx.Done():
-			return fmt.Errorf("context cancelled after %d attempts", attempt)
+			return fmt.Errorf("emulator not ready after %d attempts (~%ds)", attempt, attempt*5)
 		default:
 		}
 
-		execConf := container.ExecOptions{
+		// Проверяем логи контейнера — ищем признак завершения загрузки Android
+		logsReader, err := d.client.ContainerLogs(ctx, containerID, container.LogsOptions{
+			ShowStdout: true,
+			ShowStderr: true,
+			Tail:       "100",
+		})
+		if err == nil {
+			var buf bytes.Buffer
+			io.Copy(&buf, logsReader) //nolint:errcheck
+			logsReader.Close()
+			logs := buf.String()
+
+			// budtmo/docker-android пишет это когда эмулятор полностью загружен
+			if strings.Contains(logs, "Boot animation finished") ||
+				strings.Contains(logs, "Emulator is ready") ||
+				strings.Contains(logs, "boot completed") {
+				slog.Info("mobile driver: emulator ready (boot animation finished)", "attempt", attempt)
+				return nil
+			}
+		}
+
+		// Резервная проверка через adb devices (работает после старта adb-сервера внутри контейнера)
+		execID, err := d.client.ContainerExecCreate(ctx, containerID, container.ExecOptions{
 			Cmd:          []string{"adb", "devices"},
 			AttachStdout: true,
 			AttachStderr: true,
-		}
-		execID, err := d.client.ContainerExecCreate(ctx, containerID, execConf)
-		if err != nil {
-			slog.Debug("mobile driver: exec create failed, retrying", "attempt", attempt, "error", err)
-			time.Sleep(5 * time.Second)
-			continue
-		}
-
-		execResp, err := d.client.ContainerExecAttach(ctx, execID.ID, container.ExecAttachOptions{})
-		if err != nil {
-			time.Sleep(5 * time.Second)
-			continue
-		}
-
-		var stdout bytes.Buffer
-		stdcopy.StdCopy(&stdout, io.Discard, execResp.Reader)
-		execResp.Close()
-
-		output := stdout.String()
-		slog.Debug("mobile driver: adb devices output", "attempt", attempt, "output", strings.TrimSpace(output))
-
-		// Эмулятор готов когда в выводе есть "emulator" или строка с "device"
-		if strings.Contains(output, "emulator") ||
-			(strings.Contains(output, "\tdevice") && !strings.HasSuffix(strings.TrimSpace(output), "devices")) {
-			slog.Info("mobile driver: android emulator ready!", "attempt", attempt)
-			return nil
+		})
+		if err == nil {
+			if execResp, err := d.client.ContainerExecAttach(ctx, execID.ID, container.ExecAttachOptions{}); err == nil {
+				var stdout bytes.Buffer
+				stdcopy.StdCopy(&stdout, io.Discard, execResp.Reader)
+				execResp.Close()
+				output := stdout.String()
+				if strings.Contains(output, "emulator") ||
+					(strings.Contains(output, "\tdevice") && !strings.HasSuffix(strings.TrimSpace(output), "devices")) {
+					slog.Info("mobile driver: emulator ready (adb devices)", "attempt", attempt)
+					return nil
+				}
+			}
 		}
 
 		if attempt%6 == 0 {
 			slog.Info("mobile driver: still waiting for emulator",
 				"attempt", attempt,
-				"elapsed", fmt.Sprintf("%ds", attempt*5),
+				"elapsed_sec", attempt*5,
 			)
 		}
 		time.Sleep(5 * time.Second)

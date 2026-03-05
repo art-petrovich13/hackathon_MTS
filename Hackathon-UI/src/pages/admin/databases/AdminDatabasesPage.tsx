@@ -2,24 +2,23 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
-import { getDatabases, createDatabase, deleteDatabase, getFlavors } from '../../../api/api'
-import type { ManagedDatabase, DBEngine, Flavor } from '../../../types/api'
+import { getDatabases, createDatabase, deleteDatabase, getFlavors, getUsers } from '../../../api/api'
+import type { ManagedDatabase, DBEngine, Flavor, UserWithProject } from '../../../types/api'
 import { StatusBadge } from '../../../components/ui/StatusBadge'
 import { EngineBadge } from '../../../components/ui/EngineBadge'
 import { CredentialsModal, type CredField } from '../../../components/ui/CredentialsModal'
 import { UserFilter } from '../../../components/ui/UserFilter'
-import { getUsers } from '../../../api/api'
-import type { UserWithProject } from '../../../types/api'
+import shared from '../../shared.module.css'
 import s from './AdminDatabasesStyle.module.css'
 
 const ACTIVE_STATUSES = new Set(['pending', 'creating', 'pending-start', 'pending-stop'])
 
 export function AdminDatabasesPage() {
   const qc = useQueryClient()
-  const [showCreate, setShowCreate] = useState(false)
-  const [credsFor, setCredsFor] = useState<ManagedDatabase | null>(null)
+  const [showCreate, setShowCreate]           = useState(false)
+  const [credsFor, setCredsFor]               = useState<ManagedDatabase | null>(null)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
+  const [selectedUserId, setSelectedUserId]   = useState<string | null>(null)
 
   const { data: allDbs = [], isLoading, isError } = useQuery({
     queryKey: ['databases', selectedUserId],
@@ -31,13 +30,8 @@ export function AdminDatabasesPage() {
     },
   })
 
-  const { data: users = [] } = useQuery({
-    queryKey: ['users'],
-    queryFn: getUsers,
-    staleTime: 60_000,
-  })
+  const { data: users = [] } = useQuery({ queryKey: ['users'], queryFn: getUsers, staleTime: 60_000 })
 
-  // Клиентская фильтрация как fallback
   const dbs = selectedUserId
     ? allDbs.filter(db => {
         const owner = users.find(u => u.id === selectedUserId)
@@ -47,28 +41,23 @@ export function AdminDatabasesPage() {
 
   const deleteMut = useMutation({
     mutationFn: deleteDatabase,
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['databases'] })
-      setConfirmDeleteId(null)
-      toast.success('База данных удалена')
-    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['databases'] }); setConfirmDeleteId(null); toast.success('База данных удалена') },
     onError: () => toast.error('Ошибка при удалении'),
   })
 
   const buildCredFields = (db: ManagedDatabase): CredField[] => {
     const fields: CredField[] = []
-    if (db.host) fields.push({ label: 'Host', value: db.host })
-    if (db.port) fields.push({ label: 'Port', value: String(db.port) })
-    if (db.db_name) fields.push({ label: 'Database', value: db.db_name })
-    if (db.db_user) fields.push({ label: 'Username', value: db.db_user })
+    if (db.host)        fields.push({ label: 'Host',     value: db.host })
+    if (db.port)        fields.push({ label: 'Port',     value: String(db.port) })
+    if (db.db_name)     fields.push({ label: 'Database', value: db.db_name })
+    if (db.db_user)     fields.push({ label: 'Username', value: db.db_user })
     if (db.db_password) fields.push({ label: 'Password', value: db.db_password, secret: true })
     if (db.host && db.port && db.db_user && db.db_password) {
-      const cs =
-        db.engine === 'postgres'
-          ? `postgresql://${db.db_user}:${db.db_password}@${db.host}:${db.port}/${db.db_name ?? 'postgres'}`
-          : db.engine === 'mysql'
-            ? `mysql://${db.db_user}:${db.db_password}@${db.host}:${db.port}/${db.db_name ?? 'mydb'}`
-            : `redis://:${db.db_password}@${db.host}:${db.port}`
+      const cs = db.engine === 'postgres'
+        ? `postgresql://${db.db_user}:${db.db_password}@${db.host}:${db.port}/${db.db_name ?? 'postgres'}`
+        : db.engine === 'mysql'
+          ? `mysql://${db.db_user}:${db.db_password}@${db.host}:${db.port}/${db.db_name ?? 'mydb'}`
+          : `redis://:${db.db_password}@${db.host}:${db.port}`
       fields.push({ label: 'Connection String', value: cs, secret: true })
     }
     return fields
@@ -78,34 +67,32 @@ export function AdminDatabasesPage() {
 
   return (
     <div className={s.container}>
-      <div className={s.pageHeader}>
+      <div className={shared.pageHeader}>
         <div>
-          <h1 className={s.pageTitle}>Managed Databases</h1>
-          <p className={s.pageSubtitle}>
+          <h1 className={shared.pageTitle}>Managed Databases</h1>
+          <p className={shared.pageSubtitle}>
             {dbs.length} database{dbs.length !== 1 ? 's' : ''}
             {hasPending && ' · auto-refresh 3s'}
           </p>
-          <button className={s.btnPrimary} onClick={() => setShowCreate(true)}>
-            + New Database
-          </button>
         </div>
+        <button className="btn-primary" onClick={() => setShowCreate(true)}>+ New Database</button>
       </div>
 
       <UserFilter selectedUserId={selectedUserId} onChange={setSelectedUserId} />
 
       {isLoading && (
-        <div className={s.stateBox}><p className={s.stateText}>Loading databases…</p></div>
+        <div className={shared.stateBox}><p className={shared.stateText}>Loading databases…</p></div>
       )}
       {isError && (
-        <div className={s.stateBox}><p className={s.stateTextErr}>Failed to load databases.</p></div>
+        <div className={shared.stateBox}><p className={shared.stateTextErr}>Failed to load databases.</p></div>
       )}
       {!isLoading && !isError && dbs.length === 0 && (
-        <div className={s.stateBox}><p className={s.stateText}>No databases yet</p></div>
+        <div className={shared.stateBox}><p className={shared.stateText}>No databases yet</p></div>
       )}
 
       {!isLoading && !isError && dbs.length > 0 && (
-        <div className={s.tableWrap}>
-          <table className={s.table}>
+        <div className={shared.tableWrap}>
+          <table className={shared.table}>
             <thead>
               <tr>
                 <th>Name</th>
@@ -120,38 +107,39 @@ export function AdminDatabasesPage() {
             </thead>
             <tbody>
               {dbs.map(db => {
-                const isActive = ACTIVE_STATUSES.has(db.status)
+                const isActive     = ACTIVE_STATUSES.has(db.status)
                 const isConfirming = confirmDeleteId === db.id
-                const owner = users.find(u => u.project?.id === db.project_id)
+                const owner        = users.find(u => u.project?.id === db.project_id)
                 return (
                   <tr key={db.id}>
-                    <td className={s.cellBold}>{db.name}</td>
-                    <td style={{ fontSize: 11, color: '#94a3b8' }}>
-                      {owner ? owner.email.split('@')[0] : '—'}
-                    </td>
+                    <td className={shared.cellBold}>{db.name}</td>
+                    <td className={s.ownerCell}>{owner ? owner.email.split('@')[0] : '—'}</td>
                     <td><EngineBadge engine={db.engine} /></td>
                     <td><StatusBadge status={db.status} /></td>
-                    <td className={s.cellMono}>
-                      {db.host && db.port ? `${db.host}:${db.port}` : <span className={s.span}>—</span>}
+                    <td className={shared.cellMono}>
+                      {db.host && db.port ? `${db.host}:${db.port}` : <span className={shared.cellDim}>—</span>}
                     </td>
-                    <td className={s.cellMono}>{db.db_name ?? '—'}</td>
-                    <td className={s.cellDim}>{new Date(db.created_at).toLocaleString('ru-RU')}</td>
+                    <td className={shared.cellMono}>{db.db_name ?? '—'}</td>
+                    <td className={shared.cellDim}>{new Date(db.created_at).toLocaleString('ru-RU')}</td>
                     <td>
                       <div className={s.cred}>
                         {db.status === 'running' && (
-                          <button onClick={() => setCredsFor(db)} className={`${s.actionButton} ${s.credentialsButton}`}>
+                          <button className={`${s.actionButton} ${s.credentialsButton}`} onClick={() => setCredsFor(db)}>
                             🔑 Credentials
                           </button>
                         )}
                         {isConfirming ? (
                           <>
-                            <button onClick={() => deleteMut.mutate(db.id)} disabled={deleteMut.isPending} className={`${s.actionButton} ${s.confirmDeleteButton}`}>
+                            <button className={`${s.actionButton} ${s.confirmDeleteButton}`}
+                              disabled={deleteMut.isPending} onClick={() => deleteMut.mutate(db.id)}>
                               {deleteMut.isPending ? '...' : 'Да, удалить'}
                             </button>
-                            <button onClick={() => setConfirmDeleteId(null)} className={`${s.actionButton} ${s.cancelButton}`}>Отмена</button>
+                            <button className={`${s.actionButton} ${s.cancelButton}`}
+                              onClick={() => setConfirmDeleteId(null)}>Отмена</button>
                           </>
                         ) : (
-                          <button onClick={() => setConfirmDeleteId(db.id)} disabled={isActive} className={`${s.actionButton} ${s.deleteButton}`}>
+                          <button className={`${s.actionButton} ${s.deleteButton}`}
+                            disabled={isActive} onClick={() => setConfirmDeleteId(db.id)}>
                             ✕ Delete
                           </button>
                         )}
@@ -168,15 +156,11 @@ export function AdminDatabasesPage() {
       {showCreate && (
         <CreateDatabaseModal
           onClose={() => setShowCreate(false)}
-          onCreated={() => {
-            setShowCreate(false)
-            qc.invalidateQueries({ queryKey: ['databases'] })
-          }}
+          onCreated={() => { setShowCreate(false); qc.invalidateQueries({ queryKey: ['databases'] }) }}
           users={users}
           preselectedUserId={selectedUserId}
         />
       )}
-
       {credsFor && (
         <CredentialsModal
           title={`${credsFor.name} — Credentials`}
@@ -228,8 +212,6 @@ function CreateDatabaseModal({
     queryFn: () => getFlavors(serviceType),
   })
 
-  const handleEngineChange = (e: DBEngine) => { setEngine(e); setFlavorId('') }
-
   const mutation = useMutation({
     mutationFn: createDatabase,
     onSuccess: () => { toast.success('База данных создаётся...'); onCreated() },
@@ -240,8 +222,7 @@ function CreateDatabaseModal({
   })
 
   const handleSubmit = (e: FormEvent) => {
-    e.preventDefault()
-    setError('')
+    e.preventDefault(); setError('')
     if (!targetUserId)    return setError('Выберите пользователя')
     if (!targetProjectId) return setError('У выбранного пользователя нет проекта')
     if (!name.trim())     return setError('Введите имя сервиса')
@@ -250,41 +231,35 @@ function CreateDatabaseModal({
     mutation.mutate({ name: name.trim(), project_id: targetProjectId, flavor_id: flavorId, engine, db_name: dbName.trim() })
   }
 
+  const nonAdminUsers = users.filter(u => u.role !== 'admin')
+
   return (
-    <div className={s.modalOverlay} onClick={onClose}>
-      <div className={s.modalContent} onClick={e => e.stopPropagation()}>
+    <div className="overlay" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()}>
         <h2 className={s.modalTitle}>🗄️ Create Database</h2>
 
         <form className={s.modalForm} onSubmit={handleSubmit}>
 
-          {/* Выбор пользователя */}
+          {/* ── Пользователь ─────────────────────────────────────────── */}
           <div className={s.formGroup}>
-            <label className={s.label}>
-              Пользователь <span style={{ color: '#ef4444' }}>*</span>
+            <label className="label">
+              Пользователь <span style={{ color: 'var(--red)' }}>*</span>
             </label>
-            {users.filter(u => u.role !== 'admin').length === 0 ? (
+            {nonAdminUsers.length === 0 ? (
               <p className={s.loadingText}>Загрузка пользователей...</p>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 180, overflowY: 'auto' }}>
-                {users.filter(u => u.role !== 'admin').map(u => {
-                  const selected = targetUserId === u.id
+              <div className={s.userPickerList}>
+                {nonAdminUsers.map(u => {
+                  const active = targetUserId === u.id
                   return (
-                    <button
-                      key={u.id}
-                      type="button"
-                      onClick={() => setTargetUserId(u.id)}
-                      style={{
-                        padding: '10px 14px', borderRadius: 8, textAlign: 'left', cursor: 'pointer',
-                        border: `1px solid ${selected ? '#C62E26' : 'var(--border)'}`,
-                        background: selected ? 'rgba(199,46,38,0.07)' : 'transparent',
-                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                      }}
-                    >
-                      <span style={{ fontWeight: 600, fontSize: 14, color: 'var(--text-pri)' }}>👤 {u.email}</span>
-                      <span style={{ fontSize: 11, color: '#94a3b8' }}>
+                    <button key={u.id} type="button"
+                      className={`${s.userPickerBtn} ${active ? s.userPickerBtnActive : ''}`}
+                      onClick={() => setTargetUserId(u.id)}>
+                      <span className={s.userPickerEmail}>👤 {u.email}</span>
+                      <span className={s.userPickerProject}>
                         {u.project?.id ? `project: ${u.project.id.slice(0, 8)}…` : 'нет проекта'}
                       </span>
-                      {selected && <span style={{ color: '#C62E26', marginLeft: 8 }}>✓</span>}
+                      {active && <span className={s.userPickerCheck}>✓</span>}
                     </button>
                   )
                 })}
@@ -292,22 +267,20 @@ function CreateDatabaseModal({
             )}
           </div>
 
-          {/* Имя сервиса */}
+          {/* ── Имя сервиса ──────────────────────────────────────────── */}
           <div className={s.formGroup}>
-            <label className={s.label}>Имя сервиса</label>
-            <input className={s.input} value={name} onChange={e => setName(e.target.value)} placeholder="e.g. production-db" />
+            <label className="label">Имя сервиса</label>
+            <input className="input" value={name} onChange={e => setName(e.target.value)} placeholder="e.g. production-db" />
           </div>
 
-          {/* Движок */}
+          {/* ── Движок ───────────────────────────────────────────────── */}
           <div className={s.formGroup}>
-            <label className={s.label}>Движок</label>
+            <label className="label">Движок</label>
             <div className={s.engineGrid}>
               {ENGINE_OPTIONS.map(opt => (
-                <button
-                  key={opt.engine} type="button"
+                <button key={opt.engine} type="button"
                   className={`${s.engineButton} ${engine === opt.engine ? s.engineButtonSelected : ''}`}
-                  onClick={() => handleEngineChange(opt.engine)}
-                >
+                  onClick={() => { setEngine(opt.engine); setFlavorId('') }}>
                   <div className={s.engineIcon}>{opt.icon}</div>
                   <div className={s.engineLabel}>{opt.label}</div>
                   <div className={s.engineDesc}>{opt.desc}</div>
@@ -316,9 +289,9 @@ function CreateDatabaseModal({
             </div>
           </div>
 
-          {/* Конфигурация */}
+          {/* ── Конфигурация ─────────────────────────────────────────── */}
           <div className={s.formGroup}>
-            <label className={s.label}>Конфигурация</label>
+            <label className="label">Конфигурация</label>
             {loadFlavors ? (
               <p className={s.loadingText}>Загрузка...</p>
             ) : flavors.length === 0 ? (
@@ -327,16 +300,13 @@ function CreateDatabaseModal({
               <div className={s.flavorList}>
                 {flavors.map(f => {
                   const ram = f.ram_mb >= 1024 ? `${f.ram_mb / 1024} GB` : `${f.ram_mb} MB`
-                  const selected = flavorId === f.id
                   return (
-                    <button
-                      key={f.id} type="button"
-                      className={`${s.flavorButton} ${selected ? s.flavorButtonSelected : ''}`}
-                      onClick={() => setFlavorId(f.id)}
-                    >
+                    <button key={f.id} type="button"
+                      className={`${s.flavorButton} ${flavorId === f.id ? s.flavorButtonSelected : ''}`}
+                      onClick={() => setFlavorId(f.id)}>
                       <span className={s.flavorName}>{f.name}</span>
                       <span className={s.flavorSpecs}>{f.cpu} vCPU · {ram} · {f.disk_gb} GB</span>
-                      {selected && <span className={s.flavorCheck}>✓</span>}
+                      {flavorId === f.id && <span className={s.flavorCheck}>✓</span>}
                     </button>
                   )
                 })}
@@ -344,18 +314,18 @@ function CreateDatabaseModal({
             )}
           </div>
 
-          {/* Имя БД */}
+          {/* ── Имя БД ───────────────────────────────────────────────── */}
           <div className={s.formGroup}>
-            <label className={s.label}>Имя базы данных</label>
-            <input className={s.input} value={dbName} onChange={e => setDbName(e.target.value)} placeholder="e.g. myapp_db" />
+            <label className="label">Имя базы данных</label>
+            <input className="input" value={dbName} onChange={e => setDbName(e.target.value)} placeholder="e.g. myapp_db" />
             <p className={s.hintText}>Credentials генерируются автоматически.</p>
           </div>
 
-          {error && <div className={s.errorBox}>⚠ {error}</div>}
+          {error && <div className="form-error">⚠ {error}</div>}
 
-          <div className={s.buttonGroup}>
-            <button type="button" className={s.buttonSecondary} onClick={onClose}>Отмена</button>
-            <button type="submit" className={s.buttonPrimary} disabled={mutation.isPending}>
+          <div className={s.formFooter}>
+            <button type="button" className="btn-secondary" onClick={onClose}>Отмена</button>
+            <button type="submit" className="btn-primary" disabled={mutation.isPending}>
               {mutation.isPending ? 'Создаём...' : 'Создать →'}
             </button>
           </div>

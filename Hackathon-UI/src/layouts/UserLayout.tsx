@@ -9,12 +9,12 @@ import styles from './Layout.module.css'
 
 const NAV = [
   { to: '/dashboard', label: 'Dashboard',  Icon: LayoutDashboard },
+  { to: '/agent',     label: 'Cloud Agent',Icon: Cpu             },
   { to: '/compute',   label: 'Compute',    Icon: Monitor         },
   { to: '/databases', label: 'Databases',  Icon: Database        },
   { to: '/storage',   label: 'Storage',    Icon: HardDrive       },
   { to: '/mobile',    label: 'Mobile Farm',Icon: Smartphone      },
   { to: '/snapshots', label: 'Snapshots',  Icon: Camera          },
-  { to: '/agent',     label: 'Cloud Agent',Icon: Cpu             },
   { to: '/settings',  label: 'Settings',   Icon: Settings        },
 ]
 

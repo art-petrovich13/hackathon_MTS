@@ -1,19 +1,19 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Monitor, Database,
-  HardDrive, Smartphone, Camera, Settings, LogOut, Cpu,
+  HardDrive, Smartphone, Camera, Settings, LogOut, Cpu
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
 const NAV = [
-  { to: '/dashboard', label: 'Dashboard', Icon: LayoutDashboard },
-  { to: '/compute', label: 'Compute', Icon: Monitor },
-  { to: '/databases', label: 'Databases', Icon: Database },
-  { to: '/storage', label: 'Storage', Icon: HardDrive },
-  { to: '/mobile', label: 'Mobile Farm', Icon: Smartphone },
-  { to: '/snapshots', label: 'Snapshots', Icon: Camera },
-  { to: '/agent', label: 'AI Агент', Icon: Cpu },  // ← ДОБАВИТЬ
-  { to: '/settings', label: 'Settings', Icon: Settings },
+  { to: '/dashboard',  label: 'Dashboard',   Icon: LayoutDashboard },
+  { to: '/compute',    label: 'Compute',      Icon: Monitor         },
+  { to: '/databases',  label: 'Databases',    Icon: Database        },
+  { to: '/storage',    label: 'Storage',      Icon: HardDrive       },
+  { to: '/mobile',     label: 'Mobile Farm',  Icon: Smartphone      },
+  { to: '/snapshots',  label: 'Snapshots',    Icon: Camera          },
+  { to: '/agent',      label: 'AI Агент',     Icon: Cpu             },
+  { to: '/settings',   label: 'Settings',     Icon: Settings        },
 ]
 
 export function UserLayout() {
@@ -44,15 +44,20 @@ export function UserLayout() {
         {/* Навигация */}
         <nav style={{ flex: 1, padding: '10px 8px', display: 'flex', flexDirection: 'column', gap: 2 }}>
           {NAV.map(({ to, label, Icon }) => (
-            <NavLink key={to} to={to} style={({ isActive }) => ({})}>
+            <NavLink
+              key={to}
+              to={to}
+              style={({ isActive }) => ({
+                display: 'flex', alignItems: 'center', gap: 9,
+                padding: '8px 12px', borderRadius: 8,
+                textDecoration: 'none', fontSize: 14,
+                fontWeight: isActive ? 600 : 400,
+                color: isActive ? '#f1f5f9' : '#94a3b8',
+                background: isActive ? 'rgba(99,102,241,0.15)' : 'transparent',
+              })}
+            >
               <Icon size={15} />
               <span>{label}</span>
-              {to === '/agent' && (
-                <span style={{
-                  marginLeft: 'auto', fontSize: 9, background: '#1d4ed8',
-                  color: '#bfdbfe', padding: '1px 6px', borderRadius: 10, fontWeight: 700,
-                }}>NEW</span>
-              )}
             </NavLink>
           ))}
         </nav>

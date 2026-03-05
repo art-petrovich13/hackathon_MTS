@@ -11,20 +11,23 @@ import (
 	"github.com/art-petrovich13/hackathon_MTS/internal/middleware"
 	"github.com/art-petrovich13/hackathon_MTS/internal/models"
 	"github.com/art-petrovich13/hackathon_MTS/internal/repository"
+	"github.com/art-petrovich13/hackathon_MTS/internal/services"
 )
 
 type UserHandler struct {
-	userRepo    *repository.UserRepository
-	projectRepo *repository.ProjectRepository
-	limitRepo   *repository.ProjectLimitRepository
+	userRepo      *repository.UserRepository
+	projectRepo   *repository.ProjectRepository
+	limitRepo     *repository.ProjectLimitRepository
+	limitsChecker *services.LimitsChecker
 }
 
 func NewUserHandler(
 	userRepo *repository.UserRepository,
 	projectRepo *repository.ProjectRepository,
 	limitRepo *repository.ProjectLimitRepository,
+	lc *services.LimitsChecker,
 ) *UserHandler {
-	return &UserHandler{userRepo, projectRepo, limitRepo}
+	return &UserHandler{userRepo, projectRepo, limitRepo, lc}
 }
 
 // ListUsers — GET /api/v1/users (только admin)
@@ -160,4 +163,27 @@ func (h *UserHandler) SetLimits(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	respondJSON(w, http.StatusOK, req)
+}
+
+// GetLimits — GET /api/v1/users/{id}/limits (admin only)
+func (h *UserHandler) GetLimits(w http.ResponseWriter, r *http.Request) {
+	userID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		respondError(w, http.StatusBadRequest, "Invalid user ID")
+		return
+	}
+
+	project, _ := h.projectRepo.GetByUserID(r.Context(), userID)
+	if project == nil {
+		respondJSON(w, http.StatusOK, map[string]any{"limits": nil, "usage": nil})
+		return
+	}
+
+	limits, _ := h.limitRepo.GetByProjectID(r.Context(), project.ID)
+	usage, _ := h.limitsChecker.GetCurrentUsage(r.Context(), project.ID)
+
+	respondJSON(w, http.StatusOK, map[string]any{
+		"limits": limits,
+		"usage":  usage,
+	})
 }

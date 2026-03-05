@@ -96,25 +96,9 @@ func (w *VMWorker) processBatch(ctx context.Context) {
 	}
 }
 
-// ──────────────────────────────────────────────────────────────────────────
-// processCreate — создаёт контейнер для VM со статусом "pending".
-//
-// ВАЖНО: Docker-операция (особенно pull образа) может занять минуты.
-// Держать транзакцию открытой всё это время нельзя — PostgreSQL убьёт
-// соединение, и UPDATE ресурсов тихо потеряется.
-//
-// Решение — два этапа с двумя короткими транзакциями:
-//
-//	Этап 1 (быстро, в рамках общего tx): найти узел, зарезервировать
-//	        ресурсы, поставить VM статус "creating".
-//	Этап 2 (после Docker, отдельный tx): обновить VM с container_id и ip.
-//
-// ──────────────────────────────────────────────────────────────────────────
 func (w *VMWorker) processCreate(ctx context.Context, tx *sqlx.Tx, vm models.VirtualMachine) {
 	log := slog.With("vm_id", vm.ID, "vm_name", vm.Name, "op", "create")
 	log.Info("worker: creating vm")
-
-	// ── Этап 1: резервируем ресурсы в текущей (короткой) транзакции ────────
 
 	var flavor models.Flavor
 	if err := tx.GetContext(ctx, &flavor, `SELECT * FROM flavors WHERE id = $1`, vm.FlavorID); err != nil {
@@ -130,8 +114,6 @@ func (w *VMWorker) processCreate(ctx context.Context, tx *sqlx.Tx, vm models.Vir
 		return
 	}
 
-	// Ищем узел и сразу блокируем его строку (FOR UPDATE).
-	// Это быстрая операция — транзакция не будет долго ждать.
 	var node models.ComputeNode
 	err := tx.GetContext(ctx, &node,
 		`SELECT * FROM compute_nodes
@@ -143,11 +125,9 @@ func (w *VMWorker) processCreate(ctx context.Context, tx *sqlx.Tx, vm models.Vir
 	)
 	if err != nil {
 		log.Warn("worker: no suitable node, will retry next tick")
-		return // не меняем статус — VM остаётся pending
+		return
 	}
 
-	// Сразу уменьшаем свободные ресурсы узла ДО вызова Docker.
-	// Это гарантирует что ресурсы зарезервированы даже если Docker работает долго.
 	if _, err := tx.ExecContext(ctx,
 		`UPDATE compute_nodes
 		 SET free_cpu = free_cpu - $1, free_ram_mb = free_ram_mb - $2
@@ -158,14 +138,15 @@ func (w *VMWorker) processCreate(ctx context.Context, tx *sqlx.Tx, vm models.Vir
 		w.setError(ctx, tx, vm.ID)
 		return
 	}
-	// Аллоцируем порт для noVNC (будет использоваться только VNC-образами).
+
+	// Аллоцируем porт для noVNC.
+	// Порт выделяется всегда — безопасно: если образ не VNC, порт просто не будет занят.
 	novncPort, novncErr := utils.AllocatePort(tx, node.ID, "vm_novnc", vm.ID)
 	if novncErr != nil {
 		log.Warn("worker: failed to allocate novnc port, vm will run without VNC", "error", novncErr)
-		novncPort = 0 // не критично — VM создастся без VNC
+		novncPort = 0
 	}
-	// Меняем статус VM на "creating", записываем node_id.
-	// Так при следующем тике воркер не возьмёт эту VM снова.
+
 	if _, err := tx.ExecContext(ctx,
 		`UPDATE vms SET status = 'creating', node_id = $1, updated_at = NOW() WHERE id = $2`,
 		node.ID, vm.ID,
@@ -175,18 +156,8 @@ func (w *VMWorker) processCreate(ctx context.Context, tx *sqlx.Tx, vm models.Vir
 		return
 	}
 
-	// ── Этап 1 заканчивается здесь. tx.Commit() вызовется в processBatch
-	//    после возврата из этой функции. Ресурсы зарезервированы в БД. ──────
-
-	// ── Этап 2: вызываем Docker ПОСЛЕ того как эта функция вернётся
-	//    и транзакция будет закоммичена. Для этого запускаем горутину. ───────
-	//
-	// Почему горутина: processCreate возвращается → processBatch делает
-	// tx.Commit() → ресурсы в БД зафиксированы → горутина вызывает Docker
-	// → по завершении открывает новую короткую транзакцию и обновляет VM.
-
 	go func(vmID, nodeID interface{}, flavorCPU, flavorRAMMB int, imageName, vmName string, novncPort int) {
-		dockerCtx := context.Background() // отдельный контекст, не зависит от запроса
+		dockerCtx := context.Background()
 
 		instance, err := w.drv.CreateVM(dockerCtx, &driver.CreateVMOpts{
 			Name:      vmName,
@@ -197,12 +168,10 @@ func (w *VMWorker) processCreate(ctx context.Context, tx *sqlx.Tx, vm models.Vir
 		})
 		if err != nil {
 			log.Error("worker: docker create failed", "error", err)
-			// Компенсация: возвращаем ресурсы и ставим error
 			w.compensateFailedCreate(dockerCtx, vmID, nodeID, flavorCPU, flavorRAMMB)
 			return
 		}
 
-		// Обновляем VM: container_id, ip, статус running — в отдельной короткой транзакции.
 		updateCtx := context.Background()
 		updateTx, err := w.db.BeginTxx(updateCtx, nil)
 		if err != nil {
@@ -215,12 +184,12 @@ func (w *VMWorker) processCreate(ctx context.Context, tx *sqlx.Tx, vm models.Vir
 
 		if _, err := updateTx.ExecContext(updateCtx,
 			`UPDATE vms SET
-        status              = 'running',
-        docker_container_id = $1,
-        ip_address          = $2,
-        novnc_port          = $3,
-        updated_at          = NOW()
-     WHERE id = $4`,
+				status              = 'running',
+				docker_container_id = $1,
+				ip_address          = $2,
+				novnc_port          = $3,
+				updated_at          = NOW()
+			 WHERE id = $4`,
 			instance.ID, instance.IPAddress, instance.NoVNCPort, vmID,
 		); err != nil {
 			log.Error("worker: update vm after docker create failed", "error", err)
@@ -243,8 +212,6 @@ func (w *VMWorker) processCreate(ctx context.Context, tx *sqlx.Tx, vm models.Vir
 	}(vm.ID, node.ID, flavor.CPU, flavor.RAMMB, img.DockerImage, vm.Name, novncPort)
 }
 
-// compensateFailedCreate — компенсирующая транзакция при ошибке Docker:
-// возвращает ресурсы узлу и ставит VM статус error.
 func (w *VMWorker) compensateFailedCreate(ctx context.Context, vmID, nodeID interface{}, cpu, ramMB int) {
 	tx, err := w.db.BeginTxx(ctx, nil)
 	if err != nil {
@@ -253,7 +220,6 @@ func (w *VMWorker) compensateFailedCreate(ctx context.Context, vmID, nodeID inte
 	}
 	defer tx.Rollback() //nolint:errcheck
 
-	// Возвращаем ресурсы узлу
 	if _, err := tx.ExecContext(ctx,
 		`UPDATE compute_nodes SET free_cpu = free_cpu + $1, free_ram_mb = free_ram_mb + $2 WHERE id = $3`,
 		cpu, ramMB, nodeID,
@@ -261,7 +227,6 @@ func (w *VMWorker) compensateFailedCreate(ctx context.Context, vmID, nodeID inte
 		slog.Error("worker: compensation restore resources failed", "error", err)
 	}
 
-	// Ставим VM статус error
 	if _, err := tx.ExecContext(ctx,
 		`UPDATE vms SET status = 'error', updated_at = NOW() WHERE id = $1`,
 		vmID,
@@ -274,10 +239,6 @@ func (w *VMWorker) compensateFailedCreate(ctx context.Context, vmID, nodeID inte
 	}
 }
 
-// ──────────────────────────────────────────────────────────────────────────
-// processStart — запускает контейнер для VM со статусом "pending-start".
-// StartVM быстрая операция (< 1 сек), транзакцию держим одну.
-// ──────────────────────────────────────────────────────────────────────────
 func (w *VMWorker) processStart(ctx context.Context, tx *sqlx.Tx, vm models.VirtualMachine) {
 	log := slog.With("vm_id", vm.ID, "vm_name", vm.Name, "op", "start")
 	log.Info("worker: starting vm")
@@ -295,7 +256,6 @@ func (w *VMWorker) processStart(ctx context.Context, tx *sqlx.Tx, vm models.Virt
 		return
 	}
 
-	// Резервируем ресурсы ДО вызова Docker (та же логика что и в create)
 	if vm.NodeID != nil {
 		if _, err := tx.ExecContext(ctx,
 			`UPDATE compute_nodes SET free_cpu = free_cpu - $1, free_ram_mb = free_ram_mb - $2 WHERE id = $3`,
@@ -307,10 +267,8 @@ func (w *VMWorker) processStart(ctx context.Context, tx *sqlx.Tx, vm models.Virt
 		}
 	}
 
-	// StartVM быстрая — вызываем прямо в транзакции, это нормально
 	if err := w.drv.StartVM(ctx, *vm.DockerContainerID); err != nil {
 		log.Error("worker: docker start failed", "error", err)
-		// Возвращаем ресурсы (в той же транзакции — откатятся при Rollback)
 		w.setError(ctx, tx, vm.ID)
 		return
 	}
@@ -328,9 +286,6 @@ func (w *VMWorker) processStart(ctx context.Context, tx *sqlx.Tx, vm models.Virt
 	log.Info("worker: vm started successfully")
 }
 
-// ──────────────────────────────────────────────────────────────────────────
-// processStop — останавливает контейнер для VM со статусом "pending-stop".
-// ──────────────────────────────────────────────────────────────────────────
 func (w *VMWorker) processStop(ctx context.Context, tx *sqlx.Tx, vm models.VirtualMachine) {
 	log := slog.With("vm_id", vm.ID, "vm_name", vm.Name, "op", "stop")
 	log.Info("worker: stopping vm")
@@ -348,14 +303,12 @@ func (w *VMWorker) processStop(ctx context.Context, tx *sqlx.Tx, vm models.Virtu
 		return
 	}
 
-	// StopVM достаточно быстрая — вызываем в транзакции
 	if err := w.drv.StopVM(ctx, *vm.DockerContainerID); err != nil {
 		log.Error("worker: docker stop failed", "error", err)
 		w.setError(ctx, tx, vm.ID)
 		return
 	}
 
-	// Освобождаем ресурсы узла
 	if vm.NodeID != nil {
 		if _, err := tx.ExecContext(ctx,
 			`UPDATE compute_nodes SET free_cpu = free_cpu + $1, free_ram_mb = free_ram_mb + $2 WHERE id = $3`,
@@ -378,10 +331,6 @@ func (w *VMWorker) processStop(ctx context.Context, tx *sqlx.Tx, vm models.Virtu
 
 	log.Info("worker: vm stopped successfully")
 }
-
-// ──────────────────────────────────────────────────────────────────────────
-// Вспомогательные методы
-// ──────────────────────────────────────────────────────────────────────────
 
 func (w *VMWorker) setError(ctx context.Context, tx *sqlx.Tx, vmID interface{}) {
 	if _, err := tx.ExecContext(ctx,

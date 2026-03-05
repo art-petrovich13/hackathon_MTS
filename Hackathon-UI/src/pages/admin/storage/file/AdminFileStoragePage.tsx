@@ -25,7 +25,7 @@ export function AdminFileStoragePage() {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
 
 
-  const { data: storages = [], isLoading, isError } = useQuery<FileStorage[]>({
+  const { data: allStorages = [], isLoading, isError } = useQuery<FileStorage[]>({
     queryKey: ['file-storages', selectedUserId],
     queryFn: () => getFileStorages(selectedUserId),
     refetchInterval: (query) => {
@@ -40,6 +40,14 @@ export function AdminFileStoragePage() {
     queryFn: getUsers,
     staleTime: 60_000,
   })
+
+  // Клиентская фильтрация как fallback
+  const storages = selectedUserId
+    ? allStorages.filter(fs => {
+        const owner = users.find(u => u.id === selectedUserId)
+        return owner ? fs.project_id === owner.project?.id : true
+      })
+    : allStorages
 
   const deleteMut = useMutation({
     mutationFn: deleteFileStorage,
@@ -236,20 +244,17 @@ export function AdminFileStoragePage() {
       )}
 
       {/* ── Модал создания ────────────────────────────────────────────────── */}
-      {showCreate && (() => {
-        const targetUser = selectedUserId ? users.find(u => u.id === selectedUserId) : null
-        const targetProjectId = targetUser?.project?.id ?? null
-        return (
-          <CreateFileStorageModal
-            onClose={() => setShowCreate(false)}
-            onCreated={() => {
-              setShowCreate(false)
-              qc.invalidateQueries({ queryKey: ['file-storages'] })
-            }}
-            targetProjectId={targetProjectId}
-          />
-        )
-      })()}
+      {showCreate && (
+        <CreateFileStorageModal
+          onClose={() => setShowCreate(false)}
+          onCreated={() => {
+            setShowCreate(false)
+            qc.invalidateQueries({ queryKey: ['file-storages'] })
+          }}
+          users={users}
+          preselectedUserId={selectedUserId}
+        />
+      )}
     </div>
   )
 }
@@ -265,15 +270,20 @@ function actionBtn(bg: string, color: string): CSSProperties {
 // ─── Модал создания File Storage ───────────────────────────────────────────────
 
 function CreateFileStorageModal({
-  onClose, onCreated, targetProjectId,
+  onClose, onCreated, users, preselectedUserId,
 }: {
   onClose: () => void
   onCreated: () => void
-  targetProjectId: string | null
+  users: UserWithProject[]
+  preselectedUserId: string | null
 }) {
   const [name, setName] = useState('')
   const [flavorId, setFlavorId] = useState('')
   const [error, setError] = useState('')
+  const [targetUserId, setTargetUserId] = useState<string>(preselectedUserId ?? '')
+
+  const targetUser = users.find(u => u.id === targetUserId)
+  const targetProjectId = targetUser?.project?.id ?? null
 
   const { data: flavors = [], isLoading: loadFlavors } = useQuery<Flavor[]>({
     queryKey: ['flavors', 'file_storage'],
@@ -298,7 +308,8 @@ function CreateFileStorageModal({
     setError('')
     if (!name.trim()) return setError('Введите имя хранилища')
     if (!flavorId) return setError('Выберите конфигурацию')
-    if (!targetProjectId) return setError('Выберите пользователя в фильтре перед созданием')
+    if (!targetUserId) return setError('Выберите пользователя')
+    if (!targetProjectId) return setError('У выбранного пользователя нет проекта')
     mutation.mutate({
       name: name.trim(),
       project_id: targetProjectId,
@@ -330,6 +341,44 @@ function CreateFileStorageModal({
         </p>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+          {/* Выбор пользователя */}
+          <div>
+            <label style={labelStyle}>
+              Пользователь <span style={{ color: '#ef4444' }}>*</span>
+            </label>
+            {users.filter(u => u.role !== 'admin').length === 0 ? (
+              <p style={{ color: '#94a3b8', fontSize: 13 }}>Загрузка пользователей...</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 180, overflowY: 'auto' }}>
+                {users.filter(u => u.role !== 'admin').map(u => {
+                  const selected = targetUserId === u.id
+                  return (
+                    <button
+                      key={u.id}
+                      type="button"
+                      onClick={() => setTargetUserId(u.id)}
+                      style={{
+                        padding: '10px 14px', borderRadius: 8, textAlign: 'left',
+                        cursor: 'pointer',
+                        border: `1px solid ${selected ? 'var(--accent)' : 'var(--border)'}`,
+                        background: selected ? 'var(--accent-dim)' : 'transparent',
+                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                      }}
+                    >
+                      <span style={{ fontWeight: 600, fontSize: 14, color: 'var(--text-pri)' }}>
+                        👤 {u.email}
+                      </span>
+                      <span style={{ fontSize: 11, color: '#94a3b8' }}>
+                        {u.project?.id ? `project: ${u.project.id.slice(0, 8)}…` : 'нет проекта'}
+                      </span>
+                      {selected && <span style={{ color: 'var(--accent)', marginLeft: 8 }}>✓</span>}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </div>
 
           {/* Имя */}
           <div>

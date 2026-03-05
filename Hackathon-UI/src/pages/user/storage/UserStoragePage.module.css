@@ -1,0 +1,124 @@
+/* src/pages/admin/storage/UserStoragePage.module.css */
+
+.page {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+/* ── Вкладки ─────────────────────────────────────────────────────────────── */
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.tabBtn {
+  padding: 8px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-sec);
+  font-family: 'Syne', sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+  transition: all 0.15s;
+}
+.tabBtn:hover {
+  border-color: var(--red-primary);
+  color: var(--red-primary);
+}
+.tabBtnActive {
+  border-color: var(--red-primary);
+  background: rgba(198, 46, 38, 0.08);
+  color: var(--red-primary);
+  font-weight: 700;
+}
+
+/* ── Сетка карточек ──────────────────────────────────────────────────────── */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+/* ── Empty hint ──────────────────────────────────────────────────────────── */
+.emptyHint {
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+/* ── Action buttons inside ResourceCard ─────────────────────────────────── */
+.btnAccess {
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: none;
+  background: var(--red-gradient);
+  color: #fff;
+  cursor: pointer;
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+  transition: opacity 0.15s;
+}
+.btnAccess:hover { opacity: 0.82; }
+
+.btnDelete {
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1px solid rgba(198, 46, 38, 0.4);
+  background: rgba(198, 46, 38, 0.08);
+  color: var(--red-primary);
+  cursor: pointer;
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  transition: all 0.15s;
+}
+.btnDelete:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.btnDelete:hover:not(:disabled) {
+  background: rgba(198, 46, 38, 0.18);
+  border-color: var(--red-primary);
+}
+
+.btnDeleteConfirm {
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: none;
+  background: var(--red-gradient);
+  color: #fff;
+  cursor: pointer;
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+  transition: opacity 0.15s;
+}
+.btnDeleteConfirm:disabled { opacity: 0.5; cursor: not-allowed; }
+.btnDeleteConfirm:hover:not(:disabled) { opacity: 0.82; }
+
+.btnCancel {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-sec);
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.15s;
+}
+.btnCancel:hover {
+  border-color: var(--red-primary);
+  color: var(--red-primary);
+}
+
+/* ── Endpoint monospace ──────────────────────────────────────────────────── */
+.endpoint {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+}

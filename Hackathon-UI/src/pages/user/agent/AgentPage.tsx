@@ -1,17 +1,15 @@
 import { AgentChat } from './components/AgentChat'
+import styles from './components/AgentPage.module.css'
 
 export function AgentPage() {
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ paddingBottom: 14, borderBottom: '1px solid var(--color-border, #334155)' }}>
-        <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: '#f1f5f9', display: 'flex', alignItems: 'center', gap: 10 }}>
-          🤖 AgentMesh
-          <span style={{
-            fontSize: 11, background: '#1d4ed8', color: '#bfdbfe',
-            padding: '2px 9px', borderRadius: 20, fontWeight: 600, letterSpacing: '0.05em',
-          }}>NEW</span>
+    <div className={styles.page}>
+      <div className={styles.header}>
+        <h1 className={styles.title}>
+          🤖 Cloud Agent
+          <span className={styles.badge}>NEW</span>
         </h1>
-        <p style={{ margin: '4px 0 0', fontSize: 13, color: '#64748b' }}>
+        <p className={styles.subtitle}>
           Опишите задачу — агент спроектирует и развернёт инфраструктуру автоматически
         </p>
       </div>

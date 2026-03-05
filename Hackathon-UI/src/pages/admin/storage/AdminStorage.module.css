@@ -1,0 +1,129 @@
+/* src/pages/admin/storage/adminStorage.module.css
+   Только то, чего нет в глобальном index.css */
+
+.page {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+/* ── Кнопки действий в таблице ───────────────────────────────────────────── */
+.actionBtn {
+  padding: 4px 12px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-family: 'Syne', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: opacity 0.15s;
+}
+.actionBtn:disabled { opacity: 0.35; cursor: not-allowed; }
+.actionBtn:hover:not(:disabled) { opacity: 0.8; }
+
+.actionBtnStart   { background: rgba(0, 200, 83, 0.12);  color: #4ade80; }
+.actionBtnStop    { background: rgba(255, 145, 0, 0.12); color: #fb923c; }
+.actionBtnAccess  { background: rgba(198, 46, 38, 0.1);  color: var(--red-primary); }
+.actionBtnAccess:disabled { opacity: 0.3; }
+.actionBtnDelete  { background: rgba(198, 46, 38, 0.08); color: #f87171; }
+.actionBtnConfirm { background: rgba(198, 46, 38, 0.18); color: #f87171; }
+.actionBtnCancel  { background: transparent; color: var(--text-sec); border: 1px solid var(--border); }
+
+.actionsCell { display: flex; gap: 6px; align-items: center; }
+
+/* ── Ячейка владельца ────────────────────────────────────────────────────── */
+.ownerCell {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-sec);
+}
+
+/* ── Ссылка в ячейке ─────────────────────────────────────────────────────── */
+.cellLink {
+  color: var(--red-primary);
+  text-decoration: none;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  transition: opacity 0.15s;
+}
+.cellLink:hover { opacity: 0.75; }
+
+/* ── Модал — только заголовок и подпись (остальное глобально) ────────────── */
+.modalTitle {
+  margin: 0 0 8px;
+  font-family: 'Syne', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-pri);
+}
+
+.modalSubtitle {
+  margin-bottom: 20px;
+  font-size: 13px;
+  color: var(--text-sec);
+  line-height: 1.5;
+}
+
+/* ── Форма ───────────────────────────────────────────────────────────────── */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.labelNote {
+  color: var(--text-dim);
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 11px;
+}
+
+/* ── Flavor picker ───────────────────────────────────────────────────────── */
+.flavorList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.flavorBtn {
+  padding: 10px 14px;
+  border-radius: 8px;
+  text-align: left;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: transparent;
+  transition: border-color 0.15s, background 0.15s;
+  width: 100%;
+}
+.flavorBtn:hover { border-color: rgba(198, 46, 38, 0.4); }
+.flavorBtnActive {
+  border-color: var(--red-primary);
+  background: rgba(198, 46, 38, 0.08);
+}
+
+.flavorName {
+  font-family: 'Syne', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-pri);
+}
+
+.flavorSpec {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--text-sec);
+}
+
+.flavorCheck { color: var(--red-primary); margin-left: 8px; }
+
+/* ── Футер формы ─────────────────────────────────────────────────────────── */
+.formFooter {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 4px;
+}

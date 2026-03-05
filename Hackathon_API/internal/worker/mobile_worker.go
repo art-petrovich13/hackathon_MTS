@@ -170,7 +170,7 @@ func (w *MobileWorker) createDevice(
 	log.Info("mobile worker: container started, waiting for emulator ready",
 		"container", instance.ContainerID[:12])
 
-	waitCtx, waitCancel := context.WithTimeout(ctx, 3*time.Minute)
+	waitCtx, waitCancel := context.WithTimeout(ctx, 15*time.Minute)
 	defer waitCancel()
 
 	if err := w.driver.WaitForReady(waitCtx, instance.ContainerID); err != nil {

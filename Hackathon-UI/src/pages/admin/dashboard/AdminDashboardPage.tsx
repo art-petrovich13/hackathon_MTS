@@ -6,13 +6,13 @@ import {
 import s from '../../shared.module.css'
 
 export function AdminDashboardPage() {
-  const { data: vms     = [] } = useQuery({ queryKey: ['vms'],             queryFn: getVMs })
-  const { data: dbs     = [] } = useQuery({ queryKey: ['databases'],       queryFn: getDatabases })
-  const { data: objects = [] } = useQuery({ queryKey: ['object-storages'], queryFn: getObjectStorages })
-  const { data: files   = [] } = useQuery({ queryKey: ['file-storages'],   queryFn: getFileStorages })
-  const { data: mobiles = [] } = useQuery({ queryKey: ['mobile-devices'],  queryFn: getMobileDevices })
-  const { data: users   = [] } = useQuery({ queryKey: ['users'],           queryFn: getUsers })
-  const { data: nodes   = [] } = useQuery({ queryKey: ['nodes'],           queryFn: getNodes })
+  const { data: vms     = [] } = useQuery({ queryKey: ['vms'],             queryFn: () => getVMs() })
+  const { data: dbs     = [] } = useQuery({ queryKey: ['databases'],       queryFn: () => getDatabases() })
+  const { data: objects = [] } = useQuery({ queryKey: ['object-storages'], queryFn: () => getObjectStorages() })
+  const { data: files   = [] } = useQuery({ queryKey: ['file-storages'],   queryFn: () => getFileStorages() })
+  const { data: mobiles = [] } = useQuery({ queryKey: ['mobile-devices'],  queryFn: () => getMobileDevices() })
+  const { data: users   = [] } = useQuery({ queryKey: ['users'],           queryFn: () => getUsers() })
+  const { data: nodes   = [] } = useQuery({ queryKey: ['nodes'],           queryFn: () => getNodes() })
 
   const tiles = [
     { icon: '👥', label: 'Users',           value: users.length,   sub: `${users.filter(u => u.role === 'user').length} tenants`,  color: '#8b5cf6' },

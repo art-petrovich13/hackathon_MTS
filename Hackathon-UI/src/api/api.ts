@@ -313,7 +313,7 @@ export async function agentExecute(plan: AgentPlan): Promise<ReadableStreamDefau
 // Используется и в AgentChat, и в DeployTimeline.
 export async function readSSEStream(
   reader: ReadableStreamDefaultReader<Uint8Array>,
-  onEvent: (event: SSEEvent) => void,
+  onEvent: (ev: SSEEvent) => void,
 ): Promise<void> {
   const decoder = new TextDecoder()
   let buffer = ''
@@ -325,11 +325,8 @@ export async function readSSEStream(
     buffer = lines.pop() ?? ''
     for (const line of lines) {
       if (!line.startsWith('data: ')) continue
-      try {
-        onEvent(JSON.parse(line.slice(6)) as SSEEvent)
-      } catch {
-        // ignore malformed line
-      }
+      try { onEvent(JSON.parse(line.slice(6)) as SSEEvent) } catch { /* skip */ }
     }
   }
 }
+

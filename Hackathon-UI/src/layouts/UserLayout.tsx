@@ -1,7 +1,7 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Monitor, Database,
-  HardDrive, Smartphone, Camera, Settings, LogOut,
+  HardDrive, Smartphone, Camera, Settings, LogOut, Cpu
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
@@ -12,6 +12,7 @@ const NAV = [
   { to: '/storage',    label: 'Storage',      Icon: HardDrive       },
   { to: '/mobile',     label: 'Mobile Farm',  Icon: Smartphone      },
   { to: '/snapshots',  label: 'Snapshots',    Icon: Camera          },
+  { to: '/agent',      label: 'AI Агент',     Icon: Cpu             },
   { to: '/settings',   label: 'Settings',     Icon: Settings        },
 ]
 

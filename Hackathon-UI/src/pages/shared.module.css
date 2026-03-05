@@ -1,5 +1,11 @@
 /* src/pages/shared.module.css */
 
+:root {
+  --red-primary: #C62E26;
+  --red-dark: #7B1814;
+  --red-gradient: linear-gradient(135deg, var(--red-dark), var(--red-primary));
+}
+
 /* ── Заголовок страницы ─────────────────────────────────────────────────── */
 .pageHeader {
   display: flex;
@@ -29,7 +35,7 @@
 
 /* ── Кнопки ─────────────────────────────────────────────────────────────── */
 .btnPrimary {
-  background: var(--accent);
+  background: var(--red-gradient);
   color: #fff;
   border: none;
   padding: 10px 22px;
@@ -41,6 +47,7 @@
   white-space: nowrap;
   flex-shrink: 0;
   transition: opacity 0.15s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 .btnPrimary:hover:not(:disabled) { opacity: 0.82; }
 .btnPrimary:disabled { opacity: 0.4; cursor: not-allowed; }

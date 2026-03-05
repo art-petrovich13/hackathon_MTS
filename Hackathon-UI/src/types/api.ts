@@ -266,3 +266,36 @@ export interface CreateMobileDeviceRequest {
   flavor_id: string
   os_version: string
 }
+
+// ─── AgentMesh types — ДОБАВИТЬ В КОНЕЦ src/types/api.ts ─────────────────────
+
+export interface ServiceProposal {
+  service_type: 'vm' | 'database' | 'object_storage'
+  name: string
+  flavor_id: string
+  flavor_name: string
+  config: Record<string, unknown>
+  reason: string
+  cost_per_hour: number
+}
+
+export interface AgentPlan {
+  summary: string
+  services: ServiceProposal[]
+  total_cost_per_hour: number
+}
+
+export interface DeployStep {
+  step: string
+  status: 'in_progress' | 'success' | 'error'
+  message: string
+  result?: VirtualMachine | ManagedDatabase | ObjectStorage
+}
+
+export type SSEEventType = 'thinking' | 'plan' | 'deploy_step' | 'error' | 'done'
+
+export interface SSEEvent {
+  type: SSEEventType
+  content: string | AgentPlan | DeployStep | null
+}
+

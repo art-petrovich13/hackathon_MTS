@@ -225,7 +225,6 @@ func main() {
 		// ── AgentMesh SSE эндпоинты ──────────────────────────────────────────────
 		r.Post("/agent/chat", agentHandler.Chat)
 		r.Post("/agent/execute", agentHandler.Execute)
-		r.Post("/agent/preset",  agentHandler.Preset)
 	})
 
 	// ── HTTP сервер + Graceful Shutdown ─────────────────────────────────────

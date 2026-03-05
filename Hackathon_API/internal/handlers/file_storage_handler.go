@@ -29,7 +29,7 @@ func NewFileStorageHandler(
 	db *sqlx.DB,
 	lc *services.LimitsChecker,
 ) *FileStorageHandler {
-	return &FileStorageHandler{fsRepo: fsRepo, flavorRepo: flavorRepo, db: db}
+	return &FileStorageHandler{fsRepo: fsRepo, flavorRepo: flavorRepo, db: db, limitsChecker: lc}
 }
 
 // Create — POST /api/v1/file-storages

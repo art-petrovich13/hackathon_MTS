@@ -32,7 +32,7 @@ func NewObjectStorageHandler(
 	driver *objectcompute.MinIODriver,
 	lc *services.LimitsChecker,
 ) *ObjectStorageHandler {
-	return &ObjectStorageHandler{osRepo: osRepo, flavorRepo: flavorRepo, db: db, driver: driver}
+	return &ObjectStorageHandler{osRepo: osRepo, flavorRepo: flavorRepo, db: db, driver: driver, limitsChecker: lc}
 }
 
 // Create — POST /api/v1/object-storages

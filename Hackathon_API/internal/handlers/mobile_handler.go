@@ -33,7 +33,7 @@ func NewMobileHandler(
 	driver *mobilecompute.MobileDriver,
 	lc *services.LimitsChecker,
 ) *MobileHandler {
-	return &MobileHandler{mobileRepo: mobileRepo, flavorRepo: flavorRepo, db: db, driver: driver}
+	return &MobileHandler{mobileRepo: mobileRepo, flavorRepo: flavorRepo, db: db, driver: driver, limitsChecker: lc}
 }
 
 func (h *MobileHandler) Create(w http.ResponseWriter, r *http.Request) {

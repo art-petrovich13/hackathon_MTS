@@ -14,7 +14,6 @@ import { UserFilter } from '../../../../components/ui/UserFilter'
 import { getUsers } from '../../../../api/api'
 import type { UserWithProject } from '../../../../types/api'
 
-const DEFAULT_PROJECT_ID = '9d320322-31f5-48d5-ade8-43f1b03b5b59'
 const ACTIVE_STATUSES = new Set(['pending', 'creating', 'pending-start', 'pending-stop'])
 
 // ─── Главная страница ──────────────────────────────────────────────────────────
@@ -237,15 +236,20 @@ export function AdminFileStoragePage() {
       )}
 
       {/* ── Модал создания ────────────────────────────────────────────────── */}
-      {showCreate && (
-        <CreateFileStorageModal
-          onClose={() => setShowCreate(false)}
-          onCreated={() => {
-            setShowCreate(false)
-            qc.invalidateQueries({ queryKey: ['file-storages'] })
-          }}
-        />
-      )}
+      {showCreate && (() => {
+        const targetUser = selectedUserId ? users.find(u => u.id === selectedUserId) : null
+        const targetProjectId = targetUser?.project?.id ?? null
+        return (
+          <CreateFileStorageModal
+            onClose={() => setShowCreate(false)}
+            onCreated={() => {
+              setShowCreate(false)
+              qc.invalidateQueries({ queryKey: ['file-storages'] })
+            }}
+            targetProjectId={targetProjectId}
+          />
+        )
+      })()}
     </div>
   )
 }
@@ -261,10 +265,11 @@ function actionBtn(bg: string, color: string): CSSProperties {
 // ─── Модал создания File Storage ───────────────────────────────────────────────
 
 function CreateFileStorageModal({
-  onClose, onCreated,
+  onClose, onCreated, targetProjectId,
 }: {
   onClose: () => void
   onCreated: () => void
+  targetProjectId: string | null
 }) {
   const [name, setName] = useState('')
   const [flavorId, setFlavorId] = useState('')
@@ -293,9 +298,10 @@ function CreateFileStorageModal({
     setError('')
     if (!name.trim()) return setError('Введите имя хранилища')
     if (!flavorId) return setError('Выберите конфигурацию')
+    if (!targetProjectId) return setError('Выберите пользователя в фильтре перед созданием')
     mutation.mutate({
       name: name.trim(),
-      project_id: DEFAULT_PROJECT_ID,
+      project_id: targetProjectId,
       flavor_id: flavorId,
     })
   }

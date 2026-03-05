@@ -1,30 +1,41 @@
-// src/pages/CreateVMPage.tsx
+// src/pages/admin/vms/CreateVMPage.tsx
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getFlavors, getImages, createVM } from '../../../api/api'
-import { type Image } from "../../../types/api"
-import type { Flavor } from '../../../types/api'
+import { getFlavors, getImages, createVM, getUsers } from '../../../api/api'
+import { useAuth } from '../../../context/AuthContext'
+import { type Image } from '../../../types/api'
+import type { Flavor, UserWithProject } from '../../../types/api'
 import s from '../../shared.module.css'
 import styles from './CreateVMPage.module.css'
-
-const DEFAULT_PROJECT_ID = '9d320322-31f5-48d5-ade8-43f1b03b5b59'
 
 export function CreateVMPage() {
   const navigate = useNavigate()
   const qc = useQueryClient()
+  const { user: me, isAdmin } = useAuth()
 
   const [name, setName] = useState('')
   const [flavorId, setFlavorId] = useState('')
   const [imageId, setImageId] = useState('')
+  const [targetUserId, setTargetUserId] = useState<string>('')
   const [formError, setFormError] = useState('')
 
-  
   const { data: flavors = [], isLoading: loadFlavors } = useQuery({
-  queryKey: ['flavors', 'compute'],
-  queryFn: () => getFlavors('compute'),
-})
-  const { data: images = [], isLoading: loadImages } = useQuery({ queryKey: ['images'], queryFn: getImages })
+    queryKey: ['flavors', 'compute'],
+    queryFn: () => getFlavors('compute'),
+  })
+  const { data: images = [], isLoading: loadImages } = useQuery({
+    queryKey: ['images'],
+    queryFn: getImages,
+  })
+
+  // Список пользователей — только для admin
+  const { data: users = [] } = useQuery({
+    queryKey: ['users'],
+    queryFn: getUsers,
+    enabled: isAdmin,
+    staleTime: 60_000,
+  })
 
   const mutation = useMutation({
     mutationFn: createVM,
@@ -33,7 +44,7 @@ export function CreateVMPage() {
       navigate('/admin/vms')
     },
     onError: (err: any) => {
-      setFormError(err.response?.data?.message ?? 'Failed to create VM.')
+      setFormError(err.response?.data?.error ?? err.response?.data?.message ?? 'Failed to create VM.')
     },
   })
 
@@ -43,7 +54,27 @@ export function CreateVMPage() {
     if (!name.trim()) return setFormError('VM name is required')
     if (!flavorId) return setFormError('Please select a flavor')
     if (!imageId) return setFormError('Please select an image')
-    mutation.mutate({ name: name.trim(), project_id: DEFAULT_PROJECT_ID, flavor_id: flavorId, image_id: imageId })
+
+    // Определяем project_id
+    let projectId: string
+    if (isAdmin) {
+      // Для admin — обязательно выбрать целевого пользователя
+      if (!targetUserId) return setFormError('Выберите пользователя, для которого создаётся VM')
+      const targetUser = users.find(u => u.id === targetUserId)
+      if (!targetUser?.project?.id) return setFormError('У выбранного пользователя нет проекта')
+      projectId = targetUser.project.id
+    } else {
+      // Для user — свой project_id из токена
+      if (!me?.project_id) return setFormError('Project ID not found. Try re-login.')
+      projectId = me.project_id
+    }
+
+    mutation.mutate({
+      name: name.trim(),
+      project_id: projectId,
+      flavor_id: flavorId,
+      image_id: imageId,
+    })
   }
 
   if (loadFlavors || loadImages) {
@@ -65,6 +96,46 @@ export function CreateVMPage() {
 
       <form className={styles.form} onSubmit={handleSubmit} noValidate>
 
+        {/* ── Выбор пользователя (только для admin) ─────────────────────── */}
+        {isAdmin && (
+          <div className={styles.section}>
+            <label className={styles.sectionTitle}>
+              Создать для пользователя <span style={{ color: '#ef4444' }}>*</span>
+            </label>
+            {users.length === 0 ? (
+              <p style={{ color: '#94a3b8', fontSize: 13 }}>Загрузка пользователей...</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {users.filter(u => u.role !== 'admin').map(u => {
+                  const selected = targetUserId === u.id
+                  return (
+                    <button
+                      key={u.id}
+                      type="button"
+                      onClick={() => setTargetUserId(u.id)}
+                      style={{
+                        padding: '10px 14px', borderRadius: 8, textAlign: 'left',
+                        cursor: 'pointer',
+                        border: `1px solid ${selected ? 'var(--accent)' : 'var(--border)'}`,
+                        background: selected ? 'var(--accent-dim)' : 'transparent',
+                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                      }}
+                    >
+                      <span style={{ fontWeight: 600, fontSize: 14, color: 'var(--text-pri)' }}>
+                        👤 {u.email}
+                      </span>
+                      <span style={{ fontSize: 11, color: '#94a3b8' }}>
+                        {u.project?.id ? `project: ${u.project.id.slice(0, 8)}…` : 'нет проекта'}
+                      </span>
+                      {selected && <span style={{ color: 'var(--accent)', marginLeft: 8 }}>✓</span>}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* ── Name ───────────────────────────────────────────────────── */}
         <div className={styles.section}>
           <label className={styles.sectionTitle}>VM Name</label>
@@ -74,7 +145,7 @@ export function CreateVMPage() {
             placeholder="e.g. web-server-01"
             value={name}
             onChange={e => setName(e.target.value)}
-            autoFocus
+            autoFocus={!isAdmin}
             maxLength={64}
           />
         </div>

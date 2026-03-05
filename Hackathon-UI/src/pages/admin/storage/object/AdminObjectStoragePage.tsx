@@ -16,9 +16,6 @@ import type { UserWithProject } from '../../../../types/api'
 
 
 
-// Тот же project_id что в CreateVMPage и AdminDatabasesPage
-const DEFAULT_PROJECT_ID = '9d320322-31f5-48d5-ade8-43f1b03b5b59'
-
 const ACTIVE_STATUSES = new Set(['pending', 'creating', 'pending-start', 'pending-stop'])
 
 // ─── Главная страница ──────────────────────────────────────────────────────────
@@ -265,15 +262,20 @@ export function AdminObjectStoragePage() {
       )}
 
       {/* ── Модал создания ────────────────────────────────────────────────── */}
-      {showCreate && (
-        <CreateObjectStorageModal
-          onClose={() => setShowCreate(false)}
-          onCreated={() => {
-            setShowCreate(false)
-            qc.invalidateQueries({ queryKey: ['object-storages'] })
-          }}
-        />
-      )}
+      {showCreate && (() => {
+        const targetUser = selectedUserId ? users.find(u => u.id === selectedUserId) : null
+        const targetProjectId = targetUser?.project?.id ?? null
+        return (
+          <CreateObjectStorageModal
+            onClose={() => setShowCreate(false)}
+            onCreated={() => {
+              setShowCreate(false)
+              qc.invalidateQueries({ queryKey: ['object-storages'] })
+            }}
+            targetProjectId={targetProjectId}
+          />
+        )
+      })()}
 
       {/* ── Модал credentials ─────────────────────────────────────────────── */}
       {credsFor && (
@@ -299,10 +301,11 @@ function actionBtn(bg: string, color: string): CSSProperties {
 // ─── Модал создания Object Storage ────────────────────────────────────────────
 
 function CreateObjectStorageModal({
-  onClose, onCreated,
+  onClose, onCreated, targetProjectId,
 }: {
   onClose: () => void
   onCreated: () => void
+  targetProjectId: string | null
 }) {
   const [name, setName] = useState('')
   const [flavorId, setFlavorId] = useState('')
@@ -332,9 +335,10 @@ function CreateObjectStorageModal({
     setError('')
     if (!name.trim()) return setError('Введите имя хранилища')
     if (!flavorId) return setError('Выберите конфигурацию')
+    if (!targetProjectId) return setError('Выберите пользователя в фильтре перед созданием')
     mutation.mutate({
       name: name.trim(),
-      project_id: DEFAULT_PROJECT_ID,
+      project_id: targetProjectId,
       flavor_id: flavorId,
       // Если bucket_name не заполнен — берём имя хранилища
       bucket_name: bucketName.trim() || name.trim(),

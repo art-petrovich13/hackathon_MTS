@@ -106,7 +106,7 @@ func (r *VMRepository) List(ctx context.Context, projectID uuid.UUID) ([]models.
 	} else {
 		query = `SELECT
 			id, name, project_id, flavor_id, image_id, status,
-			docker_container_id, ip_address, node_id, created_at, updated_at
+			docker_container_id, ip_address, node_id, novnc_port, created_at, updated_at
 		FROM vms WHERE project_id = $1 ORDER BY created_at DESC`
 		args = append(args, projectID)
 	}
@@ -121,17 +121,8 @@ func (r *VMRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
-// ── НОВЫЙ МЕТОД: нужен воркеру (День 8-9) ───────────────────────────────────
-
 // GetPendingForUpdate выбирает до limit VM со статусами, требующими обработки,
-// блокирует их строки (FOR UPDATE SKIP LOCKED) чтобы несколько воркеров
-// не обработали одну и ту же VM одновременно.
-//
-// Метод должен вызываться ВНУТРИ открытой транзакции tx.
-// Поддерживаемые статусы:
-//   - "pending"       → нужно создать контейнер
-//   - "pending-start" → нужно запустить контейнер
-//   - "pending-stop"  → нужно остановить контейнер
+// блокирует их строки (FOR UPDATE SKIP LOCKED).
 func (r *VMRepository) GetPendingForUpdate(ctx context.Context, tx *sqlx.Tx, limit int) ([]models.VirtualMachine, error) {
 	if limit <= 0 {
 		limit = 10

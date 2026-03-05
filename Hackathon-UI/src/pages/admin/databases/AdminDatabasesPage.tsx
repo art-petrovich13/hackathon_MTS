@@ -14,9 +14,6 @@ import type { UserWithProject } from '../../../types/api'
 
 import s from './AdminDatabasesStyle.module.css'
 
-// Тот же project_id что в CreateVMPage
-const DEFAULT_PROJECT_ID = '9d320322-31f5-48d5-ade8-43f1b03b5b59'
-
 const ACTIVE_STATUSES = new Set(['pending', 'creating', 'pending-start', 'pending-stop'])
 
 // ─── Главная страница ──────────────────────────────────────────────────────────
@@ -202,15 +199,20 @@ export function AdminDatabasesPage() {
       )}
 
       {/* ── Модал создания БД ─────────────────────────────────────────────── */}
-      {showCreate && (
-        <CreateDatabaseModal
-          onClose={() => setShowCreate(false)}
-          onCreated={() => {
-            setShowCreate(false)
-            qc.invalidateQueries({ queryKey: ['databases'] })
-          }}
-        />
-      )}
+      {showCreate && (() => {
+        const targetUser = selectedUserId ? users.find(u => u.id === selectedUserId) : null
+        const targetProjectId = targetUser?.project?.id ?? null
+        return (
+          <CreateDatabaseModal
+            onClose={() => setShowCreate(false)}
+            onCreated={() => {
+              setShowCreate(false)
+              qc.invalidateQueries({ queryKey: ['databases'] })
+            }}
+            targetProjectId={targetProjectId}
+          />
+        )
+      })()}
 
       {/* ── Модал с credentials ───────────────────────────────────────────── */}
       {credsFor && (
@@ -229,6 +231,7 @@ export function AdminDatabasesPage() {
 interface CreateDBModalProps {
   onClose: () => void
   onCreated: () => void
+  targetProjectId: string | null  // project_id целевого пользователя
 }
 
 type EngineOption = { engine: DBEngine; label: string; icon: string; desc: string }
@@ -245,7 +248,7 @@ const ENGINE_SERVICE_TYPE: Record<DBEngine, string> = {
   redis: 'db_redis',
 }
 
-function CreateDatabaseModal({ onClose, onCreated }: CreateDBModalProps) {
+function CreateDatabaseModal({ onClose, onCreated, targetProjectId }: CreateDBModalProps) {
   const [engine, setEngine] = useState<DBEngine>('postgres')
   const [flavorId, setFlavorId] = useState('')
   const [name, setName] = useState('')
@@ -284,10 +287,11 @@ function CreateDatabaseModal({ onClose, onCreated }: CreateDBModalProps) {
     if (!name.trim()) return setError('Введите имя сервиса')
     if (!flavorId) return setError('Выберите конфигурацию')
     if (!dbName.trim()) return setError('Введите имя базы данных')
+    if (!targetProjectId) return setError('Выберите пользователя в фильтре перед созданием')
 
     mutation.mutate({
       name: name.trim(),
-      project_id: DEFAULT_PROJECT_ID,
+      project_id: targetProjectId,
       flavor_id: flavorId,
       engine,
       db_name: dbName.trim(),

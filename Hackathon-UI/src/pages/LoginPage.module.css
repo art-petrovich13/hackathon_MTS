@@ -1,0 +1,167 @@
+/* src/pages/LoginPage.module.css */
+
+/* ── Фон ─────────────────────────────────────────────────────────────────── */
+.page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #2a0e0e;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ⬡ узор под углом */
+.page::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Ctext x='10' y='55' font-size='44' fill='%23ff6b6b' opacity='0.1' transform='rotate(-20 40 40)' font-family='sans-serif'%3E%E2%AC%A1%3C/text%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 80px 80px;
+  pointer-events: none;
+}
+
+/* радиальный градиент поверх — создаёт глубину */
+.page::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 30%, #2a0e0e 100%);
+  pointer-events: none;
+}
+
+/* ── Карточка ────────────────────────────────────────────────────────────── */
+.card {
+  width: 420px;
+  padding: 40px 36px;
+  border-radius: 20px;
+  background: rgba(40, 15, 15, 0.85);
+  border: 1px solid rgba(198, 46, 38, 0.25);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Логотип ─────────────────────────────────────────────────────────────── */
+.logo {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.logoIcon {
+  font-size: 40px;
+  margin-bottom: 8px;
+  color: var(--red-primary);
+}
+
+.logoTitle {
+  margin: 0;
+  font-family: 'Syne', sans-serif;
+  font-size: 24px;
+  font-weight: 800;
+  color: #f1f5f9;
+  letter-spacing: -0.03em;
+}
+
+.logoTitle em {
+  font-style: italic;
+  color: var(--red-primary);
+}
+
+.logoSubtitle {
+  margin: 6px 0 0;
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+/* ── Форма ───────────────────────────────────────────────────────────────── */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.label {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.input {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(198, 46, 38, 0.3);
+  background: rgba(15, 5, 5, 0.6);
+  color: #f1f5f9;
+  font-size: 14px;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+}
+.input:focus {
+  border-color: var(--red-primary);
+}
+
+/* ── Ошибка ──────────────────────────────────────────────────────────────── */
+.error {
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: rgba(198, 46, 38, 0.1);
+  border: 1px solid rgba(198, 46, 38, 0.35);
+  color: #f87171;
+  font-size: 13px;
+}
+
+/* ── Кнопка входа ────────────────────────────────────────────────────────── */
+.btnSubmit {
+  padding: 13px 20px;
+  border-radius: 10px;
+  border: none;
+  background: var(--red-gradient);
+  color: #fff;
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  margin-top: 4px;
+  box-shadow: 0 4px 12px rgba(198, 46, 38, 0.35);
+  transition: opacity 0.2s;
+}
+.btnSubmit:hover:not(:disabled) { opacity: 0.85; }
+.btnSubmit:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ── Demo credentials ────────────────────────────────────────────────────── */
+.demo {
+  margin-top: 24px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: rgba(198, 46, 38, 0.05);
+  border: 1px solid rgba(198, 46, 38, 0.15);
+  font-size: 12px;
+  color: #94a3b8;
+  line-height: 1.7;
+}
+
+.demoTitle {
+  color: #cbd5e1;
+  font-weight: 700;
+}
+
+.demoCode {
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--red-primary);
+  background: rgba(198, 46, 38, 0.1);
+  padding: 1px 5px;
+  border-radius: 4px;
+}

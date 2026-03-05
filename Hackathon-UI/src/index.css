@@ -1,5 +1,3 @@
-/* src/index.css */
-
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Syne:wght@400;600;700&display=swap');
 
 /* ══════════════════════════════════════════════════════
@@ -7,19 +5,30 @@
    ══════════════════════════════════════════════════════ */
 :root,
 [data-theme="dark"] {
+  /* Фоны */
   --bg-base:    #0d0f14;
   --bg-surface: #13161e;
   --bg-raised:  #1a1e2a;
   --border:     #252836;
-  --accent:     #00e5ff;
-  --accent-dim: rgba(0, 229, 255, 0.12);
+
+  /* Красный акцент (основной) */
+  --red-primary:  #C62E26;
+  --red-dark:     #7B1814;
+  --red-gradient: linear-gradient(135deg, var(--red-dark), var(--red-primary));
+  --accent:       var(--red-primary);
+  --accent-dim:   rgba(198, 46, 38, 0.1);
+
+  /* Текст */
   --text-pri:   #e8eaf0;
   --text-sec:   #7a7f94;
   --text-dim:   #3d4155;
-  --red:        #ff4d6a;
-  --green:      #00e676;
-  --yellow:     #ffd740;
-  --shadow:     0 4px 24px rgba(0, 0, 0, 0.4);
+
+  /* Статусные цвета */
+  --red:    #ff4d6a;
+  --green:  #00e676;
+  --yellow: #ffd740;
+
+  --shadow:    0 4px 24px rgba(0, 0, 0, 0.4);
   --sidebar-w: 220px;
   --topbar-h:  52px;
   --font-ui:   'Syne', sans-serif;
@@ -30,19 +39,30 @@
    СВЕТЛАЯ ТЕМА
    ══════════════════════════════════════════════════════ */
 [data-theme="light"] {
+  /* Фоны */
   --bg-base:    #f0f2f7;
   --bg-surface: #ffffff;
   --bg-raised:  #f7f8fc;
   --border:     #e0e4ef;
-  --accent:     #0072e5;
-  --accent-dim: rgba(0, 114, 229, 0.08);
+
+  /* Красный акцент (чуть темнее для читаемости на светлом) */
+  --red-primary:  #B02820;
+  --red-dark:     #6B1410;
+  --red-gradient: linear-gradient(135deg, var(--red-dark), var(--red-primary));
+  --accent:       var(--red-primary);
+  --accent-dim:   rgba(176, 40, 32, 0.08);
+
+  /* Текст */
   --text-pri:   #0f1117;
   --text-sec:   #5a6075;
   --text-dim:   #b0b6c8;
-  --red:        #e0284a;
-  --green:      #00a854;
-  --yellow:     #d4870a;
-  --shadow:     0 4px 24px rgba(0, 0, 0, 0.08);
+
+  /* Статусные цвета */
+  --red:    #e0284a;
+  --green:  #00a854;
+  --yellow: #d4870a;
+
+  --shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
 }
 
 /* ══════════════════════════════════════════════════════
@@ -57,14 +77,13 @@ body {
   font-size: 14px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
-  /* Плавный переход при смене темы */
   transition: background 0.2s ease, color 0.2s ease;
 }
 
 a { color: inherit; text-decoration: none; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* Скроллбар в тёмной теме */
+/* Скроллбар */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: var(--bg-base); }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }

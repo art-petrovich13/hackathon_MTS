@@ -1,10 +1,5 @@
-/* src/pages/shared.module.css */
-
-:root {
-  --red-primary: #C62E26;
-  --red-dark: #7B1814;
-  --red-gradient: linear-gradient(135deg, var(--red-dark), var(--red-primary));
-}
+/* src/pages/shared.module.css
+   Только классы компонентов — все переменные живут в index.css */
 
 /* ── Заголовок страницы ─────────────────────────────────────────────────── */
 .pageHeader {
@@ -47,7 +42,7 @@
   white-space: nowrap;
   flex-shrink: 0;
   transition: opacity 0.15s;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(198, 46, 38, 0.3);
 }
 .btnPrimary:hover:not(:disabled) { opacity: 0.82; }
 .btnPrimary:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -117,7 +112,7 @@
 .cellMono { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-sec); }
 .cellDim  { font-size: 12px; color: var(--text-dim); }
 
-/* ── Badge (без color-mix — используем явные цвета) ─────────────────────── */
+/* ── Badge ───────────────────────────────────────────────────────────────── */
 .badge {
   display: inline-flex;
   align-items: center;
@@ -130,12 +125,11 @@
   white-space: nowrap;
 }
 
-/* Варианты badge по цвету */
-.badgeGreen  { color: #00c853; background: rgba(0,200,83,0.12);  border: 1px solid rgba(0,200,83,0.3); }
+.badgeGreen  { color: #00c853; background: rgba(0,200,83,0.12);   border: 1px solid rgba(0,200,83,0.3); }
 .badgeRed    { color: #ff4d6a; background: rgba(255,77,106,0.12); border: 1px solid rgba(255,77,106,0.3); }
 .badgeYellow { color: #ffd740; background: rgba(255,215,64,0.12); border: 1px solid rgba(255,215,64,0.3); }
 .badgeBlue   { color: #40c4ff; background: rgba(64,196,255,0.12); border: 1px solid rgba(64,196,255,0.3); }
-.badgeGray   { color: #7a7f94; background: rgba(122,127,148,0.12); border: 1px solid rgba(122,127,148,0.25); }
+.badgeGray   { color: #7a7f94; background: rgba(122,127,148,0.12);border: 1px solid rgba(122,127,148,0.25); }
 .badgeOrange { color: #ff9100; background: rgba(255,145,0,0.12);  border: 1px solid rgba(255,145,0,0.3); }
 
 .badgeSpinner {
@@ -146,4 +140,3 @@
   animation: spin 0.75s linear infinite;
   flex-shrink: 0;
 }
-@keyframes spin { to { transform: rotate(360deg); } }

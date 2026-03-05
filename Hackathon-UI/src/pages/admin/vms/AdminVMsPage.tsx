@@ -76,7 +76,14 @@ export function AdminVMsPage() {
     error: vms.filter(v => v.status === 'error').length,
   }
 
-  const filtered = vms.filter(v => FILTER_STATUSES[filter].includes(v.status))
+  const userFiltered = selectedUserId
+    ? vms.filter(v => {
+        const owner = users.find(u => u.id === selectedUserId)
+        return owner ? v.project_id === owner.project?.id : true
+      })
+    : vms
+
+  const filtered = userFiltered.filter(v => FILTER_STATUSES[filter].includes(v.status))
 
   return (
     <div className={styles.page}>

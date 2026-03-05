@@ -170,7 +170,7 @@ func (s *VMService) DeleteVM(ctx context.Context, id uuid.UUID) error {
 	}
 
 	// Освобождаем ресурсы узла, если VM занимала их (статус running или stopped).
-	if vm.NodeID != nil && (vm.Status == "running" || vm.Status == "stopped") {
+	if vm.NodeID != nil && vm.Status != "pending" && vm.Status != "creating" {
 		flavor, err := s.flavorRepo.GetByID(ctx, vm.FlavorID)
 		if err == nil {
 			if err := s.nodeRepo.UpdateResources(ctx, nil, *vm.NodeID, flavor.CPU, flavor.RAMMB); err != nil {

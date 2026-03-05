@@ -422,3 +422,8 @@ func randString(n int) string {
 	}
 	return string(b)
 }
+
+// Client возвращает underlying Docker client для использования вне драйвера.
+func (d *DockerDriver) Client() *client.Client {
+	return d.cli
+}

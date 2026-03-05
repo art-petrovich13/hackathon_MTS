@@ -84,6 +84,9 @@ func main() {
 	}
 	slog.Info("mobile driver initialized")
 
+	// ── Очистка orphan-контейнеров при старте ────────────────────────────────
+	services.CleanupOrphanContainers(context.Background(), db, computeDriver.Client())
+
 	// File Storage Worker
 	fsWorker, err := worker.NewFileStorageWorker(db, fsRepo, nodeRepo, 5*time.Second)
 	if err != nil {

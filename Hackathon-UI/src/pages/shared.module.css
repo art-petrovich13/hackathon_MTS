@@ -140,3 +140,28 @@
   animation: spin 0.75s linear infinite;
   flex-shrink: 0;
 }
+
+/* ── Role badges ─────────────────────────────────────────────────────────── */
+.roleAdmin {
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(198, 46, 38, 0.12);
+  color: var(--red-primary);
+  border: 1px solid rgba(198, 46, 38, 0.3);
+  white-space: nowrap;
+}
+
+.roleUser {
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(198, 46, 38, 0.06);
+  color: var(--text-sec);
+  border: 1px solid var(--border);
+  white-space: nowrap;
+}

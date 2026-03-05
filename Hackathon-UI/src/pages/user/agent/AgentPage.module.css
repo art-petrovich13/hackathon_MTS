@@ -1,0 +1,554 @@
+/* src/pages/user/agent/AgentPage.module.css */
+
+/* ══════════════════════════════════════════════════════
+   MARKET — страница с пресетами
+   ══════════════════════════════════════════════════════ */
+
+.page { display: flex; flex-direction: column; width: 100%; }
+
+.marketHeader { margin-bottom: 28px; }
+
+.marketTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.marketTitle {
+  font-family: 'Syne', sans-serif;
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-pri);
+  letter-spacing: -0.5px;
+}
+
+.aiBadge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  background: var(--red-gradient);
+  color: #fff;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+.marketSubtitle {
+  font-family: 'JetBrains Mono', monospace;
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-sec);
+}
+
+/* ── Сетка пресетов ──────────────────────────────────────────────────────── */
+.presetsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+  margin-bottom: 32px;
+}
+
+/* ── Разделитель ─────────────────────────────────────────────────────────── */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.dividerLine { flex: 1; height: 1px; background: var(--border); }
+.dividerText {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+/* ── Блок своего запроса ─────────────────────────────────────────────────── */
+.customBox {
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
+}
+
+.customBoxHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.customBoxIcon  { font-size: 22px; }
+.customBoxTitle {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  color: var(--text-pri);
+  font-size: 15px;
+}
+.customBoxSub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--text-sec);
+}
+
+.customInputRow { display: flex; gap: 10px; }
+
+.customTextarea {
+  flex: 1;
+  background: var(--bg-surface);
+  color: var(--text-pri);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 14px;
+  resize: none;
+  font-size: 14px;
+  outline: none;
+  font-family: 'Syne', sans-serif;
+  line-height: 1.5;
+  transition: border-color 0.15s;
+}
+.customTextarea:focus { border-color: var(--red-primary); }
+.customTextarea::placeholder { color: var(--text-dim); }
+
+.customSendBtn {
+  padding: 0 20px;
+  border-radius: 12px;
+  border: none;
+  font-size: 18px;
+  font-weight: 700;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.customSendBtnActive   { background: var(--red-gradient); color: #fff; box-shadow: 0 2px 8px rgba(198,46,38,0.3); }
+.customSendBtnDisabled { background: var(--bg-surface); color: var(--text-dim); cursor: not-allowed; }
+
+.hints { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
+
+.hintBtn {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  padding: 4px 10px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.hintBtn:hover { border-color: var(--red-primary); color: var(--red-primary); }
+
+/* ══════════════════════════════════════════════════════
+   PRESET CARD
+   ══════════════════════════════════════════════════════ */
+
+.presetCard {
+  background: var(--bg-base);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px;
+  cursor: pointer;
+  transition: background 0.18s, border-color 0.18s, box-shadow 0.18s;
+  position: relative;
+  overflow: hidden;
+}
+/* цвет бордера и тени задаётся инлайн через --card-color */
+.presetCard:hover { background: var(--bg-raised); }
+
+.presetTopBar {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  /* фон задаётся инлайн */
+  transition: opacity 0.18s;
+}
+
+.presetCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.presetIndustry {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  /* color задаётся инлайн через --card-color */
+}
+
+.presetTitle {
+  font-family: 'Syne', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-pri);
+  margin-top: 2px;
+}
+
+.presetIcon { font-size: 28px; flex-shrink: 0; }
+
+.presetDesc {
+  font-family: 'JetBrains Mono', monospace;
+  margin: 0 0 12px;
+  font-size: 12px;
+  color: var(--text-sec);
+  line-height: 1.5;
+}
+
+.presetIncludes { margin-bottom: 12px; }
+
+.includeTag {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  background: var(--bg-raised);
+  color: var(--text-sec);
+  padding: 2px 8px;
+  border-radius: 6px;
+  margin: 2px 3px 2px 0;
+}
+
+.presetFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.presetTags { display: flex; gap: 4px; flex-wrap: wrap; }
+.presetTag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  opacity: 0.8;
+  /* color задаётся инлайн через --card-color */
+}
+
+.presetCta {
+  font-family: 'Syne', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  transition: color 0.18s;
+  /* color задаётся инлайн */
+}
+
+/* ══════════════════════════════════════════════════════
+   AGENT CHAT
+   ══════════════════════════════════════════════════════ */
+
+.chatWrap {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.chatHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 16px;
+  flex-shrink: 0;
+}
+
+.backBtn {
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-sec);
+  cursor: pointer;
+  padding: 6px 12px;
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: border-color 0.15s, color 0.15s;
+}
+.backBtn:hover { border-color: var(--red-primary); color: var(--red-primary); }
+
+.chatPresetInfo { display: flex; align-items: center; gap: 8px; }
+.chatPresetIcon { font-size: 20px; }
+.chatPresetTitle {
+  font-family: 'Syne', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-pri);
+}
+.chatPresetIndustry {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-sec);
+}
+
+.chatCustomTitle {
+  font-family: 'Syne', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-pri);
+}
+
+.streamingIndicator {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--red-primary);
+}
+.spinIcon {
+  animation: spin 1s linear infinite;
+  display: inline-block;
+}
+
+.chatMessages {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.chatInputRow {
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+  flex-shrink: 0;
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  margin-top: 8px;
+}
+
+.chatTextarea {
+  flex: 1;
+  background: var(--bg-raised);
+  color: var(--text-pri);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 9px 14px;
+  resize: none;
+  font-size: 13px;
+  outline: none;
+  font-family: 'Syne', sans-serif;
+  transition: border-color 0.15s, opacity 0.15s;
+}
+.chatTextarea:focus { border-color: var(--red-primary); }
+.chatTextarea:disabled { opacity: 0.5; }
+.chatTextarea::placeholder { color: var(--text-dim); }
+
+.chatSendBtn {
+  padding: 9px 16px;
+  border-radius: 10px;
+  border: none;
+  font-size: 16px;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.chatSendBtnActive   { background: var(--red-gradient); color: #fff; box-shadow: 0 2px 8px rgba(198,46,38,0.3); }
+.chatSendBtnDisabled { background: var(--bg-raised); color: var(--text-dim); cursor: not-allowed; }
+
+/* ── Пузыри чата ─────────────────────────────────────────────────────────── */
+.userBubble {
+  display: flex;
+  justify-content: flex-end;
+}
+.userBubbleInner {
+  background: var(--red-gradient);
+  color: #fff;
+  border-radius: 16px 16px 4px 16px;
+  padding: 9px 14px;
+  max-width: 70%;
+  font-size: 14px;
+  box-shadow: 0 2px 8px rgba(198,46,38,0.25);
+}
+
+.thinkingLine {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.thinkingDot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--red-primary);
+  flex-shrink: 0;
+}
+.thinkingText {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--text-dim);
+  font-style: italic;
+}
+
+.errorLine {
+  background: rgba(198, 46, 38, 0.08);
+  border: 1px solid rgba(198, 46, 38, 0.25);
+  border-radius: 10px;
+  padding: 10px 14px;
+  color: var(--red);
+  font-size: 13px;
+}
+
+.loadingDots {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+}
+.loadingDot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--red-primary);
+  animation: bounce 0.8s infinite ease-in-out;
+}
+.loadingDot:nth-child(2) { animation-delay: 0.2s; }
+.loadingDot:nth-child(3) { animation-delay: 0.4s; }
+.loadingLabel {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-left: 4px;
+}
+
+/* ── PlanCard ────────────────────────────────────────────────────────────── */
+.planCard {
+  background: var(--bg-raised);
+  border-radius: 14px;
+  padding: 18px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.planCardActive { border: 1px solid var(--red-primary); box-shadow: 0 0 20px rgba(198,46,38,0.12); }
+.planCardDone   { border: 1px solid var(--border); }
+
+.planSummary {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--text-sec);
+  margin-bottom: 14px;
+  line-height: 1.5;
+}
+
+.planServices { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+
+.planService {
+  background: var(--bg-surface);
+  border-radius: 10px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.planServiceName {
+  font-family: 'Syne', sans-serif;
+  font-weight: 600;
+  color: var(--text-pri);
+  font-size: 14px;
+}
+.planServiceType {
+  font-family: 'JetBrains Mono', monospace;
+  margin-left: 8px;
+  font-size: 11px;
+  color: var(--text-dim);
+  font-weight: 400;
+}
+.planServiceFlavor {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-top: 3px;
+}
+.planServiceReason {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--red-primary);
+  margin-top: 3px;
+  opacity: 0.8;
+}
+.planServiceCost {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--green);
+  flex-shrink: 0;
+  margin-left: 12px;
+  text-align: right;
+}
+
+.planFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+}
+.planCostLabel { font-size: 13px; color: var(--text-sec); }
+.planCostValue {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-pri);
+}
+.planCostMonth {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-left: 8px;
+}
+
+/* ── DeployTimeline ──────────────────────────────────────────────────────── */
+.deployCard {
+  border-radius: 14px;
+  padding: 18px;
+  background: var(--bg-raised);
+  transition: border-color 0.3s;
+}
+.deployCardPending { border: 1px solid var(--border); }
+.deployCardDone    { border: 1px solid var(--green); }
+
+.deployTitle {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  color: var(--text-pri);
+  font-size: 14px;
+  margin-bottom: 14px;
+}
+
+.deploySteps { display: flex; flex-direction: column; gap: 8px; }
+.deployStep  { display: flex; align-items: center; gap: 10px; }
+
+.deployStepIcon {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: #fff;
+  font-weight: 700;
+}
+.stepSuccess    { background: var(--green); }
+.stepError      { background: var(--red); }
+.stepInProgress { background: var(--red-primary); }
+
+.deployStepMsg {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--text-sec);
+}
+
+/* ── Анимации ────────────────────────────────────────────────────────────── */
+@keyframes bounce {
+  0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+  40%           { transform: translateY(-6px); opacity: 1; }
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}

@@ -44,12 +44,4 @@ type DeployStep struct {
 }
 
 // Parsed — структура намерений пользователя, которую возвращает Mistral.
-type Parsed struct {
-	NeedsVM      bool   `json:"needs_vm"`
-	NeedsDB      bool   `json:"needs_db"`
-	NeedsStorage bool   `json:"needs_storage"`
-	Engine       string `json:"engine"`     // postgres | mysql | redis
-	Users        int    `json:"users"`
-	App          string `json:"app"`
-	StorageGB    int    `json:"storage_gb"`
-}
+

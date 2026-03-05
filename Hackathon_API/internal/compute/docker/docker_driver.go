@@ -7,6 +7,7 @@ import (
 	"io"
 	"math/rand"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/docker/docker/api/types"
@@ -64,15 +65,19 @@ func (d *DockerDriver) CreateVM(ctx context.Context, opts *driver.CreateVMOpts) 
 	// Определяем Cmd: для VNC-образов (novnc_port > 0) не переопределяем CMD —
 	// образ dorowu/ubuntu-desktop-lxde-vnc имеет собственный entrypoint.
 	// Для обычных образов (alpine, ubuntu) нужен sleep infinity, иначе контейнер сразу выйдет.
+	isVNCImage := strings.Contains(strings.ToLower(opts.ImageName), "desktop") ||
+		strings.Contains(strings.ToLower(opts.ImageName), "vnc") ||
+		strings.Contains(strings.ToLower(opts.ImageName), "lxde")
+
 	var cmd []string
-	if opts.NoVNCPort == 0 {
+	if !isVNCImage {
 		cmd = []string{"sleep", "infinity"}
 	}
 
 	cfg := &container.Config{
 		Image:    opts.ImageName,
 		Hostname: opts.Name,
-		Cmd:      cmd, // nil для VNC-образов — Docker использует CMD из Dockerfile
+		Cmd:      cmd,
 		Labels: map[string]string{
 			"iaas.vm.name": opts.Name,
 			"iaas.managed": "true",
@@ -85,7 +90,6 @@ func (d *DockerDriver) CreateVM(ctx context.Context, opts *driver.CreateVMOpts) 
 
 	if opts.NoVNCPort > 0 {
 		portBindings = nat.PortMap{
-			// Образ dorowu/ubuntu-desktop-lxde-vnc экспортирует noVNC на порту 80
 			"80/tcp": []nat.PortBinding{
 				{HostIP: "0.0.0.0", HostPort: fmt.Sprintf("%d", opts.NoVNCPort)},
 			},
@@ -101,7 +105,7 @@ func (d *DockerDriver) CreateVM(ctx context.Context, opts *driver.CreateVMOpts) 
 			NanoCPUs: int64(opts.CPU) * 1_000_000_000,
 			Memory:   int64(opts.RAMMB) * 1024 * 1024,
 		},
-		PortBindings:  portBindings, // nil если noVNC не нужен
+		PortBindings:  portBindings,
 		RestartPolicy: container.RestartPolicy{Name: "unless-stopped"},
 	}
 
@@ -129,7 +133,7 @@ func (d *DockerDriver) CreateVM(ctx context.Context, opts *driver.CreateVMOpts) 
 		Name:      containerName,
 		Status:    "running",
 		IPAddress: ip,
-		NoVNCPort: opts.NoVNCPort, // возвращаем обратно чтобы воркер сохранил в БД
+		NoVNCPort: opts.NoVNCPort,
 	}, nil
 }
 

@@ -1,8 +1,8 @@
-// internal/handlers/vm_handler.go
 package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -14,40 +14,44 @@ import (
 )
 
 type VMHandler struct {
-	service *services.VMService
+	service       *services.VMService
+	limitsChecker *services.LimitsChecker
 }
 
-func NewVMHandler(service *services.VMService) *VMHandler {
-	return &VMHandler{service: service}
+func NewVMHandler(service *services.VMService, lc *services.LimitsChecker) *VMHandler {
+	return &VMHandler{service: service, limitsChecker: lc}
 }
 
-// CreateVMRequest – тело запроса на создание VM.
 type CreateVMRequest = models.CreateVMRequest
 
-// Create обрабатывает POST /api/v1/vms
 func (h *VMHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req CreateVMRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		respondError(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
-	// Принудительно подставляем project_id из токена (user не может указать чужой проект)
-	claims := middleware.ClaimsFromContext(r.Context())
-	if claims != nil && claims.Role != "admin" {
-		req.ProjectID = claims.ProjectID
-	}
-
-	// Простейшая валидация
 	if req.Name == "" {
 		respondError(w, http.StatusBadRequest, "name is required")
 		return
+	}
+	if req.FlavorID == uuid.Nil || req.ImageID == uuid.Nil {
+		respondError(w, http.StatusBadRequest, "flavor_id and image_id are required")
+		return
+	}
+
+	// Подставляем project_id из токена для user
+	claims := middleware.ClaimsFromContext(r.Context())
+	if claims != nil && claims.Role != "admin" {
+		req.ProjectID = claims.ProjectID
 	}
 	if req.ProjectID == uuid.Nil {
 		respondError(w, http.StatusBadRequest, "project_id is required")
 		return
 	}
-	if req.FlavorID == uuid.Nil || req.ImageID == uuid.Nil {
-		respondError(w, http.StatusBadRequest, "flavor_id and image_id are required")
+
+	// Проверяем лимиты
+	if err := h.limitsChecker.CheckCanCreateVM(r.Context(), req.ProjectID, req.FlavorID); err != nil {
+		respondError(w, http.StatusUnprocessableEntity, err.Error())
 		return
 	}
 
@@ -59,10 +63,9 @@ func (h *VMHandler) Create(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusCreated, vm)
 }
 
-// List возвращает все VM
 func (h *VMHandler) List(w http.ResponseWriter, r *http.Request) {
 	claims := middleware.ClaimsFromContext(r.Context())
-	var projectID uuid.UUID // uuid.Nil = admin видит всё
+	var projectID uuid.UUID
 	if claims != nil && claims.Role != "admin" {
 		projectID = claims.ProjectID
 	}
@@ -74,15 +77,12 @@ func (h *VMHandler) List(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, vms)
 }
 
-// Get возвращает VM по ID
 func (h *VMHandler) Get(w http.ResponseWriter, r *http.Request) {
-	idStr := chi.URLParam(r, "id")
-	id, err := uuid.Parse(idStr)
+	id, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		respondError(w, http.StatusBadRequest, "Invalid VM ID")
 		return
 	}
-
 	vm, err := h.service.GetVM(r.Context(), id)
 	if err != nil {
 		respondError(w, http.StatusNotFound, "VM not found")
@@ -91,12 +91,22 @@ func (h *VMHandler) Get(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, vm)
 }
 
-// Delete обрабатывает DELETE /api/v1/vms/{id}
 func (h *VMHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	idStr := chi.URLParam(r, "id")
-	id, err := uuid.Parse(idStr)
+	id, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		respondError(w, http.StatusBadRequest, "Invalid VM ID")
+		return
+	}
+
+	// ownership check
+	vm, err := h.service.GetVM(r.Context(), id)
+	if err != nil || vm == nil {
+		respondError(w, http.StatusNotFound, "VM not found")
+		return
+	}
+	claims := middleware.ClaimsFromContext(r.Context())
+	if claims != nil && claims.Role != "admin" && vm.ProjectID != claims.ProjectID {
+		respondError(w, http.StatusForbidden, "Access denied")
 		return
 	}
 
@@ -107,15 +117,12 @@ func (h *VMHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// Start обрабатывает POST /api/v1/vms/{id}/start
 func (h *VMHandler) Start(w http.ResponseWriter, r *http.Request) {
-	idStr := chi.URLParam(r, "id")
-	id, err := uuid.Parse(idStr)
+	id, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		respondError(w, http.StatusBadRequest, "Invalid VM ID")
 		return
 	}
-
 	if err := h.service.StartVM(r.Context(), id); err != nil {
 		respondError(w, http.StatusInternalServerError, err.Error())
 		return
@@ -123,15 +130,12 @@ func (h *VMHandler) Start(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, map[string]string{"status": "start initiated"})
 }
 
-// Stop обрабатывает POST /api/v1/vms/{id}/stop
 func (h *VMHandler) Stop(w http.ResponseWriter, r *http.Request) {
-	idStr := chi.URLParam(r, "id")
-	id, err := uuid.Parse(idStr)
+	id, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		respondError(w, http.StatusBadRequest, "Invalid VM ID")
 		return
 	}
-
 	if err := h.service.StopVM(r.Context(), id); err != nil {
 		respondError(w, http.StatusInternalServerError, err.Error())
 		return
@@ -139,5 +143,43 @@ func (h *VMHandler) Stop(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, map[string]string{"status": "stop initiated"})
 }
 
-// ВНИМАНИЕ: функции respondJSON и respondError УДАЛЕНЫ отсюда,
-// так как они уже определены в другом файле (скорее всего response.go)
+// GetConsole — GET /api/v1/vms/{id}/console
+func (h *VMHandler) GetConsole(w http.ResponseWriter, r *http.Request) {
+	id, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		respondError(w, http.StatusBadRequest, "Invalid VM ID")
+		return
+	}
+
+	vm, err := h.service.GetVM(r.Context(), id)
+	if err != nil || vm == nil {
+		respondError(w, http.StatusNotFound, "VM not found")
+		return
+	}
+
+	claims := middleware.ClaimsFromContext(r.Context())
+	if claims != nil && claims.Role != "admin" && vm.ProjectID != claims.ProjectID {
+		respondError(w, http.StatusForbidden, "Access denied")
+		return
+	}
+
+	if vm.NoVNCPort == nil {
+		respondError(w, http.StatusNotFound, "This VM does not have VNC enabled")
+		return
+	}
+	if vm.Status != "running" {
+		respondError(w, http.StatusConflict, "VM is not running")
+		return
+	}
+
+	host := "127.0.0.1"
+	if vm.IPAddress != nil {
+		host = *vm.IPAddress
+	}
+
+	respondJSON(w, http.StatusOK, map[string]any{
+		"novnc_url": fmt.Sprintf("http://%s:%d/vnc.html", host, *vm.NoVNCPort),
+		"host":      host,
+		"port":      *vm.NoVNCPort,
+	})
+}

@@ -122,18 +122,28 @@ func main() {
 	slog.Info("mobile worker launched")
 
 	// ── Хендлеры ────────────────────────────────────────────────────────────
+	limitsChecker := services.NewLimitsChecker(
+		limitRepo,
+		vmRepo,
+		dbRepo,
+		osRepo,
+		fsRepo,
+		mobileRepo,
+		flavorRepo,
+	)
+
 	flavorHandler := handlers.NewFlavorHandler(flavorRepo)
 	imageHandler := handlers.NewImageHandler(imageRepo)
 	nodeHandler := handlers.NewNodeHandler(nodeRepo)
-	vmHandler := handlers.NewVMHandler(vmService)
+	vmHandler := handlers.NewVMHandler(vmService, limitsChecker)
 	healthHandler := handlers.NewHealthHandler(db)
 	catalogHandler := handlers.NewServiceCatalogHandler(catalogRepo, flavorRepo)
-	databaseHandler := handlers.NewDatabaseHandler(dbRepo, flavorRepo, db, databaseDriver)
-	osHandler := handlers.NewObjectStorageHandler(osRepo, flavorRepo, db, minioDriver)
-	fsHandler := handlers.NewFileStorageHandler(fsRepo, flavorRepo, db)
-	mobileHandler := handlers.NewMobileHandler(mobileRepo, flavorRepo, db, mobileDriver)
+	databaseHandler := handlers.NewDatabaseHandler(dbRepo, flavorRepo, db, databaseDriver, limitsChecker)
+	osHandler := handlers.NewObjectStorageHandler(osRepo, flavorRepo, db, minioDriver, limitsChecker)
+	fsHandler := handlers.NewFileStorageHandler(fsRepo, flavorRepo, db, limitsChecker)
+	mobileHandler := handlers.NewMobileHandler(mobileRepo, flavorRepo, db, mobileDriver, limitsChecker)
 	authHandler := handlers.NewAuthHandler(userRepo, projectRepo)
-	userHandler := handlers.NewUserHandler(userRepo, projectRepo, limitRepo)
+	userHandler := handlers.NewUserHandler(userRepo, projectRepo, limitRepo, limitsChecker)
 
 	// ── AgentMesh ────────────────────────────────────────────────────────────────
 	vmAgentA := agent.NewVmAgent(flavorRepo)
@@ -164,6 +174,7 @@ func main() {
 			r.Post("/users", userHandler.CreateUser)
 			r.Get("/users/{id}", userHandler.GetUser)
 			r.Delete("/users/{id}", userHandler.DeleteUser)
+			r.Get("/users/{id}/limits", userHandler.GetLimits)
 			r.Put("/users/{id}/limits", userHandler.SetLimits)
 		})
 
@@ -177,6 +188,7 @@ func main() {
 		r.Delete("/vms/{id}", vmHandler.Delete)
 		r.Post("/vms/{id}/start", vmHandler.Start)
 		r.Post("/vms/{id}/stop", vmHandler.Stop)
+		r.Get("/vms/{id}/console", vmHandler.GetConsole)
 
 		r.Get("/service-catalog", catalogHandler.List)
 		r.Get("/service-catalog/full", catalogHandler.ListWithFlavors)
@@ -208,6 +220,7 @@ func main() {
 		r.Delete("/mobile-devices/{id}", mobileHandler.Delete)
 		r.Post("/mobile-devices/{id}/start", mobileHandler.Start)
 		r.Post("/mobile-devices/{id}/stop", mobileHandler.Stop)
+		r.Get("/mobile-devices/{id}/connect", mobileHandler.GetConnectInfo)
 
 		// ── AgentMesh SSE эндпоинты ──────────────────────────────────────────────
 		r.Post("/agent/chat", agentHandler.Chat)

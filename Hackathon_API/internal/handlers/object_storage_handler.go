@@ -13,14 +13,16 @@ import (
 	"github.com/art-petrovich13/hackathon_MTS/internal/middleware"
 	"github.com/art-petrovich13/hackathon_MTS/internal/models"
 	"github.com/art-petrovich13/hackathon_MTS/internal/repository"
+	"github.com/art-petrovich13/hackathon_MTS/internal/services"
 	"github.com/art-petrovich13/hackathon_MTS/internal/utils"
 )
 
 type ObjectStorageHandler struct {
-	osRepo     *repository.ObjectStorageRepository
-	flavorRepo *repository.FlavorRepository
-	db         *sqlx.DB
-	driver     *objectcompute.MinIODriver
+	osRepo        *repository.ObjectStorageRepository
+	flavorRepo    *repository.FlavorRepository
+	db            *sqlx.DB
+	driver        *objectcompute.MinIODriver
+	limitsChecker *services.LimitsChecker
 }
 
 func NewObjectStorageHandler(
@@ -28,6 +30,7 @@ func NewObjectStorageHandler(
 	flavorRepo *repository.FlavorRepository,
 	db *sqlx.DB,
 	driver *objectcompute.MinIODriver,
+	lc *services.LimitsChecker,
 ) *ObjectStorageHandler {
 	return &ObjectStorageHandler{osRepo: osRepo, flavorRepo: flavorRepo, db: db, driver: driver}
 }
@@ -49,6 +52,10 @@ func (h *ObjectStorageHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 	if req.ProjectID == uuid.Nil {
 		respondError(w, http.StatusBadRequest, "project_id is required")
+		return
+	}
+	if err := h.limitsChecker.CheckCanCreateStorage(r.Context(), req.ProjectID); err != nil {
+		respondError(w, http.StatusUnprocessableEntity, err.Error())
 		return
 	}
 	if req.FlavorID == uuid.Nil {
@@ -101,9 +108,16 @@ func (h *ObjectStorageHandler) Create(w http.ResponseWriter, r *http.Request) {
 // List — GET /api/v1/object-storages
 func (h *ObjectStorageHandler) List(w http.ResponseWriter, r *http.Request) {
 	claims := middleware.ClaimsFromContext(r.Context())
-	var projectID uuid.UUID // uuid.Nil → admin видит всё
+	var projectID uuid.UUID
 	if claims != nil && claims.Role != "admin" {
 		projectID = claims.ProjectID
+	}
+	if claims != nil && claims.Role == "admin" {
+		if qp := r.URL.Query().Get("project_id"); qp != "" {
+			if pid, err := uuid.Parse(qp); err == nil {
+				projectID = pid
+			}
+		}
 	}
 	storages, err := h.osRepo.List(r.Context(), projectID)
 	if err != nil {
@@ -146,6 +160,11 @@ func (h *ObjectStorageHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	claims := middleware.ClaimsFromContext(r.Context())
+	if claims != nil && claims.Role != "admin" && record.ProjectID != claims.ProjectID {
+		respondError(w, http.StatusForbidden, "Access denied")
+		return
+	}
 	// Удаляем Docker контейнер
 	if record.DockerContainerID != nil && *record.DockerContainerID != "" {
 		if err := h.driver.Delete(r.Context(), *record.DockerContainerID); err != nil {
@@ -185,6 +204,11 @@ func (h *ObjectStorageHandler) Start(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusNotFound, "Object storage not found")
 		return
 	}
+	claims := middleware.ClaimsFromContext(r.Context())
+	if claims != nil && claims.Role != "admin" && record.ProjectID != claims.ProjectID {
+		respondError(w, http.StatusForbidden, "Access denied")
+		return
+	}
 	if record.Status != "stopped" && record.Status != "error" {
 		respondError(w, http.StatusConflict,
 			"Can only start from 'stopped' or 'error', current: "+record.Status)
@@ -210,6 +234,11 @@ func (h *ObjectStorageHandler) Stop(w http.ResponseWriter, r *http.Request) {
 	record, err := h.osRepo.GetByID(r.Context(), id)
 	if err != nil || record == nil {
 		respondError(w, http.StatusNotFound, "Object storage not found")
+		return
+	}
+	claims := middleware.ClaimsFromContext(r.Context())
+	if claims != nil && claims.Role != "admin" && record.ProjectID != claims.ProjectID {
+		respondError(w, http.StatusForbidden, "Access denied")
 		return
 	}
 	if record.Status != "running" {

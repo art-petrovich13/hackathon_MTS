@@ -13,6 +13,7 @@ import (
 	"github.com/art-petrovich13/hackathon_MTS/internal/repository"
 
 	"github.com/art-petrovich13/hackathon_MTS/internal/middleware"
+	"github.com/art-petrovich13/hackathon_MTS/internal/services"
 
 	"log/slog"
 
@@ -21,10 +22,11 @@ import (
 )
 
 type DatabaseHandler struct {
-	dbRepo     *repository.ManagedDatabaseRepository
-	flavorRepo *repository.FlavorRepository
-	db         *sqlx.DB
-	dbDriver   *dbcompute.DatabaseDriver
+	dbRepo        *repository.ManagedDatabaseRepository
+	flavorRepo    *repository.FlavorRepository
+	db            *sqlx.DB
+	dbDriver      *dbcompute.DatabaseDriver
+	limitsChecker *services.LimitsChecker
 }
 
 func NewDatabaseHandler(
@@ -32,8 +34,9 @@ func NewDatabaseHandler(
 	flavorRepo *repository.FlavorRepository,
 	db *sqlx.DB,
 	dbDriver *dbcompute.DatabaseDriver,
+	lc *services.LimitsChecker, // ← добавить
 ) *DatabaseHandler {
-	return &DatabaseHandler{dbRepo: dbRepo, flavorRepo: flavorRepo, db: db, dbDriver: dbDriver}
+	return &DatabaseHandler{dbRepo: dbRepo, flavorRepo: flavorRepo, db: db, dbDriver: dbDriver, limitsChecker: lc}
 }
 
 // Create обрабатывает POST /api/v1/databases
@@ -64,6 +67,21 @@ func (h *DatabaseHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Подставляем project_id из токена для user
+	claims := middleware.ClaimsFromContext(r.Context())
+	if claims != nil && claims.Role != "admin" {
+		req.ProjectID = claims.ProjectID
+	}
+	if req.ProjectID == uuid.Nil {
+		respondError(w, http.StatusBadRequest, "project_id is required")
+		return
+	}
+
+	// Проверяем лимиты
+	if err := h.limitsChecker.CheckCanCreateDB(r.Context(), req.ProjectID); err != nil {
+		respondError(w, http.StatusUnprocessableEntity, err.Error())
+		return
+	}
 	// Проверяем и загружаем flavor
 	flavor, err := h.flavorRepo.GetByID(r.Context(), req.FlavorID)
 	if err != nil || flavor == nil {
@@ -124,6 +142,13 @@ func (h *DatabaseHandler) List(w http.ResponseWriter, r *http.Request) {
 	if claims != nil && claims.Role != "admin" {
 		projectID = claims.ProjectID
 	}
+	if claims != nil && claims.Role == "admin" {
+		if qp := r.URL.Query().Get("project_id"); qp != "" {
+			if pid, err := uuid.Parse(qp); err == nil {
+				projectID = pid
+			}
+		}
+	}
 	dbs, err := h.dbRepo.List(r.Context(), projectID)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "Failed to fetch databases")
@@ -169,6 +194,11 @@ func (h *DatabaseHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 	if record == nil {
 		respondError(w, http.StatusNotFound, "Database not found")
+		return
+	}
+	claims := middleware.ClaimsFromContext(r.Context())
+	if claims != nil && claims.Role != "admin" && record.ProjectID != claims.ProjectID {
+		respondError(w, http.StatusForbidden, "Access denied")
 		return
 	}
 
@@ -219,6 +249,11 @@ func (h *DatabaseHandler) Start(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusNotFound, "Database not found")
 		return
 	}
+	claims := middleware.ClaimsFromContext(r.Context())
+	if claims != nil && claims.Role != "admin" && record.ProjectID != claims.ProjectID {
+		respondError(w, http.StatusForbidden, "Access denied")
+		return
+	}
 	if record.Status != "stopped" && record.Status != "error" {
 		respondError(w, http.StatusConflict,
 			"Database can only be started from 'stopped' or 'error', current: "+record.Status)
@@ -244,6 +279,11 @@ func (h *DatabaseHandler) Stop(w http.ResponseWriter, r *http.Request) {
 	record, err := h.dbRepo.GetByID(r.Context(), id)
 	if err != nil || record == nil {
 		respondError(w, http.StatusNotFound, "Database not found")
+		return
+	}
+	claims := middleware.ClaimsFromContext(r.Context())
+	if claims != nil && claims.Role != "admin" && record.ProjectID != claims.ProjectID {
+		respondError(w, http.StatusForbidden, "Access denied")
 		return
 	}
 	if record.Status != "running" {

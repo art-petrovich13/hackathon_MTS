@@ -1,0 +1,34 @@
+/* userstable.mobile.css — AdminUsersPage */
+
+@media (max-width: 1024px) {
+  .tableWrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (max-width: 768px) {
+  .table { min-width: 600px; }
+
+  /* Сервисы в ячейке — чуть компактнее */
+  .servicesCell { gap: 6px; font-size: 11px; }
+
+  /* Кнопки */
+  .actionsCell { gap: 4px; }
+  .actionBtn { padding: 4px 10px; font-size: 11px; }
+
+  /* Модал лимитов — 1 колонка */
+  .limitsGrid { grid-template-columns: 1fr; gap: 10px; }
+
+  /* Модал создания пользователя */
+  .roleGrid { flex-direction: column; gap: 8px; }
+  .roleBtn { padding: 10px; font-size: 13px; }
+
+  .formFooter { flex-direction: column-reverse; gap: 8px; }
+  .formFooter button { width: 100%; justify-content: center; }
+}
+
+@media (max-width: 480px) {
+  .serviceCount:nth-child(n+3) { display: none; } /* скрываем storage и mobile */
+  .actionBtnLimits span { display: none; }
+}

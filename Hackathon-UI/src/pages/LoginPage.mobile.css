@@ -1,0 +1,34 @@
+/* ═══════════════════════════════════════════════════
+   LoginPage.mobile.css
+   ═══════════════════════════════════════════════════ */
+
+/* ── Планшет ─────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .page { padding: 20px 16px; align-items: stretch; }
+
+  .card {
+    width: 100%;
+    padding: 32px 24px;
+    border-radius: 16px;
+  }
+
+  .logoTitle    { font-size: 22px; }
+  .logoIcon     { font-size: 36px; }
+  .logoSubtitle { font-size: 12px; }
+
+  .btnSubmit { font-size: 14px; padding: 12px 16px; }
+}
+
+/* ── Мобильный ───────────────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .page { padding: 12px; }
+
+  .card {
+    padding: 28px 20px;
+    border-radius: 14px;
+  }
+
+  .logoTitle { font-size: 20px; }
+  .demo      { font-size: 11px; }
+  .demoCode  { font-size: 11px; }
+}

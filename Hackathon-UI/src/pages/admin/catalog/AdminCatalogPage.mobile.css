@@ -1,0 +1,21 @@
+/* AdminCatalogPage.mobile.css */
+
+@media (max-width: 1024px) {
+  .catalogGrid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+}
+
+@media (max-width: 768px) {
+  .catalogGrid { grid-template-columns: 1fr; gap: 10px; }
+  .card { padding: 16px; }
+  .cardName { font-size: 14px; }
+
+  /* Таблица флейворов — горизонтальный скролл внутри карточки */
+  .flavorTable { font-size: 11px; }
+  .flavorTable th { font-size: 9px; padding: 3px 6px; }
+  .flavorTable td { padding: 4px 6px; }
+}
+
+@media (max-width: 480px) {
+  .cardHeader { flex-direction: column; gap: 8px; }
+  .availBadge { align-self: flex-start; }
+}

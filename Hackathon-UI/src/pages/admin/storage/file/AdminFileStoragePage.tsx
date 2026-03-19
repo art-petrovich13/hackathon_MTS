@@ -9,6 +9,7 @@ import {
 import type { FileStorage, Flavor } from '../../../../types/api'
 import { StatusBadge } from '../../../../components/ui/StatusBadge'
 import s from '../../../shared.module.css'
+import '../AdminStorage.mobile.css'
 
 import { UserFilter } from '../../../../components/ui/UserFilter'
 import { getUsers } from '../../../../api/api'

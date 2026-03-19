@@ -1,0 +1,97 @@
+/* ═══════════════════════════════════════════════════
+   LandingAboutPage.mobile.css
+   Адаптив: планшет (≤1024px) и мобильный (≤768px)
+   ═══════════════════════════════════════════════════ */
+
+@import './LandingAboutPage.module.css';
+
+/* ── Планшет ─────────────────────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .navInner { padding: 0 24px; }
+
+  .hero { padding: 80px 24px 60px; }
+
+  .whyGrid { grid-template-columns: repeat(2, 1fr); }
+
+  .section { padding: 64px 24px; }
+
+  .heroStats { padding: 14px 20px; }
+  .heroStat  { padding: 0 16px; }
+}
+
+/* ── Мобильный ───────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+
+  /* Навбар */
+  .navInner { padding: 0 16px; }
+  .navLinks { gap: 4px; }
+  .navLink  { padding: 6px 10px; font-size: 13px; }
+  .navBtnLogin { padding: 6px 12px; font-size: 13px; margin-left: 4px; }
+
+  /* Hero */
+  .hero { padding: 60px 16px 48px; }
+  .heroBadge { font-size: 11px; padding: 5px 12px; }
+  .heroTitle { font-size: 32px; }
+  .heroSub   { font-size: 15px; }
+
+  .heroCta {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .btnPrimary,
+  .btnOutline {
+    width: 100%;
+    justify-content: center;
+    padding: 14px 20px;
+    font-size: 15px;
+  }
+
+  /* Stats — 2 × 2 */
+  .heroStats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    padding: 0;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .heroStat {
+    padding: 14px 12px;
+    border-right: 1px solid var(--border, #252836);
+    border-bottom: 1px solid var(--border, #252836);
+  }
+  .heroStat:nth-child(2n) { border-right: none; }
+  .heroStat:nth-child(n+3) { border-bottom: none; }
+  .heroStatDiv { display: none; }
+  .heroStat strong { font-size: 18px; }
+
+  /* Секции */
+  .section { padding: 52px 16px; }
+  .sectionHead { margin-bottom: 36px; }
+  .sectionTitle { font-size: 26px; }
+  .sectionSub   { font-size: 14px; }
+
+  /* Почему мы — 1 колонка */
+  .whyGrid { grid-template-columns: 1fr; gap: 12px; }
+  .whyCard { padding: 22px 18px; }
+
+  /* FAQ */
+  .faqList { max-width: 100%; }
+  .faqQ    { font-size: 14px; padding: 16px 18px; }
+  .faqA    { padding: 0 18px 14px; }
+
+  /* Футер */
+  .footer { padding: 40px 16px 28px; }
+  .socials { gap: 8px; }
+  .socialLink { padding: 8px 14px; font-size: 12px; }
+  .footerMeta { flex-direction: column; gap: 4px; }
+}
+
+/* ── Очень маленький экран (≤480px) ──────────────────────────────────────── */
+@media (max-width: 480px) {
+  .navLogoText { font-size: 16px; }
+  .navLink     { display: none; }           /* скрываем текстовые ссылки */
+  .navBtnLogin { display: inline-flex; }    /* кнопка входа остаётся */
+
+  .heroTitle { font-size: 28px; }
+}

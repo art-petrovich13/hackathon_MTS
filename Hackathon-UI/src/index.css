@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Syne:wght@400;600;700&display=swap');
+@import './pages/shared.mobile.css';
 
 /* ══════════════════════════════════════════════════════
    ТЁМНАЯ ТЕМА (по умолчанию)

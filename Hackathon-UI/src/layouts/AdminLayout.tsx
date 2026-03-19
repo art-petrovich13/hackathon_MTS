@@ -1,10 +1,12 @@
 import { Outlet, NavLink } from 'react-router-dom'
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTheme } from '../context/ThemeContext'
 import { useAuth } from '../context/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import { getHealth } from '../api/api'
 import styles from './Layout.module.css'
+import './Layout.mobile.css'
 import {
   Monitor, Server, Database, HardDrive, Smartphone,
   Users, LayoutGrid, BarChart2, TrendingUp, Camera, Image, LayoutDashboard,
@@ -54,12 +56,18 @@ export function AdminLayout() {
   const { theme, toggle } = useTheme()
   const { user, logout }  = useAuth()
   const navigate = useNavigate()
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const handleLogout = () => { logout(); navigate('/login') }
 
   return (
     <div className={styles.shell}>
-      <aside className={styles.sidebar}>
+      {/* Мобильный overlay */}
+      {sidebarOpen && (
+        <div className="mobile-overlay" onClick={() => setSidebarOpen(false)} />
+      )}
+
+      <aside className={`${styles.sidebar} ${sidebarOpen ? 'sidebar-open' : ''}`}>
         <div className={styles.logo}>
           <span className={styles.logoMark}>⬡</span>
           <span className={styles.logoText}>MTS<em>Cloud</em></span>
@@ -88,7 +96,15 @@ export function AdminLayout() {
 
       <main className={styles.main}>
         <header className={styles.topbar}>
-          <div className={styles.topbarLeft} />
+          <div className={styles.topbarLeft}>
+            <button
+              className="hamburger-btn"
+              onClick={() => setSidebarOpen(o => !o)}
+              aria-label="Toggle sidebar"
+            >
+              <span /><span /><span />
+            </button>
+          </div>
           <div className={styles.topbarRight}>
             <HealthBadge />
             {user && (

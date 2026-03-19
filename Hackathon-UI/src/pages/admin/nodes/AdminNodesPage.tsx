@@ -4,6 +4,7 @@ import { getNodes } from '../../../api/api'
 import { type ComputeNode } from '../../../types/api'
 import s from '../../shared.module.css'
 import styles from './AdminNodesPage.module.css'
+import './AdminNodesPage.mobile.css'
 
 export function AdminNodesPage() {
   const { data: nodes = [], isLoading, isError } = useQuery({

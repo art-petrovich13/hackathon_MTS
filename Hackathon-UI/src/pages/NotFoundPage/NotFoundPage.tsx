@@ -1,6 +1,8 @@
 // src/pages/NotFoundPage.tsx
 import { Link } from 'react-router-dom'
 import styles from './NotFoundPage.module.css'
+import './NotFoundPage.mobile.css'
+import './NotFoundPage.mobile.css'
 
 export function NotFoundPage() {
   return (

@@ -1,4 +1,5 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
+import { useState } from 'react'
 import {
   LayoutDashboard, Monitor, Database,
   HardDrive, Smartphone, Camera, Settings, LogOut, Cpu,
@@ -6,6 +7,7 @@ import {
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import styles from './Layout.module.css'
+import './Layout.mobile.css'
 
 const NAV = [
   { to: '/dashboard', label: 'Dashboard',  Icon: LayoutDashboard },
@@ -22,12 +24,17 @@ export function UserLayout() {
   const { user, logout } = useAuth()
   const { theme, toggle } = useTheme()
   const navigate = useNavigate()
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const handleLogout = () => { logout(); navigate('/login') }
 
   return (
     <div className={styles.shell}>
-      <aside className={styles.sidebar}>
+      {sidebarOpen && (
+        <div className="mobile-overlay" onClick={() => setSidebarOpen(false)} />
+      )}
+
+      <aside className={`${styles.sidebar} ${sidebarOpen ? 'sidebar-open' : ''}`}>
         <div className={styles.logo}>
           <span className={styles.logoMark}>⬡</span>
           <span className={styles.logoText}>MTS<em>Cloud</em></span>
@@ -55,6 +62,13 @@ export function UserLayout() {
       <main className={styles.main}>
         <header className={styles.topbar}>
           <div className={styles.topbarLeft}>
+            <button
+              className="hamburger-btn"
+              onClick={() => setSidebarOpen(o => !o)}
+              aria-label="Toggle sidebar"
+            >
+              <span /><span /><span />
+            </button>
             <span className={styles.projectLabel}>
               Проект: <strong className={styles.projectName}>default</strong>
             </span>

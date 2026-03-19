@@ -4,6 +4,8 @@ import { AdminLayout } from '../layouts/AdminLayout'
 import { UserLayout } from '../layouts/UserLayout'
 import { LoginPage } from '../pages/LoginPage'
 import { NotFoundPage } from '../pages/NotFoundPage/NotFoundPage'
+import { LandingAboutPage } from '../pages/public/LandingAboutPage'
+import { ContactsPage } from '../pages/public/ContactsPage'
 import { ScreenPage } from '../pages/user/screen/ScreenPage'
 import { AgentPage } from '../pages/user/agent/AgentPage'
 
@@ -38,6 +40,10 @@ import { UserSettingsPage } from '../pages/user/settings/UserSettingsPage'
 export function AppRoutes() {
   return (
     <Routes>
+
+      {/* ── Публичные роуты — без авторизации ──────────────────────── */}
+      <Route path="/about"    element={<LandingAboutPage />} />
+      <Route path="/contacts" element={<ContactsPage />} />
 
       {/* ── Публичный роут — страница входа ───────────────────────── */}
       <Route path="/login" element={<LoginPage />} />

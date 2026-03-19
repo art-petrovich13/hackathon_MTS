@@ -1,6 +1,7 @@
 // Пример: src/pages/admin/databases/AdminDatabasesPage.tsx
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../../../context/AuthContext'
+import './UserDashboardPage.mobile.css'
 
 
 import { getVMs, getDatabases, getObjectStorages, getFileStorages, getMobileDevices } from '../../../api/api'

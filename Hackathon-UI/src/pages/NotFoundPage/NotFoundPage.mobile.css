@@ -1,0 +1,8 @@
+/* NotFoundPage.mobile.css */
+@media (max-width: 768px) {
+  .code { font-size: 56px; }
+  .msg  { font-size: 14px; text-align: center; padding: 0 20px; }
+}
+@media (max-width: 480px) {
+  .code { font-size: 44px; }
+}

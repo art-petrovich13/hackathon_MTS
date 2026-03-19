@@ -1,0 +1,17 @@
+/* Imagespage.mobile.css — AdminImagesPage */
+
+@media (max-width: 1024px) {
+  .grid { grid-template-columns: repeat(3, 1fr); gap: 12px; }
+}
+
+@media (max-width: 768px) {
+  .grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .card { padding: 14px 16px; gap: 10px; }
+  .imgName { font-size: 13px; }
+  .imgTag  { font-size: 11px; }
+  .cardMeta { gap: 14px; }
+}
+
+@media (max-width: 480px) {
+  .grid { grid-template-columns: 1fr; }
+}

@@ -1,0 +1,28 @@
+/* AdminDatabasesStyle.mobile.css */
+
+@media (max-width: 1024px) {
+  .engineGrid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+}
+
+@media (max-width: 768px) {
+  /* Таблица баз данных — горизонтальный скролл */
+  .tableWrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .table { min-width: 560px; }
+
+  /* Форма создания БД */
+  .engineGrid { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .engineIcon { font-size: 20px; }
+  .engineLabel { font-size: 12px; }
+  .engineDesc { display: none; }
+
+  .formFooter { flex-direction: column-reverse; gap: 8px; }
+  .formFooter button { width: 100%; justify-content: center; }
+}
+
+@media (max-width: 480px) {
+  .engineGrid { grid-template-columns: repeat(3, 1fr); }
+  .engineButton { padding: 10px 4px; }
+}

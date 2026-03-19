@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { getServiceCatalogFull } from '../../../api/api'
 import s from '../../shared.module.css'
 import styles from './AdminCatalogPage.module.css'
+import './AdminCatalogPage.mobile.css'
 
 export function AdminCatalogPage() {
   const { data: catalog = [], isLoading, isError } = useQuery({

@@ -4,6 +4,7 @@ import {
   getFileStorages, getMobileDevices, getUsers, getNodes,
 } from '../../../api/api'
 import s from '../../shared.module.css'
+import './AdminDashboardPage.mobile.css'
 
 export function AdminDashboardPage() {
   const { data: vms     = [] } = useQuery({ queryKey: ['vms'],             queryFn: () => getVMs() })

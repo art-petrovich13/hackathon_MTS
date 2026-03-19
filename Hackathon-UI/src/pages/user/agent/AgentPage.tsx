@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import type { AgentPlan, DeployStep, SSEEvent } from '../../../types/api'
 import { agentExecute, readSSEStream } from '../../../api/api'
 import m from './AgentPage.module.css'
+import './AgentPage.mobile.css'
 
 // ── Типы ──────────────────────────────────────────────────────────────────────
 
@@ -170,11 +171,11 @@ function AgentChat({ preset, customMessage, onBack }: {
   const [deploying, setDeploying]       = useState(false)
   const [currentPlan, setCurrentPlan]   = useState<AgentPlan | null>(null)
   const [input, setInput]               = useState('')
-  const [started, setStarted]           = useState(false)
+  const startedRef                      = useRef(false)
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (!started) { setStarted(true); preset ? startPreset(preset.id) : customMessage && sendCustom(customMessage) }
+    if (!startedRef.current) { startedRef.current = true; preset ? startPreset(preset.id) : customMessage && sendCustom(customMessage) }
   }, []) // eslint-disable-line
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages])

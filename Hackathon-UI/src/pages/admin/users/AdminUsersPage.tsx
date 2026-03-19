@@ -8,6 +8,7 @@ import {
 import type { UserWithProject, ProjectLimit } from '../../../types/api'
 import shared from '../../shared.module.css'
 import m from './userstable.module.css'
+import './userstable.mobile.css'
 
 export function AdminUsersPage() {
   const qc = useQueryClient()

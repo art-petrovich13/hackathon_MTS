@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { useAuth } from '../context/AuthContext'
 import styles from './LoginPage.module.css'
+import './LoginPage.mobile.css'
+import './LoginPage.mobile.css'
 
 export function LoginPage() {
   const { login, user } = useAuth()

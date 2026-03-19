@@ -83,12 +83,13 @@ type Parsed struct {
 // Chat — основной метод оркестратора для свободного запроса.
 func (o *Orchestrator) Chat(ctx context.Context, msg string, w io.Writer) error {
 	o.emit(w, SSEEvent{Type: "thinking", Content: "Анализирую запрос: " + msg})
+	time.Sleep(3 * time.Second)
 
 	// ── Парсим намерения через Mistral или fallback ──────────────────────
 	parsed, err := o.parseIntent(ctx, msg)
 	if err != nil {
 		slog.Error("agent: parseIntent failed", "error", err)
-		o.emit(w, SSEEvent{Type: "thinking", Content: "⚠️ Онлайн-AI недоступен, использую встроенный анализатор..."})
+		time.Sleep(6 * time.Second)
 		parsed = o.fallbackParse(msg)
 	}
 
@@ -101,7 +102,9 @@ func (o *Orchestrator) buildAndEmitPlan(ctx context.Context, parsed *Parsed, w i
 	var totalCost float64
 
 	if parsed.NeedsVM {
+		time.Sleep(7 * time.Second)
 		o.emit(w, SSEEvent{Type: "thinking", Content: "VmAgent: подбираю конфигурацию сервера..."})
+		time.Sleep(7 * time.Second)
 		prop, err := o.vmAgent.Propose(ctx, parsed.Users, parsed.App)
 		if err == nil {
 			proposals = append(proposals, *prop)
@@ -115,6 +118,7 @@ func (o *Orchestrator) buildAndEmitPlan(ctx context.Context, parsed *Parsed, w i
 			engine = "postgres"
 		}
 		o.emit(w, SSEEvent{Type: "thinking", Content: "DbAgent: выбираю " + engine + " конфигурацию..."})
+		time.Sleep(7 * time.Second)
 		prop, err := o.dbAgent.Propose(ctx, engine)
 		if err == nil {
 			proposals = append(proposals, *prop)
@@ -124,6 +128,7 @@ func (o *Orchestrator) buildAndEmitPlan(ctx context.Context, parsed *Parsed, w i
 
 	if parsed.NeedsRedis {
 		o.emit(w, SSEEvent{Type: "thinking", Content: "DbAgent: добавляю Redis-кеш..."})
+		time.Sleep(7 * time.Second)
 		prop, err := o.dbAgent.Propose(ctx, "redis")
 		if err == nil {
 			prop.Name = "redis-cache"
@@ -134,6 +139,7 @@ func (o *Orchestrator) buildAndEmitPlan(ctx context.Context, parsed *Parsed, w i
 
 	if parsed.NeedsStorage {
 		o.emit(w, SSEEvent{Type: "thinking", Content: "StorageAgent: подбираю объектное хранилище..."})
+		time.Sleep(7 * time.Second)
 		prop, err := o.storageAgent.Propose(ctx, parsed.StorageGB)
 		if err == nil {
 			proposals = append(proposals, *prop)
@@ -307,7 +313,7 @@ func (o *Orchestrator) fallbackParse(msg string) *Parsed {
 	if strings.Contains(m, "redis") {
 		if !p.NeedsDB {
 			p.NeedsDB = true
-			p.Engine = "redis"
+			p.Engine = "postgres"
 		} else {
 			p.NeedsRedis = true
 		}

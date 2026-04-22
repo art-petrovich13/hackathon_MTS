@@ -15,13 +15,15 @@ import {
 const NAV_SECTIONS = [
   {
     label: 'Overview',
-    items: [{ to: '/admin/dashboard', label: 'Dashboard', Icon: LayoutDashboard }],
+    items: [
+      { to: '/admin/nodes', label: 'Nodes', Icon: Server },
+      { to: '/admin/dashboard', label: 'Dashboard', Icon: LayoutDashboard },
+    ],
   },
   {
     label: 'Compute',
     items: [
-      { to: '/admin/vms',   label: 'Virtual Machines', Icon: Monitor },
-      { to: '/admin/nodes', label: 'Nodes',            Icon: Server  },
+      { to: '/admin/vms', label: 'Virtual Machines', Icon: Monitor },
     ],
   },
   {
@@ -32,7 +34,7 @@ const NAV_SECTIONS = [
     label: 'Storage',
     items: [
       { to: '/admin/storage/object', label: 'Object Storage', Icon: HardDrive },
-      { to: '/admin/storage/file',   label: 'File Storage',   Icon: HardDrive },
+      { to: '/admin/storage/file', label: 'File Storage', Icon: HardDrive },
     ],
   },
   {
@@ -42,19 +44,16 @@ const NAV_SECTIONS = [
   {
     label: 'System',
     items: [
-      { to: '/admin/users',           label: 'Users',           Icon: Users       },
-      { to: '/admin/catalog',         label: 'Service Catalog', Icon: LayoutGrid  },
-      { to: '/admin/metrics',         label: 'Metrics',         Icon: BarChart2   },
-      { to: '/admin/recommendations', label: 'Recommendations', Icon: TrendingUp  },
-      { to: '/admin/snapshots',       label: 'Snapshots',       Icon: Camera      },
-      { to: '/admin/images',          label: 'Images',          Icon: Image       },
+      { to: '/admin/users', label: 'Users', Icon: Users },
+      { to: '/admin/catalog', label: 'Service Catalog', Icon: LayoutGrid },
+      { to: '/admin/images', label: 'Images', Icon: Image },
     ],
   },
 ]
 
 export function AdminLayout() {
   const { theme, toggle } = useTheme()
-  const { user, logout }  = useAuth()
+  const { user, logout } = useAuth()
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
@@ -70,7 +69,7 @@ export function AdminLayout() {
       <aside className={`${styles.sidebar} ${sidebarOpen ? 'sidebar-open' : ''}`}>
         <div className={styles.logo}>
           <span className={styles.logoMark}>⬡</span>
-          <span className={styles.logoText}>MTS<em>Cloud</em></span>
+          <span className={styles.logoText}>IaaS<em>Cloud</em></span>
         </div>
 
         <nav className={styles.nav}>

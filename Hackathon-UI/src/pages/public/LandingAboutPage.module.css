@@ -489,3 +489,63 @@
 .footerDot {
   color: var(--border, #252836);
 }
+
+/* ═══════════════════════════════════════════════════
+   АДАПТИВ (перенесено из LandingAboutPage.mobile.css)
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 1024px) {
+  .navInner  { padding: 0 24px; }
+  .hero      { padding: 80px 24px 60px; }
+  .whyGrid   { grid-template-columns: repeat(2, 1fr); }
+  .section   { padding: 64px 24px; }
+  .heroStats { padding: 14px 20px; }
+  .heroStat  { padding: 0 16px; }
+}
+@media (max-width: 768px) {
+  .navInner    { padding: 0 16px; }
+  .navLinks    { gap: 4px; }
+  .navLink     { padding: 6px 10px; font-size: 13px; }
+  .navBtnLogin { padding: 6px 12px; font-size: 13px; margin-left: 4px; }
+  .hero        { padding: 60px 16px 48px; }
+  .heroBadge   { font-size: 11px; padding: 5px 12px; }
+  .heroTitle   { font-size: 32px; }
+  .heroSub     { font-size: 15px; }
+  .heroCta     { flex-direction: column; align-items: stretch; }
+  .btnPrimary, .btnOutline { width: 100%; justify-content: center; padding: 14px 20px; font-size: 15px; }
+  .heroStats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    padding: 0;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .heroStat {
+    padding: 14px 12px;
+    border-right: 1px solid var(--border, #252836);
+    border-bottom: 1px solid var(--border, #252836);
+  }
+  .heroStat:nth-child(2n)  { border-right: none; }
+  .heroStat:nth-child(n+3) { border-bottom: none; }
+  .heroStatDiv  { display: none; }
+  .heroStat strong { font-size: 18px; }
+  .section      { padding: 52px 16px; }
+  .sectionHead  { margin-bottom: 36px; }
+  .sectionTitle { font-size: 26px; }
+  .sectionSub   { font-size: 14px; }
+  .whyGrid { grid-template-columns: 1fr; gap: 12px; }
+  .whyCard { padding: 22px 18px; }
+  .faqList { max-width: 100%; }
+  .faqQ    { font-size: 14px; padding: 16px 18px; }
+  .faqA    { padding: 0 18px 14px; }
+  .footer  { padding: 40px 16px 28px; }
+  .socials { gap: 8px; }
+  .socialLink { padding: 8px 14px; font-size: 12px; }
+  .footerMeta { flex-direction: column; gap: 4px; }
+}
+@media (max-width: 480px) {
+  .navLogoText { font-size: 16px; }
+  .navLink     { display: none; }
+  .navBtnLogin { display: inline-flex; }
+  .heroTitle   { font-size: 28px; }
+}

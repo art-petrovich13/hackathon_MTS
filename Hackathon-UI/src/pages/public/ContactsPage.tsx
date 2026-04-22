@@ -9,7 +9,7 @@ const CONTACTS = [
   {
     icon: '📍',
     label: 'Адрес',
-    value: 'г. Минск, ул. Логойский тракт, 22, офис 314',
+    value: 'ул. Московская, 15А, Минск',
     href: null,
   },
   {
@@ -237,16 +237,16 @@ export function ContactsPage() {
             <div className={styles.mapBlock}>
               <h2 className={styles.blockTitle}>Как добраться</h2>
               <p className={styles.mapAddress}>
-                📍 г. Минск, ул. Логойский тракт, 22
+                📍 г. Минск, ул. Московская, 15А
               </p>
               <div className={styles.mapHints}>
                 <div className={styles.mapHint}>
                   <span className={styles.mapHintIcon}>🚇</span>
-                  <span>м. Молодёжная, выход №2, далее 7 мин пешком на север</span>
+                  <span>м. Институт культуры, выход №1, далее 3 мин пешком на север</span>
                 </div>
                 <div className={styles.mapHint}>
                   <span className={styles.mapHintIcon}>🚌</span>
-                  <span>Автобусы 8, 36, 51 — остановка «Логойский тракт»</span>
+                  <span>Автобусы 8, 36, 51 — остановка «м. Институт культуры»</span>
                 </div>
                 <div className={styles.mapHint}>
                   <span className={styles.mapHintIcon}>🚗</span>
@@ -257,7 +257,7 @@ export function ContactsPage() {
               <div className={styles.mapWrapper}>
                 <iframe
                   title="IaaS Cloud на Яндекс Картах"
-                  src="https://yandex.ru/map-widget/v1/?ll=27.590000%2C53.920000&z=15&pt=27.590000,53.920000,pm2rdm~27.590000,53.920000&text=%D0%9C%D0%B8%D0%BD%D1%81%D0%BA%2C%20%D1%83%D0%BB.%20%D0%9B%D0%BE%D0%B3%D0%BE%D0%B9%D1%81%D0%BA%D0%B8%D0%B9%20%D1%82%D1%80%D0%B0%D0%BA%D1%82%2C%2022"
+                  src="https://yandex.ru/map-widget/v1/?ll=27.538969%2C53.887321&z=17&pt=27.538969%2C53.887321%2Cpm2rdm&text=%D0%9C%D0%B8%D0%BD%D1%81%D0%BA%2C%20%D0%9C%D0%BE%D1%81%D0%BA%D0%BE%D0%B2%D1%81%D0%BA%D0%B0%D1%8F%2015%D0%90"
                   width="100%"
                   height="400"
                   style={{ border: 0, borderRadius: '12px', display: 'block' }}
@@ -266,7 +266,7 @@ export function ContactsPage() {
                 />
               </div>
               <a
-                href="https://yandex.ru/maps/157/minsk/?text=%D0%9C%D0%B8%D0%BD%D1%81%D0%BA%2C%20%D1%83%D0%BB.%20%D0%9B%D0%BE%D0%B3%D0%BE%D0%B9%D1%81%D0%BA%D0%B8%D0%B9%20%D1%82%D1%80%D0%B0%D0%BA%D1%82%2C%2022"
+                href="https://yandex.ru/maps/org/institut_biznesa_belorusskogo_gosudarstvennogo_universiteta/166062970974/?from=mapframe"
                 target="_blank"
                 rel="noopener noreferrer"
                 className={styles.mapExternalLink}
@@ -287,7 +287,7 @@ export function ContactsPage() {
             <span className={styles.navLogoText}>IaaS<em>Cloud</em></span>
           </div>
           <p className={styles.footerMeta}>
-            © 2024 IaaS Cloud · ООО «АйЭаС Клауд», УНП 191234567, г. Минск
+            © 2025 IaaS Cloud · ООО «АйЭаС Клауд», УНП 191234567, г. Минск
           </p>
         </div>
       </footer>

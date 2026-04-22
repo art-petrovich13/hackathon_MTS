@@ -5,6 +5,13 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 3000,
+    // Добавьте эту секцию для разрешения всех хостов Cloudflare Tunnel
+    allowedHosts: [
+      'localhost',
+      '.trycloudflare.com',  // Разрешает все поддомены trycloudflare.com
+      // Или конкретный хост, который вы видите в ошибке:
+      'valued-pendant-stations-doctrine.trycloudflare.com'
+    ],
     proxy: {
       '/api': {
         target: 'http://localhost:8080',

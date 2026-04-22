@@ -97,3 +97,24 @@
   justify-content: flex-end;
   margin-top: 20px;
 }
+/* ═══════════════════════════════════════════════════
+   АДАПТИВ (перенесено из userstable.mobile.css)
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 1024px) {
+  .tableWrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+}
+@media (max-width: 768px) {
+  .table { min-width: 600px; }
+  .servicesCell { gap: 6px; font-size: 11px; }
+  .actionsCell { gap: 4px; }
+  .actionBtn { padding: 4px 10px; font-size: 11px; }
+  .limitsGrid { grid-template-columns: 1fr; gap: 10px; }
+  .roleGrid { flex-direction: column; gap: 8px; }
+  .roleBtn { padding: 10px; font-size: 13px; }
+  .formFooter { flex-direction: column-reverse; gap: 8px; }
+  .formFooter button { width: 100%; justify-content: center; }
+}
+@media (max-width: 480px) {
+  .serviceCount:nth-child(n+3) { display: none; }
+  .actionBtnLimits span { display: none; }
+}

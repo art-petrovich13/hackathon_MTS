@@ -513,3 +513,44 @@ a.contactValue:hover { color: var(--accent, #C62E26); }
   font-size: 12px;
   color: var(--text-dim, #3d4155);
 }
+
+/* ═══════════════════════════════════════════════════
+   АДАПТИВ (перенесено из ContactsPage.mobile.css)
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 1024px) {
+  .navInner { padding: 0 24px; }
+  .main     { padding: 40px 24px 64px; }
+  .mainInner { grid-template-columns: 1fr; gap: 24px; }
+  .rightCol  { position: static; }
+}
+@media (max-width: 768px) {
+  .navInner  { padding: 0 16px; }
+  .navLinks  { gap: 4px; }
+  .navLink   { padding: 6px 10px; font-size: 13px; }
+  .navBtnLogin { padding: 6px 12px; font-size: 13px; margin-left: 4px; }
+  .hero      { padding: 48px 16px 36px; }
+  .heroTitle { font-size: 30px; }
+  .heroSub   { font-size: 14px; }
+  .main      { padding: 28px 16px 56px; }
+  .mainInner { grid-template-columns: 1fr; gap: 20px; }
+  .rightCol  { position: static; }
+  .contactsBlock, .formBlock, .mapBlock { padding: 22px 18px; border-radius: 12px; }
+  .blockTitle { font-size: 17px; margin-bottom: 16px; padding-bottom: 12px; }
+  .formRow { grid-template-columns: 1fr; gap: 14px; }
+  .formActions { flex-direction: column; }
+  .btnCallBack, .btnMore { width: 100%; justify-content: center; padding: 13px 16px; }
+  .mapWrapper iframe { height: 300px !important; }
+  .footer      { padding: 24px 16px; }
+  .footerInner { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .footerMeta  { font-size: 11px; }
+}
+@media (max-width: 480px) {
+  .navLogoText { font-size: 16px; }
+  .navLink     { display: none; }
+  .navBtnLogin { display: inline-flex; }
+  .heroTitle   { font-size: 26px; }
+  .heroSub     { font-size: 13px; }
+  .socials { display: grid; grid-template-columns: 1fr 1fr; }
+  .socialLink { justify-content: center; }
+  .mapWrapper iframe { height: 260px !important; }
+}

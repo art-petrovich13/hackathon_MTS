@@ -48,7 +48,7 @@ export function LoginPage() {
         <div className={styles.logo}>
           <div className={styles.logoIcon}>⬡</div>
           <h1 className={styles.logoTitle}>
-            MTS<em>Cloud</em>
+            IaaS<em>Cloud</em>
           </h1>
           <p className={styles.logoSubtitle}>Войдите в свой аккаунт</p>
         </div>
@@ -96,7 +96,7 @@ export function LoginPage() {
         <div className={styles.demo}>
           <strong className={styles.demoTitle}>Demo credentials:</strong><br />
           Admin: <code className={styles.demoCode}>admin@iaas.local</code> / <code className={styles.demoCode}>admin123</code><br />
-          User: <code className={styles.demoCode}>user@example.com</code> / <code className={styles.demoCode}>user123</code>
+          User: <code className={styles.demoCode}>user@test.com</code> / <code className={styles.demoCode}>test123</code>
         </div>
 
       </div>

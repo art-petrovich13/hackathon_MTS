@@ -165,3 +165,30 @@
   border: 1px solid var(--border);
   white-space: nowrap;
 }
+/* ═══════════════════════════════════════════════════
+   АДАПТИВ (перенесено из shared.mobile.css)
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 1024px) {
+  .pageHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .pageTitle    { font-size: 20px; }
+  .pageSubtitle { font-size: 11px; }
+  .tableWrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .table th, .table td { padding: 10px 12px; }
+  .table th { font-size: 10px; }
+  .table td { font-size: 12px; }
+}
+@media (max-width: 768px) {
+  .pageTitle { font-size: 18px; }
+  .btnPrimary { width: 100%; justify-content: center; text-align: center; }
+  .tableWrap { border-radius: 10px; }
+  .table { min-width: 540px; }
+  .table th, .table td { padding: 9px 10px; white-space: nowrap; }
+  .stateBox { padding: 48px 16px; }
+}

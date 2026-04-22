@@ -16,8 +16,6 @@ const NAV = [
   { to: '/databases', label: 'Databases',  Icon: Database        },
   { to: '/storage',   label: 'Storage',    Icon: HardDrive       },
   { to: '/mobile',    label: 'Mobile Farm',Icon: Smartphone      },
-  { to: '/snapshots', label: 'Snapshots',  Icon: Camera          },
-  { to: '/settings',  label: 'Settings',   Icon: Settings        },
 ]
 
 export function UserLayout() {
@@ -37,7 +35,7 @@ export function UserLayout() {
       <aside className={`${styles.sidebar} ${sidebarOpen ? 'sidebar-open' : ''}`}>
         <div className={styles.logo}>
           <span className={styles.logoMark}>⬡</span>
-          <span className={styles.logoText}>MTS<em>Cloud</em></span>
+          <span className={styles.logoText}>IaaS<em>Cloud</em></span>
         </div>
 
         <nav className={styles.nav}>

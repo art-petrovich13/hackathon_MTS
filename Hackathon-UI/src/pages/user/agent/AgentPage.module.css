@@ -552,3 +552,44 @@
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }
 }
+/* ═══════════════════════════════════════════════════
+   АДАПТИВ (перенесено из AgentPage.mobile.css)
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 1024px) {
+  .presetsGrid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+}
+@media (max-width: 768px) {
+  .presetsGrid { grid-template-columns: 1fr; gap: 10px; }
+  .marketTitle { font-size: 18px; }
+  .marketSubtitle { font-size: 12px; }
+  .presetCard { padding: 16px; }
+  .presetTitle { font-size: 14px; }
+  .presetDesc { font-size: 13px; }
+  .customBox { padding: 16px; }
+  .customSendBtn { padding: 0 14px; }
+  .hints {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    gap: 8px;
+    padding-bottom: 4px;
+  }
+  .hintBtn { flex-shrink: 0; white-space: nowrap; }
+  .chatHeader { padding: 12px 14px; gap: 10px; }
+  .chatMessages { padding: 14px 12px; }
+  .chatInputRow { padding: 10px 12px; }
+  .planCard { padding: 14px; }
+  .planFooter { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .planFooter button { width: 100%; justify-content: center; }
+  .planService { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .planServiceCost { margin-left: 0; }
+}
+@media (max-width: 480px) {
+  .marketTitleRow { flex-wrap: wrap; gap: 8px; }
+  .presetIcon { font-size: 22px; }
+  .presetIncludes { flex-wrap: wrap; gap: 4px; }
+  .chatPresetInfo { gap: 8px; }
+  .chatPresetTitle { font-size: 13px; }
+  .streamingIndicator { display: none; }
+}

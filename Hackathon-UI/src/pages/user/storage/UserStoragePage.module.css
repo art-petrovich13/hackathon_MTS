@@ -122,3 +122,22 @@
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
 }
+/* ═══════════════════════════════════════════════════
+   АДАПТИВ (перенесено из UserStoragePage.mobile.css)
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 1024px) {
+  .grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+}
+@media (max-width: 768px) {
+  .tabs { gap: 6px; }
+  .tabBtn { padding: 7px 14px; font-size: 12px; }
+  .grid { grid-template-columns: 1fr; gap: 10px; }
+  .btnAccess, .btnDelete, .btnDeleteConfirm, .btnCancel {
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+}
+@media (max-width: 480px) {
+  .tabBtn { padding: 6px 12px; font-size: 12px; }
+  .endpoint { font-size: 10px; word-break: break-all; }
+}

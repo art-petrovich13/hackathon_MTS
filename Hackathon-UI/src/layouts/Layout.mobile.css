@@ -1,7 +1,9 @@
 /* ═══════════════════════════════════════════════════
    Layout.mobile.css
-   Адаптив сайдбара и топбара для Admin + User Layout
-   Подключается в AdminLayout.tsx и UserLayout.tsx
+   ТОЛЬКО глобальные классы (не CSS Module):
+     .hamburger-btn, .mobile-overlay, .sidebar-open
+   Скоупленные классы (.sidebar, .main и т.д.) перенесены
+   в Layout.module.css, иначе они не применяются.
    ═══════════════════════════════════════════════════ */
 
 /* ── Гамбургер — скрыт на десктопе ──────────────────────────────────────── */
@@ -20,9 +22,7 @@
   flex-shrink: 0;
   transition: border-color 0.15s;
 }
-.hamburger-btn:hover {
-  border-color: var(--accent, #C62E26);
-}
+.hamburger-btn:hover { border-color: var(--accent, #C62E26); }
 .hamburger-btn span {
   display: block;
   width: 100%;
@@ -31,11 +31,9 @@
   border-radius: 2px;
   transition: background 0.15s;
 }
-.hamburger-btn:hover span {
-  background: var(--accent, #C62E26);
-}
+.hamburger-btn:hover span { background: var(--accent, #C62E26); }
 
-/* ── Мобильный overlay под drawer ────────────────────────────────────────── */
+/* ── Мобильный overlay ───────────────────────────────────────────────────── */
 .mobile-overlay {
   display: none;
   position: fixed;
@@ -51,74 +49,17 @@
   to   { opacity: 1; }
 }
 
-/* ═══════════════════════════════════════════════════
-   ПЛАНШЕТ (≤ 1024px)
-   ═══════════════════════════════════════════════════ */
+/* ── Показываем гамбургер и overlay на планшете/мобиле ───────────────────── */
 @media (max-width: 1024px) {
-
-  /* Показываем гамбургер */
-  .hamburger-btn { display: flex; }
-
-  /* Показываем overlay когда он добавлен в DOM */
+  .hamburger-btn  { display: flex; }
   .mobile-overlay { display: block; }
-
-  /* Сайдбар — скрыт по умолчанию, выезжает слева как drawer */
-  .sidebar {
-    transform: translateX(-100%);
-    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 200;
-    box-shadow: none;
-  }
-
-  /* Открытый drawer */
-  .sidebar-open {
-    transform: translateX(0) !important;
-    box-shadow: 8px 0 32px rgba(0, 0, 0, 0.4) !important;
-  }
-
-  /* Основная область — занимает весь экран */
-  .main {
-    margin-left: 0 !important;
-    width: 100% !important;
-  }
-
-  /* Топбар — чуть плотнее */
-  .topbar { padding: 0 16px; }
-  .topbarLeft { gap: 10px; }
-  .topbarRight { gap: 8px; }
-
-  /* email — скрываем на планшете */
-  .userEmail { display: none; }
-
-  /* Контент */
-  .content { padding: 20px 16px; }
 }
 
-/* ═══════════════════════════════════════════════════
-   МОБИЛЬНЫЙ (≤ 768px)
-   ═══════════════════════════════════════════════════ */
-@media (max-width: 768px) {
-
-  /* Топбар — высота чуть меньше */
-  .topbar { height: 48px; padding: 0 12px; }
-
-  /* Кнопка logout — только иконка на самых маленьких */
-  .logoutBtn span { display: none; }
-  .logoutBtn { padding: 4px 8px; }
-
-  /* Название проекта */
-  .projectLabel { font-size: 12px; }
-
-  /* Контент — минимальные отступы */
-  .content { padding: 16px 12px; }
-}
-
-/* ═══════════════════════════════════════════════════
-   ОЧЕНЬ МАЛЕНЬКИЙ (≤ 480px)
-   ═══════════════════════════════════════════════════ */
-@media (max-width: 480px) {
-  .topbar { padding: 0 10px; }
-
-  /* Версия в футере сайдбара */
-  .version { font-size: 10px; }
+/* ── Открытый drawer ─────────────────────────────────────────────────────── */
+/* .sidebar-open — глобальный класс, добавляется через JS:
+   className={`${styles.sidebar} ${sidebarOpen ? 'sidebar-open' : ''}`}
+   Именно поэтому он здесь, а не в module.css                              */
+.sidebar-open {
+  transform: translateX(0) !important;
+  box-shadow: 8px 0 32px rgba(0, 0, 0, 0.4) !important;
 }

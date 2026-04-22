@@ -1,0 +1,27 @@
+/* UserDashboardPage.mobile.css */
+
+@media (max-width: 768px) {
+  /* Тайлы счётчиков: 2 колонки */
+  [style*="repeat(auto-fill, minmax(200px"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+  }
+
+  /* Заголовок */
+  h1[style*="fontSize: 26"] { font-size: 20px !important; }
+
+  /* Блок лимитов */
+  [style*="borderRadius: 14"] { padding: 14px 16px !important; }
+
+  /* VM / DB карточки в списке */
+  [style*="borderRadius: 10"][style*="border: 1px solid var(--border)"] {
+    padding: 10px 12px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  [style*="repeat(auto-fill, minmax(200px"] {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+  }
+}

@@ -1,0 +1,253 @@
+/* ── Основная сетка ─────────────────────────────────────────────────────── */
+.shell {
+  display: flex;          /* меняем grid → flex, т.к. sidebar fixed и grid ломается */
+  min-height: 100vh;
+  transition: background 0.2s ease;
+}
+
+/* ── Сайдбар ─────────────────────────────────────────────────────────────── */
+.sidebar {
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0; left: 0;
+  width: 220px;
+  height: 100vh;
+  z-index: 100;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 18px 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.logoMark { font-size: 22px; color: var(--accent); line-height: 1; }
+
+.logoText {
+  font-family: 'Syne', sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-pri);
+  letter-spacing: -0.3px;
+}
+.logoText em { font-style: normal; color: var(--accent); }
+
+.nav {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 16px 10px;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  color: var(--text-sec);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  transition: background 0.15s, color 0.15s;
+  cursor: pointer;
+}
+.navItem:hover    { background: var(--bg-raised); color: var(--text-pri); }
+.navItemActive    { background: var(--accent-dim); color: var(--accent); }
+
+.navIcon { font-size: 15px; width: 18px; text-align: center; flex-shrink: 0; }
+
+.sidebarFooter {
+  padding: 14px 18px;
+  border-top: 1px solid var(--border);
+}
+.version { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-dim); }
+
+/* ── Основная область ───────────────────────────────────────────────────── */
+.main {
+  margin-left: 220px;               /* отступ = ширина фиксированного сайдбара */
+  width: calc(100vw - 220px);       /* явно задаём ширину, иначе = 100vw */
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  transition: background 0.2s ease;
+  box-sizing: border-box;
+}
+
+.topbar {
+  height: 52px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.topbarLeft  { display: flex; align-items: center; gap: 12px; }
+.topbarRight { display: flex; align-items: center; gap: 12px; }
+
+.content {
+  flex: 1;
+  padding: 28px 24px;
+  min-width: 0;         /* не даёт дочерним flex-элементам раздуваться */
+  overflow-x: hidden;   /* страхует от горизонтального скролла */
+  box-sizing: border-box;
+}
+
+/* ── Health badge ────────────────────────────────────────────────────────── */
+.healthBadge {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--text-sec);
+}
+.healthDot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: background 0.3s;
+}
+.healthOk  { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.healthErr { background: var(--red);   box-shadow: 0 0 6px var(--red); }
+
+/* ── Theme toggle button ─────────────────────────────────────────────────── */
+.themeToggle {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-raised);
+  color: var(--text-sec);
+  font-size: 16px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  flex-shrink: 0;
+}
+.themeToggle:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.navSection {
+  margin-bottom: 6px;
+}
+
+.navSectionLabel {
+  display: block;
+  padding: 8px 16px 3px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #475569;
+}
+
+/* ── Топбар — пользователь и кнопка выхода ──────────────────────────────── */
+.userEmail {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--text-dim);
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.logoutBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  padding: 4px 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(198, 46, 38, 0.3);
+  background: rgba(198, 46, 38, 0.06);
+  cursor: pointer;
+  color: var(--red-primary);
+  font-family: 'Syne', sans-serif;
+  transition: background 0.15s, border-color 0.15s;
+}
+.logoutBtn:hover {
+  background: rgba(198, 46, 38, 0.12);
+  border-color: var(--red-primary);
+}
+
+/* ── Топбар — подпись проекта (UserLayout) ───────────────────────────────── */
+.projectLabel {
+  font-size: 13px;
+  color: var(--text-sec);
+}
+.projectName {
+  color: var(--text-pri);
+  font-weight: 600;
+}
+/* ═══════════════════════════════════════════════════
+   АДАПТИВ (перенесено из Layout.mobile.css)
+   CSS Module — здесь скоупленные классы работают корректно
+   ═══════════════════════════════════════════════════ */
+
+/* ── ПЛАНШЕТ (≤ 1024px) ─────────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+
+  /* Сайдбар — скрыт по умолчанию, выезжает как drawer */
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 200;
+    box-shadow: none;
+  }
+
+  /* Основная область — на всю ширину */
+  .main {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+
+  /* Топбар */
+  .topbar      { padding: 0 16px; }
+  .topbarLeft  { gap: 10px; }
+  .topbarRight { gap: 8px; }
+
+  /* Email — скрываем */
+  .userEmail { display: none; }
+
+  /* Контент */
+  .content { padding: 20px 16px; }
+}
+
+/* ── МОБИЛЬНЫЙ (≤ 768px) ────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .topbar { height: 48px; padding: 0 12px; }
+
+  .logoutBtn span { display: none; }
+  .logoutBtn { padding: 4px 8px; }
+
+  .projectLabel { font-size: 12px; }
+
+  .content { padding: 16px 12px; }
+}
+
+/* ── ОЧЕНЬ МАЛЕНЬКИЙ (≤ 480px) ──────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .topbar  { padding: 0 10px; }
+  .version { font-size: 10px; }
+}

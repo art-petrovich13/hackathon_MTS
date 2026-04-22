@@ -1,0 +1,120 @@
+.servicesCell {
+  display: flex;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.serviceCount {
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text-sec);
+}
+
+/* ── Бейдж роли ──────────────────────────────────────────────────────────── */
+.roleAdmin {
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(198, 46, 38, 0.12);
+  color: var(--red-primary);
+  border: 1px solid rgba(198, 46, 38, 0.3);
+  white-space: nowrap;
+}
+
+.roleUser {
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(198, 46, 38, 0.06);
+  color: var(--text-sec);
+  border: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+/* ── Кнопки действий в таблице ───────────────────────────────────────────── */
+.actionsCell { display: flex; gap: 6px; align-items: center; }
+
+.actionBtn {
+  padding: 4px 12px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-family: 'Syne', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: opacity 0.15s;
+}
+.actionBtn:disabled { opacity: 0.35; cursor: not-allowed; }
+.actionBtn:hover:not(:disabled) { opacity: 0.8; }
+
+.actionBtnLimits  { background: rgba(198, 46, 38, 0.1);  color: var(--red-primary); }
+.actionBtnDelete  { background: rgba(198, 46, 38, 0.08); color: #f87171; }
+.actionBtnConfirm { background: rgba(198, 46, 38, 0.18); color: #f87171; }
+.actionBtnCancel  { background: transparent; color: var(--text-sec); border: 1px solid var(--border); }
+
+/* ── Выбор роли в CreateUserModal ────────────────────────────────────────── */
+.roleGrid { display: flex; gap: 10px; }
+
+.roleBtn {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 2px solid var(--border);
+  background: transparent;
+  color: var(--text-pri);
+  font-family: 'Syne', sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+  transition: border-color 0.15s, background 0.15s;
+}
+.roleBtn:hover { border-color: rgba(198, 46, 38, 0.4); }
+.roleBtnActive {
+  border-color: var(--red-primary);
+  background: rgba(198, 46, 38, 0.08);
+}
+
+/* ── Сетка лимитов ───────────────────────────────────────────────────────── */
+.limitsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.modalSubtitle {
+  margin: 0 0 20px;
+  font-size: 13px;
+  color: var(--text-sec);
+}
+
+.formFooter {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+/* ═══════════════════════════════════════════════════
+   АДАПТИВ (перенесено из userstable.mobile.css)
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 1024px) {
+  .tableWrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+}
+@media (max-width: 768px) {
+  .table { min-width: 600px; }
+  .servicesCell { gap: 6px; font-size: 11px; }
+  .actionsCell { gap: 4px; }
+  .actionBtn { padding: 4px 10px; font-size: 11px; }
+  .limitsGrid { grid-template-columns: 1fr; gap: 10px; }
+  .roleGrid { flex-direction: column; gap: 8px; }
+  .roleBtn { padding: 10px; font-size: 13px; }
+  .formFooter { flex-direction: column-reverse; gap: 8px; }
+  .formFooter button { width: 100%; justify-content: center; }
+}
+@media (max-width: 480px) {
+  .serviceCount:nth-child(n+3) { display: none; }
+  .actionBtnLimits span { display: none; }
+}

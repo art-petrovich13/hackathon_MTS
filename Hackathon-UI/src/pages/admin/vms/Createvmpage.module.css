@@ -1,0 +1,223 @@
+/* src/pages/CreateVMPage.module.css */
+
+.page {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 800px;
+  /* Центрирование страницы */
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 32px;
+}
+
+.backBtn {
+  background: none;
+  border: none;
+  color: var(--text-sec);
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 0;
+  width: fit-content;
+  margin-bottom: 4px;
+  transition: color 0.15s;
+}
+.backBtn:hover { color: var(--accent); }
+
+/* ── Форма ───────────────────────────────────────────────────────────────── */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+/* ── Секция ──────────────────────────────────────────────────────────────── */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sectionTitle {
+  font-family: 'Syne', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-pri);
+}
+
+.sectionHint {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-dim);
+}
+
+/* ── Input ───────────────────────────────────────────────────────────────── */
+.input {
+  width: 100%;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-pri);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  padding: 12px 16px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.input:focus { border-color: var(--accent); }
+.input::placeholder { color: var(--text-dim); }
+
+/* ── Flavor grid ─────────────────────────────────────────────────────────── */
+.flavorGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.flavorCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px 18px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s;
+}
+.flavorCard:hover { border-color: var(--accent); }
+
+.flavorName { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; color: var(--text-pri); }
+.flavorSpec { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-sec); }
+
+/* ── Image list ──────────────────────────────────────────────────────────── */
+.imageList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.imageRow {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  transition: border-color 0.15s, background 0.15s;
+}
+.imageRow:hover { border-color: var(--accent); }
+
+.imageIcon { font-size: 20px; color: var(--text-dim); flex-shrink: 0; }
+
+.imageInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+}
+.imageName { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 600; color: var(--text-pri); }
+.imageTag  { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--accent); }
+
+.imageMeta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.imageVersion { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-sec); }
+.imageOs      { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-dim); }
+
+/* ── Выбранное состояние ─────────────────────────────────────────────────── */
+.selectedCard {
+  border-color: var(--accent) !important;
+  background: rgba(0, 114, 229, 0.07);
+}
+
+/* В тёмной теме */
+[data-theme="dark"] .selectedCard {
+  background: rgba(0, 229, 255, 0.07);
+}
+
+/* ── Галочка выбора ──────────────────────────────────────────────────────── */
+.checkmark {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+/* ── Ошибка ──────────────────────────────────────────────────────────────── */
+.errorBox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: rgba(255, 77, 106, 0.08);
+  border: 1px solid rgba(255, 77, 106, 0.3);
+  border-radius: 8px;
+  color: #ff4d6a;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+}
+
+/* ── Footer ──────────────────────────────────────────────────────────────── */
+.formFooter {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.btnCancel {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-sec);
+  padding: 10px 22px;
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.btnCancel:hover { border-color: var(--text-sec); color: var(--text-pri); }
+/* ═══════════════════════════════════════════════════
+   АДАПТИВ (перенесено из Createvmpage.mobile.css)
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .page { max-width: 100%; padding: 0; }
+  .flavorGrid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .flavorCard { padding: 12px 14px; }
+  .flavorName { font-size: 14px; }
+  .imageRow { padding: 12px 14px; gap: 10px; }
+  .imageName { font-size: 13px; }
+  .imageMeta { display: none; }
+  .footer { flex-direction: column-reverse; gap: 8px; }
+  .btnCancel, .btnSubmit { width: 100%; justify-content: center; }
+}
+@media (max-width: 480px) {
+  .flavorGrid { grid-template-columns: 1fr 1fr; gap: 6px; }
+  .flavorName { font-size: 13px; }
+  .flavorSpec { font-size: 11px; }
+}

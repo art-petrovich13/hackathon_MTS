@@ -1,0 +1,1 @@
+ALTER TABLE vms ADD COLUMN IF NOT EXISTS novnc_port INT;

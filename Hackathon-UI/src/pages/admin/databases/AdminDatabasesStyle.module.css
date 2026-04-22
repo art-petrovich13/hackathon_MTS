@@ -1,0 +1,163 @@
+/* src/pages/admin/databases/AdminDatabasesStyle.module.css */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+/* ── Ячейки таблицы ──────────────────────────────────────────────────────── */
+.ownerCell {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-sec);
+}
+
+.cred { display: flex; gap: 6px; align-items: center; }
+
+/* ── Кнопки действий в таблице ───────────────────────────────────────────── */
+.actionButton {
+  padding: 5px 14px;
+  border-radius: 30px;
+  border: none;
+  cursor: pointer;
+  font-family: 'Syne', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: opacity 0.15s, transform 0.15s;
+}
+.actionButton:hover:not(:disabled) { transform: translateY(-1px); opacity: 0.85; }
+.actionButton:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.credentialsButton   { background: var(--red-gradient); color: #fff; box-shadow: 0 2px 6px rgba(198,46,38,0.25); }
+.confirmDeleteButton { background: linear-gradient(135deg, #7f1d1d, #991b1b); color: #fff; }
+.cancelButton        { background: transparent; color: var(--text-sec); border: 1px solid var(--border); }
+.cancelButton:hover  { background: var(--bg-raised); }
+.deleteButton        { background: rgba(198,46,38,0.08); color: #fca5a5; border: 1px solid rgba(198,46,38,0.2); }
+.deleteButton:hover:not(:disabled) { background: rgba(198,46,38,0.15); }
+
+/* ── Модал — заголовок и форма ───────────────────────────────────────────── */
+.modalTitle {
+  margin: 0 0 20px;
+  font-family: 'Syne', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-pri);
+}
+
+.modalForm { display: flex; flex-direction: column; gap: 18px; }
+.formGroup { width: 100%; }
+
+.formFooter {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+/* ── Пикер пользователя ──────────────────────────────────────────────────── */
+.userPickerList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.userPickerBtn {
+  padding: 10px 14px;
+  border-radius: 8px;
+  text-align: left;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: transparent;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  transition: border-color 0.15s, background 0.15s;
+}
+.userPickerBtn:hover { border-color: rgba(198,46,38,0.4); }
+.userPickerBtnActive { border-color: var(--red-primary); background: rgba(198,46,38,0.07); }
+
+.userPickerEmail {
+  font-family: 'Syne', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-pri);
+}
+
+.userPickerProject {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-sec);
+}
+
+.userPickerCheck { color: var(--red-primary); margin-left: 8px; }
+
+/* ── Хинт и тексты формы ─────────────────────────────────────────────────── */
+.hintText    { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-dim); margin-top: 4px; }
+.loadingText { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--text-sec); margin: 4px 0; }
+.errorText   { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--red); margin: 4px 0; }
+
+/* ── Выбор движка ────────────────────────────────────────────────────────── */
+.engineGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+
+.engineButton {
+  padding: 12px 8px;
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.15s, background 0.15s;
+  border: 2px solid var(--border);
+  background: transparent;
+  width: 100%;
+}
+.engineButton:hover     { border-color: rgba(198,46,38,0.5); }
+.engineButtonSelected   { border-color: var(--red-primary); background: rgba(198,46,38,0.06); }
+.engineIcon  { font-size: 24px; margin-bottom: 4px; }
+.engineLabel { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; color: var(--text-pri); }
+.engineDesc  { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-sec); margin-top: 2px; }
+
+/* ── Flavor picker ───────────────────────────────────────────────────────── */
+.flavorList { display: flex; flex-direction: column; gap: 6px; }
+
+.flavorButton {
+  padding: 10px 14px;
+  border-radius: 8px;
+  text-align: left;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: transparent;
+  width: 100%;
+  transition: border-color 0.15s, background 0.15s;
+}
+.flavorButton:hover      { border-color: rgba(198,46,38,0.4); }
+.flavorButtonSelected    { border-color: var(--red-primary); background: rgba(198,46,38,0.06); }
+.flavorName  { font-family: 'Syne', sans-serif; font-weight: 600; font-size: 14px; color: var(--text-pri); }
+.flavorSpecs { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-sec); }
+.flavorCheck { color: var(--red-primary); margin-left: 8px; }
+/* ═══════════════════════════════════════════════════
+   АДАПТИВ (перенесено из AdminDatabasesStyle.mobile.css)
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 1024px) {
+  .engineGrid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+}
+@media (max-width: 768px) {
+  .tableWrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .table { min-width: 560px; }
+  .engineGrid { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .engineIcon { font-size: 20px; }
+  .engineLabel { font-size: 12px; }
+  .engineDesc { display: none; }
+  .formFooter { flex-direction: column-reverse; gap: 8px; }
+  .formFooter button { width: 100%; justify-content: center; }
+}
+@media (max-width: 480px) {
+  .engineGrid { grid-template-columns: repeat(3, 1fr); }
+  .engineButton { padding: 10px 4px; }
+}

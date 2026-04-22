@@ -1,0 +1,290 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Syne:wght@400;600;700&display=swap');
+@import './pages/shared.mobile.css';
+
+/* ══════════════════════════════════════════════════════
+   ТЁМНАЯ ТЕМА (по умолчанию)
+   ══════════════════════════════════════════════════════ */
+:root,
+[data-theme="dark"] {
+  /* Фоны */
+  --bg-base:    #0d0f14;
+  --bg-surface: #13161e;
+  --bg-raised:  #1a1e2a;
+  --border:     #252836;
+
+  /* Красный акцент (основной) */
+  --red-primary:  #C62E26;
+  --red-dark:     #7B1814;
+  --red-gradient: linear-gradient(135deg, var(--red-dark), var(--red-primary));
+  --accent:       var(--red-primary);
+  --accent-dim:   rgba(198, 46, 38, 0.1);
+
+  /* Текст */
+  --text-pri:   #e8eaf0;
+  --text-sec:   #7a7f94;
+  --text-dim:   #3d4155;
+
+  /* Статусные цвета */
+  --red:    #ff4d6a;
+  --green:  #00e676;
+  --yellow: #ffd740;
+
+  --shadow:    0 4px 24px rgba(0, 0, 0, 0.4);
+  --sidebar-w: 220px;
+  --topbar-h:  52px;
+  --font-ui:   'Syne', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+/* ══════════════════════════════════════════════════════
+   СВЕТЛАЯ ТЕМА
+   ══════════════════════════════════════════════════════ */
+[data-theme="light"] {
+  /* Фоны */
+  --bg-base:    #f0f2f7;
+  --bg-surface: #ffffff;
+  --bg-raised:  #f7f8fc;
+  --border:     #e0e4ef;
+
+  /* Красный акцент (чуть темнее для читаемости на светлом) */
+  --red-primary:  #B02820;
+  --red-dark:     #6B1410;
+  --red-gradient: linear-gradient(135deg, var(--red-dark), var(--red-primary));
+  --accent:       var(--red-primary);
+  --accent-dim:   rgba(176, 40, 32, 0.08);
+
+  /* Текст */
+  --text-pri:   #0f1117;
+  --text-sec:   #5a6075;
+  --text-dim:   #b0b6c8;
+
+  /* Статусные цвета */
+  --red:    #e0284a;
+  --green:  #00a854;
+  --yellow: #d4870a;
+
+  --shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+}
+
+/* ══════════════════════════════════════════════════════
+   ГЛОБАЛЬНЫЙ СБРОС
+   ══════════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg-base);
+  color: var(--text-pri);
+  font-family: 'Syne', sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+a { color: inherit; text-decoration: none; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Скроллбар */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-base); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
+
+/* ══════════════════════════════════════════════════════
+   ГЛОБАЛЬНЫЕ UTILITY-КЛАССЫ
+   Используй прямо в JSX без импорта модуля:
+   className="btn-primary"  /  className="input"  и т.д.
+   ══════════════════════════════════════════════════════ */
+
+/* ── Кнопки ─────────────────────────────────────────────────────────────── */
+
+/* Основная — красный градиент */
+.btn-primary {
+  background: var(--red-gradient);
+  color: #fff;
+  border: none;
+  padding: 10px 22px;
+  border-radius: 8px;
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.15s;
+  box-shadow: 0 2px 8px rgba(198, 46, 38, 0.3);
+}
+.btn-primary:hover:not(:disabled) { opacity: 0.82; }
+.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Вторичная — прозрачная с рамкой */
+.btn-secondary {
+  background: transparent;
+  color: var(--text-pri);
+  border: 1px solid var(--border);
+  padding: 10px 22px;
+  border-radius: 8px;
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.15s, color 0.15s;
+}
+.btn-secondary:hover:not(:disabled) {
+  border-color: var(--red-primary);
+  color: var(--red-primary);
+}
+.btn-secondary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Опасная — мягкий красный */
+.btn-danger {
+  background: rgba(198, 46, 38, 0.08);
+  color: var(--red-primary);
+  border: 1px solid rgba(198, 46, 38, 0.35);
+  padding: 10px 22px;
+  border-radius: 8px;
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s;
+}
+.btn-danger:hover:not(:disabled) {
+  background: rgba(198, 46, 38, 0.16);
+  border-color: var(--red-primary);
+}
+.btn-danger:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* Маленькие варианты — добавляй модификатор .btn-sm */
+.btn-sm { padding: 5px 12px; font-size: 12px; border-radius: 6px; }
+
+/* Иконочная кнопка без текста */
+.btn-icon {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-raised);
+  color: var(--text-sec);
+  cursor: pointer;
+  font-size: 14px;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  flex-shrink: 0;
+}
+.btn-icon:hover:not(:disabled) {
+  border-color: var(--red-primary);
+  color: var(--red-primary);
+  background: var(--accent-dim);
+}
+.btn-icon:disabled { opacity: 0.3; cursor: not-allowed; }
+
+/* ── Инпуты ─────────────────────────────────────────────────────────────── */
+
+.input {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-raised);
+  color: var(--text-pri);
+  font-family: 'Syne', sans-serif;
+  font-size: 14px;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+}
+.input:focus { border-color: var(--red-primary); }
+.input:disabled { opacity: 0.5; cursor: not-allowed; }
+.input::placeholder { color: var(--text-dim); }
+
+.input-mono {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+}
+
+/* Textarea — те же стили */
+.textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-raised);
+  color: var(--text-pri);
+  font-family: 'Syne', sans-serif;
+  font-size: 14px;
+  outline: none;
+  box-sizing: border-box;
+  resize: vertical;
+  transition: border-color 0.15s;
+  line-height: 1.5;
+}
+.textarea:focus { border-color: var(--red-primary); }
+.textarea::placeholder { color: var(--text-dim); }
+
+/* Select */
+.select {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-raised);
+  color: var(--text-pri);
+  font-family: 'Syne', sans-serif;
+  font-size: 14px;
+  outline: none;
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: border-color 0.15s;
+  appearance: none;
+}
+.select:focus { border-color: var(--red-primary); }
+
+/* Label */
+.label {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-sec);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* ── Оверлей / модал ─────────────────────────────────────────────────────── */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px;
+  width: 460px;
+  max-width: 95vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow);
+}
+
+/* ── Сообщение об ошибке в форме ─────────────────────────────────────────── */
+.form-error {
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: rgba(198, 46, 38, 0.08);
+  border: 1px solid rgba(198, 46, 38, 0.3);
+  color: var(--red);
+  font-size: 13px;
+}

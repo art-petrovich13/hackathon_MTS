@@ -1,0 +1,152 @@
+/* src/pages/NodesPage.module.css */
+
+.page {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  transition: border-color 0.15s;
+}
+.card:hover { border-color: var(--accent); }
+
+/* ── Шапка карточки ──────────────────────────────────────────────────────── */
+.cardTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.nodeInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.nodeName {
+  font-family: 'Syne', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-pri);
+}
+
+.nodeEndpoint {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-dim);
+  word-break: break-all;
+}
+
+/* ── Прогресс-бары ───────────────────────────────────────────────────────── */
+.bars {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bar {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.barHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.barLabel {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-sec);
+}
+
+.barInfo {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-sec);
+}
+
+.barTrack {
+  height: 8px;
+  background: var(--bg-raised);
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.barFill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.5s ease, background 0.3s ease;
+}
+
+/* ── Свободные ресурсы ───────────────────────────────────────────────────── */
+.freeRow {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+  padding-top: 4px;
+  border-top: 1px solid var(--border);
+}
+
+.freeItem {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.freeLabel {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-dim);
+}
+
+.freeValue {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-pri);
+}
+/* ═══════════════════════════════════════════════════
+   АДАПТИВ (перенесено из AdminNodesPage.mobile.css)
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 1024px) {
+  .grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+}
+@media (max-width: 768px) {
+  .grid { grid-template-columns: 1fr; gap: 10px; }
+  .card { padding: 16px; gap: 12px; }
+  .nodeName { font-size: 14px; }
+  .nodeEndpoint { font-size: 10px; }
+  .barInfo { font-size: 10px; }
+  .freeRow { gap: 14px; }
+  .freeValue { font-size: 13px; }
+}
+@media (max-width: 480px) {
+  .card { padding: 14px 12px; }
+  .freeRow { flex-direction: column; gap: 8px; }
+}

@@ -520,15 +520,6 @@ vm_metrics         — метрики CPU/RAM для аналитики
 
 ---
 
-## 👨‍💻 Команда
-
-| Разработчик | Роль | Стек |
-|-------------|------|------|
-| **P1** | Backend Developer | Go, Docker SDK, PostgreSQL, JWT |
-| **P2** | Frontend Developer | React, TypeScript, TanStack Query |
-
----
-
 <div align="center">
 
 *Сделано на хакатоне MTS · 2026*
